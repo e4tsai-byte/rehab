@@ -5,7 +5,7 @@ calls cv2.imwrite or otherwise writes a frame to disk, per the design doc's
 no-video-persistence constraint.
 """
 
-from typing import Sequence
+from typing import Optional, Sequence
 
 import cv2
 
@@ -74,6 +74,66 @@ def draw_state_label(frame, state_name: str) -> None:
         cv2.FONT_HERSHEY_SIMPLEX,
         1.1,
         color,
+        2,
+        cv2.LINE_AA,
+    )
+
+
+_FATIGUE_STOP_COLORS = {
+    True: (60, 60, 200),  # matches _STATE_COLORS["UNKNOWN"]'s alert red
+    False: (60, 180, 75),  # matches _STATE_COLORS["SEATED"]'s green
+    None: (0, 220, 220),  # matches _STATE_COLORS["TRANSITIONING"]'s "can't tell" yellow
+}
+
+
+def draw_autoregulation_panel(
+    frame,
+    rep_count: int,
+    failed_stand_count: int,
+    velocity_loss_pct: Optional[float],
+    fatigue_stop_triggered: Optional[bool],
+) -> None:
+    """Live rep count + velocity-loss readout, drawn under the state label.
+    `velocity_loss_pct`/`fatigue_stop_triggered` are None below the
+    minimum-rep-count fallback or when the baseline-consistency guard
+    fails (design doc) -- rendered as "--" / a distinct "?" color rather
+    than a fabricated 0%/False."""
+    cv2.putText(
+        frame,
+        f"Reps: {rep_count}   Failed stands: {failed_stand_count}",
+        (20, 80),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        _DEFAULT_COLOR,
+        2,
+        cv2.LINE_AA,
+    )
+
+    loss_text = "--" if velocity_loss_pct is None else f"{velocity_loss_pct * 100:.0f}%"
+    cv2.putText(
+        frame,
+        f"Velocity loss: {loss_text}",
+        (20, 115),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        _DEFAULT_COLOR,
+        2,
+        cv2.LINE_AA,
+    )
+
+    if fatigue_stop_triggered is True:
+        status_text = "FATIGUE STOP"
+    elif fatigue_stop_triggered is False:
+        status_text = "OK"
+    else:
+        status_text = "N/A (< 3 reps or inconsistent baseline)"
+    cv2.putText(
+        frame,
+        status_text,
+        (20, 150),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        _FATIGUE_STOP_COLORS[fatigue_stop_triggered],
         2,
         cv2.LINE_AA,
     )

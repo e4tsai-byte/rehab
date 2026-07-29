@@ -70,6 +70,39 @@ HIP_HEIGHT_STANDING_HYSTERESIS_BAND = 0.05
 HIP_HEIGHT_STANDING_ENTER = HIP_HEIGHT_STANDING_BASELINE + HIP_HEIGHT_STANDING_HYSTERESIS_BAND
 HIP_HEIGHT_STANDING_EXIT = HIP_HEIGHT_STANDING_BASELINE - HIP_HEIGHT_STANDING_HYSTERESIS_BAND
 
+# --- Autoregulation: rep counting / fatigue-stop (rep-counting-velocity-
+# loss-design.md) -------------------------------------------------------------
+# Same placeholder status as the state-machine thresholds above: starting
+# estimates pending a real-footage tuning pass (design doc's Open
+# Questions), not derived from data yet.
+
+# Premise 1, discard rule (b): a concentric phase shorter than this is not
+# a physically plausible sit-to-stand for any population. Checked before
+# the mean_velocity division (see autoregulation/rep_counter.py), not just
+# as a noise filter.
+MIN_CONCENTRIC_DURATION_S = 0.3
+
+# A set needs at least this many completed (non-discarded) reps before any
+# velocity/ROM stat is computed at all -- design doc's minimum-rep-count
+# fallback. Also the fixed first-3/last-3 window size used throughout.
+MIN_REPS_FOR_VELOCITY_STATS = 3
+
+# Premise 3 / research doc Section 1: first-3 vs. last-3 rep mean_velocity,
+# expressed as a fraction (0.20 == 20%), bodyweight-modality-justified
+# threshold for fatigue_stop_triggered.
+FATIGUE_STOP_VELOCITY_LOSS_THRESHOLD = 0.20
+
+# Baseline-consistency guard (design doc's Data Model / research doc
+# Section 5): coefficient of variation of the first-3 reps' mean_velocity
+# above this is treated as "too erratic to trust", forcing
+# fatigue_stop_triggered to None. The design doc explicitly lists this
+# exact cutoff as an unresolved placeholder ("Threshold/parameter tuning",
+# Open Questions) with no numeric value given anywhere in either design
+# doc -- this value is a flagged inference (not derived from the docs),
+# same status as PERSON_SELECTION_HYSTERESIS_FRAMES's zero-margin
+# inference above; see builder's report for this as a flagged assumption.
+CONSISTENCY_GUARD_CV_THRESHOLD = 0.15
+
 # --- Capture / model -----------------------------------------------------------
 DEFAULT_CAMERA_INDEX = 0
 TARGET_FPS_FLOOR = 15  # demo-readiness floor, not enforced in code -- see models/README.md
