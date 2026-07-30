@@ -119,6 +119,33 @@ export interface Strings {
     readonly recordedAt: (t: string) => string
     readonly reasonLabel: string
     readonly firstContactRep: (n: number) => string
+    readonly statsTitle: string
+    readonly statsHint: string
+    readonly slowdownLabel: string
+    readonly slowdownSlower: (s: string) => string
+    readonly slowdownFaster: (s: string) => string
+    readonly slowdownSame: string
+    readonly meanLabel: string
+    readonly fastestLabel: string
+    readonly slowestLabel: string
+    readonly spreadLabel: string
+    readonly repNo: (n: number) => string
+    readonly overlayTitle: string
+    readonly overlayHint: string
+    readonly overlayNeedsBoth: string
+  }
+  readonly tier2: {
+    readonly title: string
+    readonly status: string
+    readonly body: string
+    readonly plannedTitle: string
+    readonly planned: readonly string[]
+    readonly gateTitle: string
+    readonly gate: string
+    readonly survives: string
+    readonly fails: string
+    readonly indeterminate: string
+    readonly fallback: string
   }
   readonly nav: {
     readonly switchToPre: string
@@ -394,6 +421,41 @@ const zhTW: Strings = {
     recordedAt: (t) => `紀錄時間 ${t}`,
     reasonLabel: '原因',
     firstContactRep: (n) => `第 ${n} 次起偵測到手部支撐`,
+
+    statsTitle: '本次量測統計',
+    // Arithmetic on the recorded times. No threshold, no grading, no norm.
+    statsHint: '以下數值由本次各次起立時間計算，僅為算術結果，不含任何判讀或分級。',
+    slowdownLabel: '第 5 次與第 1 次差',
+    slowdownSlower: (sec) => `較第 1 次慢 ${sec} 秒`,
+    slowdownFaster: (sec) => `較第 1 次快 ${sec} 秒`,
+    slowdownSame: '與第 1 次相同',
+    meanLabel: '平均每次',
+    fastestLabel: '最快一次',
+    slowestLabel: '最慢一次',
+    spreadLabel: '最快與最慢差',
+    repNo: (n) => `第 ${n} 次`,
+    overlayTitle: '前後測各次時間對照',
+    overlayHint: '同一位長輩的兩次量測並列比較，共用同一刻度。兩個量測點不構成趨勢圖。',
+    overlayNeedsBoth: '需前測與後測皆有各次時間，方可並列比較。',
+  },
+
+  // ── Tier 2 roadmap. A statement of intent, never a preview of data. ────────
+  tier2: {
+    title: '第二階段（規劃中）',
+    status: '尚未開發',
+    body: '以下項目為規劃方向，本版本並未實作，畫面上不會出現任何相關數值。是否開發取決於一項已預先登錄的實驗結果。',
+    plannedTitle: '規劃中的輸出',
+    planned: [
+      '尖峰速度（peak velocity）',
+      '平均速度（mean velocity）',
+      '組內速度衰減（velocity loss）',
+    ],
+    gateTitle: '開發條件',
+    gate: '八月進行之預先登錄實驗，n=6–8，側面 120 fps 並置入平面尺標；判定標準於實驗前公開，事後不得更動。',
+    survives: '通過：低座高時最後一次較第一次單調衰減超過 20%，且各次變異係數小於 7%，並無代償動作；標準座高時則否。',
+    fails: '不通過：組內尖峰速度變異係數大於或等於總衰減幅度；或次間停頓增加超過 40% 而向心速度下降不足 10%；或三分之一以上受試者在第 8 次前出現非單調速度或手部支撐。',
+    indeterminate: '未達判定：視同不通過。預先登錄若留有模糊地帶，即非預先登錄。',
+    fallback: '若不通過，改以代償偵測為停止條件（次間停頓、軀幹前傾代償、關節活動度衰減、手部支撐），完全不含速度項目。第一階段不受影響。',
   },
 
   nav: {

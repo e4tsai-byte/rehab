@@ -24,6 +24,11 @@
    others, and a standing part-time worker should not have to guess. The whole
    trail is 64px tall so every segment clears the tap floor.
 
+   ONE BAND. The demo marker used to be a full-width strip beneath this header,
+   which meant every surface opened with two bands of chrome before any content.
+   It is now a badge in the end slot; see DemoDisclosure.tsx for why folding it
+   does not weaken the disclosure.
+
    The phase chip is READ-ONLY. Phase is chosen once, on the setup screen. A
    control that changes which assessment point you are recording into must not
    sit beside a thing that only says where you are — that was the old roster
@@ -44,11 +49,15 @@ export interface Crumb {
 export function AppHeader({
   trail,
   phaseWord,
+  demoSlot,
   scenarioSlot,
 }: {
   /** Root first, current surface last. Always at least one entry. */
   trail: readonly Crumb[]
   phaseWord: string | null
+  /** The persistent 示範模式 marker, folded in from what used to be a
+      full-width strip below this header. */
+  demoSlot?: React.ReactNode
   /** The demo-only scenario control. Lives here so it stops floating over
       roster content, which is what it did as a fixed-position button. */
   scenarioSlot?: React.ReactNode
@@ -101,6 +110,7 @@ export function AppHeader({
       </nav>
 
       <div className="hdr__end">
+        {demoSlot}
         {phaseWord && (
           <span className="hdr__phase">
             <span className="hdr__phase-label">{strings.nav.phaseLabel}</span>

@@ -28,7 +28,9 @@ import { Digits } from '../components/Digits'
 import { Icon } from '../components/Icon'
 import { RailButton } from '../components/RailButton'
 import { RepSplits } from '../components/RepSplits'
+import { RepStatsBlock, SplitOverlay } from '../components/RepStatsBlock'
 import { StateChip } from '../components/StateChip'
+import { Tier2Panel } from '../components/Tier2Panel'
 import { rocDate } from '../domain/dates'
 import { outcomeDisplay } from '../domain/display'
 import { attemptsFor, type ResolvedTrial } from '../domain/records'
@@ -48,6 +50,15 @@ interface PhaseView {
   readonly session: AssessmentSession
   readonly trial: ResolvedTrial | null
   readonly attempts: readonly ResolvedTrial[]
+}
+
+/** Per-rep durations, where the outcome has them. */
+function splitsOf(t: ResolvedTrial | null): readonly number[] {
+  if (!t) return []
+  const o = t.outcome
+  return o.kind === 'complete' || o.kind === 'incomplete' || o.kind === 'hand_contact'
+    ? o.repTimesMs
+    : []
 }
 
 function reasonWord(o: Outcome): string | null {
@@ -121,6 +132,9 @@ function PhaseBlock({ view }: { view: PhaseView }) {
           {reasonWord(t.outcome) && <p className="pd__flag">{reasonWord(t.outcome)}</p>}
 
           <RepSplits repTimesMs={splits} />
+          {/* Arithmetic on the times above. See domain/stats.ts for what is
+              deliberately absent — no velocity, no trace, no threshold. */}
+          <RepStatsBlock repTimesMs={splits} />
         </>
       )}
 
@@ -209,6 +223,9 @@ export function ParticipantDetail({
 
   const delta = comparable && preMs !== null && postMs !== null ? (postMs - preMs) / 1000 : null
 
+  const preSplits = splitsOf(pre)
+  const postSplits = splitsOf(post)
+
   return (
     <div className="zones">
       <div className="field">
@@ -249,6 +266,13 @@ export function ParticipantDetail({
               </>
             )}
           </section>
+
+          {/* Two assessment points side by side on one scale. Not a trend: see
+              the header comment in RepStatsBlock.tsx. */}
+          <SplitOverlay preMs={preSplits} postMs={postSplits} />
+
+          {/* Roadmap, not data. Names only, no values, its own ground. */}
+          <Tier2Panel />
         </div>
       </div>
 

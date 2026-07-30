@@ -33,11 +33,17 @@ export function Roster({
 
   const doneCount = rows.filter((r) => r.trial !== null).length
 
+  /* Split into two halves of equal length rather than letting a multi-column
+     flow decide. Column-major: the left half is the first six in call order,
+     the right the next six. Each half is its own grid with IDENTICAL explicit
+     tracks, so a status chip lands at the same offset in both. */
+  const half = Math.ceil(rows.length / 2)
+  const halves = [rows.slice(0, half), rows.slice(half)]
+
   return (
     <div className="roster">
-      {/* The title and the phase chip moved to the app header, which is now the
-          single place that answers "where am I". Repeating them here would be a
-          second answer to the same question, and it cost the list a row. */}
+      {/* The title and the phase chip live in the app header, which is the
+          single place that answers "where am I". */}
       <div className="roster__meta">
         <span>{block.siteName}</span>
         <span>{block.blockName}</span>
@@ -51,40 +57,46 @@ export function Roster({
           <p className="cue__hint">{strings.roster.emptyBody}</p>
         </div>
       ) : (
-        <ul className="roster__list">
-          {rows.map(({ participant, trial }) => {
-            const display = trial ? outcomeDisplay(trial.outcome) : awaitingDisplay
-            return (
-              // Only outstanding rows carry a container: a measured row needs
-              // nothing done to it, so it is plain on the field.
-              <li key={participant.id} className={trial ? 'row' : 'row row--todo'}>
-                <span className="row__id">{participant.id}</span>
-                <span className="row__label">{participant.label}</span>
-                <span className="row__state">
-                  <StateChip display={display} size="row" />
-                </span>
-                {trial && trial.correctionCount > 0 && (
-                  <span className="row__corrected">{strings.status.corrected}</span>
-                )}
-                <span className="row__action">
-                  {trial ? (
-                    <RailButton
-                      variant="quiet"
-                      icon="record"
-                      onClick={() => onReview(participant, trial)}
-                    >
-                      {strings.roster.review}
-                    </RailButton>
-                  ) : (
-                    <RailButton icon="start" onClick={() => onStart(participant)}>
-                      {strings.roster.start}
-                    </RailButton>
-                  )}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="roster__cols">
+          {halves.map((group, gi) => (
+            <ul className="rgrid" key={gi}>
+              {group.map(({ participant, trial }) => {
+                const display = trial ? outcomeDisplay(trial.outcome) : awaitingDisplay
+                return (
+                  /* Every row emits the SAME FIVE CELLS in the same order, and
+                     the modifier cell is rendered even when empty. That is what
+                     keeps 吳媽's 已更正 from pushing her status and action out of
+                     the column everyone else is aligned to. */
+                  <li className="rgrid__row" key={participant.id}>
+                    <span className="rgrid__id">{participant.id}</span>
+                    <span className="rgrid__label">{participant.label}</span>
+                    <span className="rgrid__state">
+                      <StateChip display={display} size="row" />
+                    </span>
+                    <span className="rgrid__mod">
+                      {trial && trial.correctionCount > 0 ? strings.status.corrected : ''}
+                    </span>
+                    <span className="rgrid__action">
+                      {trial ? (
+                        <RailButton
+                          variant="quiet"
+                          icon="record"
+                          onClick={() => onReview(participant, trial)}
+                        >
+                          {strings.roster.review}
+                        </RailButton>
+                      ) : (
+                        <RailButton icon="start" onClick={() => onStart(participant)}>
+                          {strings.roster.start}
+                        </RailButton>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          ))}
+        </div>
       )}
     </div>
   )

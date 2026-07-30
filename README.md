@@ -148,10 +148,16 @@ which the first does not. Verified: all ten digits measure 113.27 px at the hero
 
 Measured in a headless browser, not eyeballed.
 
-- **All seven screens audited**, not just the roster: 421 text nodes across setup, roster, detail,
+- **All seven screens audited**, not just the roster: 559 text nodes across setup, roster, detail,
   trial cue, trial running, result and the sheet. Zero below 4.5:1, minimum 5.28:1. Zero controls under
   64 px once `<input>`s are resolved to their wrapping `<label>`, which is the actual tap target.
   One `<h1>` per surface, no duplicates.
+- **Roster columns actually align.** Measured: one distinct x per track per half for both the
+  status and action columns, and the two halves match each other to within 0.6 px at 1280×800 and
+  1600×900 — including the row carrying an extra 已更正 modifier, which sits on the same geometry
+  as every other row because the modifier cell is always rendered.
+- **One band of chrome.** Header 72 px, content starts at 73 px. It was 80 px of header plus a
+  42 px demo strip.
 - **Roster fits the class.** All **12 of 12 rows fully visible at 1280×800 with no scrolling**
   (neither the field nor the page scrolls), and 12 of 12 at 1600×900. Two columns: twelve rows at
   the 64 px tap floor is 768 px of rows alone, which does not fit under an 800 px viewport at any

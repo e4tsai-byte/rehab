@@ -27,6 +27,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { CameraControls } from '../components/CameraControls'
+import { DemoNotice } from '../components/DemoDisclosure'
 import { CameraSelfView } from '../components/CameraSelfView'
 import { RailButton } from '../components/RailButton'
 import { useDataSource } from '../data/context'
@@ -104,7 +105,10 @@ export function Setup({ onBegin }: { onBegin: (setup: SessionSetup) => void }) {
         <div className="setup">
           {/* No heading here: the header trail's current segment is already this
               page's <h1> and repeating the title gave the surface two names. */}
+          {/* The disclosure in full, un-collapsed, on the surface anyone
+              opening the demo URL lands on. Elsewhere it is the header badge. */}
           <header className="setup__head">
+            <DemoNotice simulated={src.isSimulated} />
             <p className="setup__lede">{strings.setup.lede}</p>
           </header>
 

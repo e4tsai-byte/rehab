@@ -438,6 +438,26 @@ Every unavailable path — permission denied, no camera, insecure origin, no bro
 ordinary text at the same weight as the idle copy, because none of them is an error and none stops
 the fixture demo working.
 
+### The roster grid
+
+**Rows lay out on a shared grid, not independently.** That is the fix for a real
+legibility failure: rows used to be flex lines sizing their own cells, so 已量測
+sat at one x in the left column and another in the right, and any row carrying an
+extra 已更正 chip pushed its own status and action out of line with every other
+row. Flattening the containers had removed the noise but left nothing holding the
+eye to a column.
+
+- **Explicit tracks: `id · label · status · modifier · action`.** Everything is
+  fixed except the label, which takes the slack. Fixed tracks are what make the
+  two halves align to each other rather than each to its own content.
+- **Every row emits all five cells, including an empty modifier cell.** That is
+  what keeps a corrected row on the same geometry as an uncorrected one.
+- **The two halves are separate grids with identical track definitions**, given
+  equal width by the wrapper. Measured: one distinct x per track per half, and
+  the two halves match to within 0.6px at both 1280 and 1600.
+- **Separation is a hairline between rows.** Not a container — the old rule was
+  at most one box per row; this is none.
+
 ### Roster density
 
 Twelve rows is the whole class, so the roster earns a rule about visual noise:
@@ -489,6 +509,39 @@ Two components, and the split is the policy rather than an accident:
 
 Three disjoint shape families exist so a facilitator glancing sideways never confuses them:
 tracking is circles and a square, outcomes are bars and polygons, camera signal is a stepped meter.
+
+## One band of chrome
+
+The header used to be 80px, with a 42px full-width demo strip beneath it: **123px
+of chrome on every surface before any content.** It is now a single 72px band and
+content starts at 73px.
+
+What moved:
+
+- **The demo marker folded into the header** as a badge with the sentence behind
+  it. See below for why that does not weaken the disclosure.
+- **The logo went to one line.** The dashed slot already carries the
+  artwork-pending signal, so the 標誌暫定 caption rides beside the wordmark as a
+  small badge instead of stacking under it, and hides below 1180px.
+- **示範情境 was demoted.** It is a demo affordance, not a product control, so it
+  carries no border and no fill and reads as a note. Its 64px hit area is kept:
+  quiet is about weight, not about being hard to hit.
+
+### Folding the disclosure did not weaken it
+
+Worth being precise about, because "we made the disclaimer smaller" is exactly
+the move this section exists to prevent:
+
+- The badge is **always visible, on every surface, and cannot be dismissed**.
+  There is no state in which the product does not say 示範模式.
+- The **full sentence is permanently visible, un-collapsed, on the setup
+  screen** — the first surface anyone opening the demo URL lands on.
+- It is also in the **printed sheet's footer**, which is the artifact that
+  actually leaves the building.
+- The popover opens on **click or focus, never hover alone**.
+
+So the claim is made in full at the entry point and on paper, and marked
+permanently everywhere else.
 
 ## Navigation — a path, not a nav bar
 
@@ -626,6 +679,62 @@ footer uses. Direction is reported in words — 較前測快 — which is arithm
 **Corrections appear as corrections.** The original outcome stays on screen
 beside the corrected one; voids and aborts stay in the history. Nothing on this
 surface reads as an edit, because nothing in the log is one.
+
+### Derived statistics
+
+All arithmetic on the recorded times — `domain/stats.ts`. Rep-to-rep slowdown
+(第5次 vs 第1次), mean seconds per rep, fastest and slowest rep with their
+indices, and the spread as a consistency measure.
+
+**The slowdown is the fatigue signal expressed in TIME.** If someone is fatiguing
+within the set the later reps take longer, and that shows up in durations without
+a pose model. It is stated as arithmetic — 較第 1 次慢 0.7 秒 — and never as a
+judgement about the person.
+
+**Deliberately absent, and must stay absent while this build has no pose
+estimation:** peak velocity, mean velocity, velocity loss, and any movement
+trace. There is no pose model here, so those numbers would be fabricated — the
+same reason the rail reports 鏡頭訊號 rather than a tracking-confidence figure.
+They are also Tier 2. `Tier2Panel` names them as planned outputs and shows no
+values.
+
+### The pre/post split overlay
+
+Two assessment points on one shared scale, drawn as **two blocks per rep** —
+前測 above, 後測 below — rather than as a line across a time axis. There is no
+date axis, and a third point could not be added without changing the form, which
+is the property that keeps it inside the no-trend rule.
+
+Per the dataviz method, before/after per item is the dumbbell/grouped-bar case,
+so it is **one hue in two shades** rather than two categorical hues. Two series
+means a legend is required, and each bar is additionally prefixed with its series
+word, so identity never rests on colour alone. Values are direct-labelled and a
+screen-reader table carries the same numbers.
+
+Scale is the maximum **across both trials** — a shared axis is what makes them
+comparable, and it stays strictly internal to this participant's own two
+measurements, so no norm is imported.
+
+## The Tier 2 roadmap panel
+
+A **statement of intent, never a preview of data.** The only place in the product
+allowed to say peak velocity, mean velocity or velocity loss, and only as planned
+outputs of work that does not exist.
+
+- **No numbers, no mock values, no placeholder chart.** Not a greyed-out figure,
+  not a dash, not a dimmed sparkline. A fabricated number beside real measured
+  times is worse than no number. The planned-outputs list is verified
+  numeral-free; digits appear only in the gate prose, where they are the
+  pre-registered criteria rather than measurements.
+- **Materially different and subordinate**: its own dashed border, no ground
+  fill, muted ink, and a 尚未開發 badge on the panel itself.
+- **The gate is stated with its actual criteria**, including that an
+  indeterminate result counts as failure. A roadmap that omits its own failure
+  conditions is marketing, and a pre-registration with a silent middle is not a
+  pre-registration.
+
+If a value ever needs to appear there, Tier 2 shipped — at which point it belongs
+in a measured block above, not in a roadmap panel.
 
 ### The rep-split chart
 

@@ -5,8 +5,10 @@
 .app {
   height: 100%;
   display: grid;
-  /* header · demo banner · zones */
-  grid-template-rows: auto auto 1fr;
+  /* header · body. The demo strip used to be a third row here; folding it into
+     the header left `1fr` sitting on an empty row and the rail floating short
+     of the viewport bottom. */
+  grid-template-rows: auto 1fr;
   overflow: hidden;
 }
 
@@ -19,10 +21,12 @@
   display: flex;
   align-items: center;
   gap: var(--s-4);
-  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-6);
+  padding: var(--s-1) var(--s-4);
   background: var(--surface-raised);
   border-bottom: 1px solid var(--line);
-  min-height: 80px;
+  /* ONE band. Was 80px of header plus a 42px demo strip below it, which cost
+     every surface 123px of chrome before any content. 72px total now. */
+  min-height: 72px;
 }
 
 .hdr__nav {
@@ -163,21 +167,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   border: 1.5px dashed var(--line-strong);
   border-radius: var(--r-sm);
   color: var(--accent);
 }
 
 .logo__mark {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
 }
 
+/* Single line. The stacked wordmark-over-caption cost the header a row of
+   height; the dashed slot already carries the "artwork pending" signal, and the
+   caption rides beside the wordmark as a small badge instead. */
 .logo__text {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
   line-height: 1.15;
 }
 
@@ -191,6 +199,18 @@
 .logo__provisional {
   font-size: 0.6875rem;
   color: var(--ink-muted);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-xs);
+  padding: 0.1em 0.4em;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  /* The trail is the header's job; the placeholder caption is not, so it is the
+     first thing to go when the row gets tight. */
+  .logo__provisional {
+    display: none;
+  }
 }
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
@@ -202,34 +222,77 @@
   color: inherit;
 }
 
-/* ─── Demo banner ────────────────────────────────────────────────────────── */
-/* Persistent, but a disclosure rather than content: unmissable to a stranger,
-   and as cheap in vertical space as possible. The roster pays for this strip. */
+/* ─── Demo disclosure ────────────────────────────────────────────────────────
+   A persistent badge in the header, with the sentence behind it; plus the full
+   sentence un-collapsed on the setup screen. See DemoDisclosure.tsx for why
+   folding the old full-width strip does not weaken the claim.
+   ──────────────────────────────────────────────────────────────────────────── */
 
 .demo {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* Always visible, never dismissible. */
+.demo__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--blue-50);
+  color: var(--ink);
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.demo__badge:hover {
+  background: var(--blue-100);
+}
+
+/* Opens on click or focus, never hover alone. */
+.demo__pop {
+  position: absolute;
+  top: calc(100% + var(--s-2));
+  right: 0;
+  z-index: var(--z-overlay);
+  width: 34rem;
+  max-width: calc(100vw - var(--s-8));
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface-raised);
+  box-shadow: 0 8px 28px oklch(0.25 0.02 255 / 0.18);
+  font-size: var(--t-fac-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+}
+
+/* The un-collapsed form, on setup. */
+.demo-notice {
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
   flex-wrap: wrap;
-  padding: var(--s-2) var(--s-6);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--blue-50);
-  border-bottom: 1px solid var(--line);
   font-size: var(--t-fac-sm);
-  line-height: 1.35;
+  line-height: 1.5;
   color: var(--ink-secondary);
+  max-width: 90ch;
 }
 
-.demo__badge {
+.demo-notice__badge {
   font-weight: 700;
   color: var(--ink);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-xs);
-  padding: 0.1em 0.55em;
   white-space: nowrap;
-}
-
-.demo__detail {
-  color: var(--ink-secondary);
 }
 
 /* ─── Shapes ─────────────────────────────────────────────────────────────── */
@@ -775,77 +838,103 @@
   }
 }
 
-/* ONE container per row, not two. Every row used to be a card holding a button
-   that was itself a card, which at twelve rows is twenty-four bordered boxes on
-   one screen. The row keeps its box only when it needs action; a measured row
-   is plain on the field and the action inside it carries no chrome at all until
-   it is pointed at.
+/* ── The roster grid ────────────────────────────────────────────────────────
+   Rows used to lay out independently, each a flex line sizing its own cells.
+   The result was that 已量測 sat at one x in the left column and another in the
+   right, and any row carrying an extra 已更正 chip pushed its own status and
+   action out of line with every other row. Flattening the containers removed
+   the noise but left nothing holding the eye to a column.
 
-   HIERARCHY: identity first, status second, action third. The participant's
-   label is the largest thing in the row, the status chip is a size down, and
-   the action is the same size as the status but in recessive ink. */
-.row {
-  display: flex;
+   The fix is structural: A TRUE GRID WITH EXPLICIT TRACKS. Every row emits the
+   same five cells — id, label, status, modifier, action — and the modifier cell
+   is rendered even when it is empty, so a row with a correction marker occupies
+   exactly the same geometry as one without.
+
+   The two halves are separate grids with IDENTICAL track definitions, and the
+   wrapper gives them equal width, so the tracks resolve to the same widths in
+   both. Status is scannable straight down each column.
+
+   Separation is a hairline between rows, not a container. At most one box per
+   row was the old rule; this is none. */
+
+.roster__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 var(--s-8);
+  align-items: start;
+}
+
+.rgrid {
+  display: grid;
+  /* Fixed everywhere except the label, which takes the slack. Fixed tracks are
+     what make the two halves align to each other rather than to their own
+     content. */
+  grid-template-columns:
+    [id] 6.5ch
+    [label] minmax(0, 1fr)
+    [state] 11ch
+    [mod] 4.5ch
+    [action] 8.5rem;
   align-items: center;
-  gap: var(--s-3);
-  padding: 0 var(--s-2) 0 var(--s-3);
+}
+
+.rgrid__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
   min-height: var(--tap);
-  border: 1px solid transparent;
-  border-radius: var(--r);
-  margin-bottom: var(--s-1);
-  break-inside: avoid;
+  column-gap: var(--s-3);
 }
 
-/* Only outstanding rows get a container. They are the ones that still need
-   something done to them, so they are the ones that earn the weight. */
-.row--todo {
-  background: var(--surface-raised);
-  border-color: var(--line);
+/* Hairline between rows, and none above the first. The rule is the separation;
+   there is no container. */
+.rgrid__row + .rgrid__row {
+  border-top: 1px solid var(--line);
 }
 
-.row__id {
+.rgrid__id {
   font-size: var(--t-fac-sm);
   color: var(--ink-muted);
-  width: 7ch;
-  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
-/* First in the hierarchy. */
-.row__label {
+/* First in the hierarchy: identity, then status, then action. */
+.rgrid__label {
   font-size: var(--t-fac-lg);
   font-weight: 500;
   color: var(--ink);
-  flex: 1 1 auto;
-  min-width: 5ch;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* The roster carries NO TIMES. Twelve older adults listed with their times in a
-   small shared room is a leaderboard, which the design doc names as the most
-   likely route to facilitator veto. Numbers live on the participant detail
-   surface (one person at a time) and on the sheet (read alone by the lead). */
-.row__state {
-  flex: 0 0 auto;
-  width: 11ch;
+.rgrid__state {
   text-align: right;
+  white-space: nowrap;
 }
 
-.row__corrected {
+/* Rendered even when empty. That is the whole point of it. */
+.rgrid__mod {
   font-size: var(--t-fac-sm);
   color: var(--ink-muted);
-  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.row__action {
-  flex: 0 0 auto;
+.rgrid__action {
+  justify-self: end;
 }
 
-/* THIRD in the hierarchy, and the whole point of the density pass: full 64px
-   hit area, near-zero visual weight. The tap target is unchanged; only the
-   border, fill and type weight come off. */
-.row__action .btn {
+/* Full 64px hit area, near-zero visual weight: the border, fill and type weight
+   come off, the tap target does not. */
+.rgrid__action .btn {
   min-height: var(--tap);
   min-width: 0;
-  padding: 0 var(--s-3);
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0 var(--s-2);
   border-color: transparent;
   background: transparent;
   font-size: var(--t-fac-sm);
@@ -853,17 +942,23 @@
   color: var(--ink-muted);
 }
 
-/* The outstanding row's action is the one thing on this screen a facilitator is
-   looking for, so it carries the accent — as text, not as a filled button. */
-.row--todo .row__action .btn {
+/* The outstanding rows are what a facilitator is scanning for, so their action
+   takes the accent — as text, not as a filled button. */
+.rgrid__row:has(.btn:not(.btn--quiet)) .rgrid__action .btn {
   color: var(--accent);
 }
 
-.row__action .btn:hover:not(:disabled),
-.row__action .btn:focus-visible {
+.rgrid__action .btn:hover:not(:disabled),
+.rgrid__action .btn:focus-visible {
   background: var(--blue-50);
   border-color: var(--line);
   color: var(--ink);
+}
+
+@media (max-width: 1000px) {
+  .roster__cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ─── Facts ── shared by the participant detail surface ─────────────────── */
@@ -1109,19 +1204,30 @@
   font-weight: 700;
 }
 
-/* In the header's end slot now, in normal flow. */
+/* A demo affordance, not a product control, so it carries no border and no
+   fill — it reads as a note rather than as something the product does. Full
+   64px hit area is kept: quiet is about weight, not about being hard to hit. */
 .scn__toggle {
+  display: inline-flex;
+  align-items: center;
   min-height: var(--tap);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
+  padding: 0 var(--s-2);
+  border: 1px solid transparent;
   border-radius: var(--r-sm);
-  background: var(--surface-raised);
-  color: var(--ink-secondary);
+  background: transparent;
+  color: var(--ink-muted);
   font-size: var(--t-fac-sm);
+  white-space: nowrap;
 }
 
-.scn__toggle:hover {
+.scn__toggle:hover,
+.scn__toggle:focus-visible {
   color: var(--ink);
+  background: var(--blue-50);
+}
+
+.scn {
+  inset: 76px var(--s-4) auto auto;
 }
 
 /* ─── Session setup ──────────────────────────────────────────────────────────
@@ -1736,6 +1842,298 @@
   width: 8ch;
   flex: 0 0 auto;
   text-align: right;
+}
+
+/* ─── Derived statistics ─────────────────────────────────────────────────────
+   Arithmetic on the recorded times. See domain/stats.ts for what is absent.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+
+.stats__title {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stats__hint {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.45;
+}
+
+.stats__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--s-3) var(--s-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The fatigue signal reads first. It is still arithmetic — see the wording in
+   the strings module, which states a difference and never a judgement. */
+.stat--lead {
+  grid-column: 1 / -1;
+}
+
+.stat__label {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.stat__value {
+  font-size: var(--t-fac);
+  font-weight: 500;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.stat--lead .stat__value {
+  font-size: var(--t-fac-lg);
+  font-weight: 700;
+}
+
+.stat__note {
+  font-size: var(--t-fac-sm);
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+/* ─── Pre/post split overlay ─────────────────────────────────────────────────
+   Two assessment points, one shared scale, drawn as blocks per rep. NOT a line
+   on a time axis — see the header comment in RepStatsBlock.tsx.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.ovl {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.ovl__title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+}
+
+.ovl__hint,
+.ovl__none {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.45;
+  max-width: 80ch;
+}
+
+/* Two series, so a legend is required. */
+.ovl__key {
+  display: flex;
+  gap: var(--s-4);
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+}
+
+.ovl__key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* One hue, two shades — the before/after case, not two categorical hues. */
+.ovl__swatch {
+  width: 14px;
+  height: 12px;
+  border-radius: 0 3px 3px 0;
+  flex: 0 0 auto;
+}
+
+.ovl__swatch--pre {
+  background: var(--blue-300);
+}
+
+.ovl__swatch--post {
+  background: var(--blue-600);
+}
+
+.ovl__plot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.ovlrep {
+  display: grid;
+  grid-template-columns: 6ch minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.ovlrep__n {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.ovlrep__bars {
+  display: flex;
+  flex-direction: column;
+  /* The 2px surface gap between touching marks. */
+  gap: 2px;
+  min-width: 0;
+}
+
+.ovlbar {
+  display: grid;
+  grid-template-columns: 4ch minmax(0, 1fr) 8ch;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Identity never rests on colour alone: every bar is prefixed with its series
+   word as well as carrying its shade. */
+.ovlbar__word {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.ovlbar__track {
+  height: 14px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Thin marks, square at the baseline and 4px rounded at the data end. */
+.ovlbar__fill {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  min-width: 2px;
+}
+
+.ovlbar__fill--pre {
+  background: var(--blue-300);
+}
+
+.ovlbar__fill--post {
+  background: var(--blue-600);
+}
+
+/* Direct-labelled. Text wears text tokens, never the series colour. */
+.ovlbar__t {
+  font-size: var(--t-fac-sm);
+  font-weight: 500;
+  color: var(--ink);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ─── Tier 2 roadmap ─────────────────────────────────────────────────────────
+   A statement of intent, never a preview of data. Its own ground and a dashed
+   border so it cannot be mistaken for a measured block at a glance, and no
+   numerals anywhere inside it. See Tier2Panel.tsx.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.t2 {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  color: var(--ink-secondary);
+}
+
+.t2__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.t2__title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+/* Says "not built" on the panel itself, not only in the prose. */
+.t2__status {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink-muted);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-xs);
+  padding: 0.1em 0.5em;
+}
+
+.t2__body {
+  font-size: var(--t-fac-sm);
+  line-height: 1.55;
+  max-width: 90ch;
+  text-wrap: pretty;
+}
+
+.t2__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+.t2__sub {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+/* Names only. No value column, ever. */
+.t2__list {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.t2__item {
+  font-size: var(--t-fac-sm);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-xs);
+  padding: 0.15em 0.6em;
+  color: var(--ink-muted);
+}
+
+.t2__criteria {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-size: var(--t-fac-sm);
+  line-height: 1.55;
+  max-width: 90ch;
+}
+
+.t2__criteria li {
+  padding-left: 1.1em;
+  text-indent: -1.1em;
+}
+
+.t2__criteria li::before {
+  content: '·　';
+  color: var(--ink-muted);
 }
 
 /* ─── Narrow viewports ───────────────────────────────────────────────────────

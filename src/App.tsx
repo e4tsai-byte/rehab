@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppHeader, type Crumb } from './components/AppHeader'
-import { DemoBanner } from './components/DemoBanner'
+import { DemoBadge } from './components/DemoDisclosure'
 import { RailButton } from './components/RailButton'
 import { ScenarioSwitcher, type ScenarioActions } from './components/ScenarioSwitcher'
 import { useDataSource } from './data/context'
@@ -173,11 +173,13 @@ export function App() {
     })
   }
 
+  /* Two rows now, not three: the demo strip folded into the header. */
   const shell = (body: React.ReactNode) => (
     <div className="app">
       <AppHeader
         trail={trail}
         phaseWord={phaseWord}
+        demoSlot={<DemoBadge simulated={src.isSimulated} />}
         scenarioSlot={
           <ScenarioSwitcher
             open={scenarioOpen}
@@ -187,7 +189,6 @@ export function App() {
           />
         }
       />
-      <DemoBanner simulated={src.isSimulated} />
       {body}
     </div>
   )
