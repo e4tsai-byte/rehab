@@ -269,12 +269,15 @@ audiences.**
 │                                            │
 │         PARTICIPANT FIELD  ~72vh           │   --bg
 │                                            │
-│   During an active trial this zone holds   │
-│   ONE number, one pip row, and the         │
-│   subordinate self-view. Nothing else.     │
-│   ┌────┐                                   │
-│   │self│  <- corner. never beside the      │
-│   └────┘     number.                       │
+│  ┌─────────────────┬─────────────────┐    │
+│  │                 │                 │    │
+│  │   SELF-VIEW     │   0 / 5         │    │
+│  │   mirrored,     │   次             │    │
+│  │   full height   │   ○ ○ ○ ○ ○     │    │
+│  │                 │                 │    │
+│  └─────────────────┴─────────────────┘    │
+│   Equal halves. With no camera the right   │
+│   half becomes the whole field.            │
 ├────────────────────────────────────────────┤   1px --line
 │  FACILITATOR RAIL  ~28vh        --surface  │
 │  All controls. All machine state.          │
@@ -288,7 +291,8 @@ audiences.**
   material, not by font size.
 - **During an active trial the Participant Field is locked to one number, the pips, and the
   self-view.** No clock, no per-rep list, no name, no logo. `--ink-muted` is banned from this zone
-  by contrast, which makes the rule mechanical.
+  by contrast, which makes the rule mechanical. The rep count is required to be the largest element
+  in its half; it is no longer required to be the largest element on screen. See the split below.
 - **Between trials the zone law relaxes.** Roster and result may occupy the full field, because
   nobody is mid-effort and the facilitator is the only reader.
 - Facilitator controls: **≥64px tap targets**, ≥16px gaps so a hurried thumb cannot hit two.
@@ -316,7 +320,7 @@ number legible at three metres" or for a government funding report.
 | `StateChip` | Colour + word + shape triad from the table above. Never colour alone. |
 | `RailButton` | 64px min, three sizes, full state set: default / hover / focus-visible / active / disabled. |
 | `ParticipantRow` | Roster row. Status by shape and word. **Carries no time.** |
-| `TrialField` | The locked participant zone. Refuses children other than readout + pips. |
+| `TrialField` | The locked participant zone. Two equal halves, or one when there is no camera. |
 | `FacilitatorRail` | Persistent bottom panel. |
 | `Sheet` | The A4 print surface. Light theme, separate scale in pt/mm. |
 | `ScenarioSwitcher` | Overlay, keypress-reachable, absent from print. |
@@ -324,7 +328,7 @@ number legible at three metres" or for a government funding report.
 | `AppHeader` | Where you are, how to get back, which phase. One `<h1>` per surface. |
 | `Logo` | Placeholder mark in a dashed slot. Obviously provisional. |
 | `Icon` | Wayfinding and action glyphs. SVG, never a font glyph. |
-| `CameraSelfView` | Mirrored participant self-view. `frame` and `pip` sizes. |
+| `CameraSelfView` | Mirrored participant self-view. Fills its half of the split. |
 | `CameraControls` | Facilitator half: opt-in button, privacy text, unavailable paths. |
 
 ### The self-view and the framing preview
@@ -348,39 +352,69 @@ argument that mirroring makes "move them left" mean the wrong thing. That argume
 facilitator is standing beside the person and can see them directly, and from the screen they only
 need "is the whole person inside the box", which mirroring does not affect.
 
-#### The gaze budget
+#### The layout: a fifty-fifty split
 
-The rep count must remain the largest element on screen, unambiguously. That is a measurable claim,
-so it is measured, and it is held to the **weakest axis rather than the flattering one**:
+The trial screen is **two equal halves**: self-view on the left, full height, like the remote pane
+of a video call; readout and everything else on the right.
 
-| | Count | Self-view (pip) | Ratio |
-|---|---|---|---|
-| Width | 501px | 128px | **3.91x** |
-| Height | 192px | 96px | **2.00x** |
-| Area | 96,192px² | 12,288px² | **7.82x** |
-| Centre-to-centre separation | | | **611px** |
+This **supersedes an earlier corner-pip layout** and the "unambiguously largest element on screen"
+rule that went with it. The rule has been narrowed deliberately: the rep count is now required to
+be **the largest element in the right half**, not on the whole screen. That is a real change in
+what the surface optimises for — presence and self-monitoring during the effort, over absolute
+singularity of the number — and it should be understood as a decision rather than a drift.
 
-An earlier size (208px) was 2.96x by area but only **1.23x by height**, which is not unambiguous.
-Area is the flattering axis for a wide numeral against a 4:3 box; height is the binding one, and
-128px is the size that puts the pip at 2.0x on it.
+With no camera, or a denied permission, there is no left half and the readout takes the entire
+field. The fallback is exactly the layout this screen has always had.
 
-Placement is **bottom-left, diagonally opposite the centred readout** — deliberately not beside the
-number, where the two would contest the same fixation. It is absolutely positioned so it cannot
-displace or resize the readout by existing, and it is rendered at the running stage only: once the
-trial settles the self-view has no function, so it goes rather than lingering as decoration.
+The split runs at **every stage**, not only once the trial starts. The brief permits the video to
+take the full field before the cue, but the cue text has to live somewhere, and a video that fills
+the screen and then jumps to half of it relayouts the participant's whole world at the moment they
+are being asked to concentrate. Half of a 1280px field is a 640px-wide, full-height pane, which is
+larger than the 360px box it replaces, so framing loses nothing by holding still.
 
-At the cue stage the self-view is large (360px) and sits **beside** the cue text rather than above
-it. Stacked, the two together overflowed an 800px viewport and clipped the video at the top and the
-cue hint at the bottom. The screen is wide and short; spend the horizontal room.
+**Measured across thirteen viewport sizes** — no horizontal overflow, no clipping, exact 50/50
+where split, and `.readout__count` the largest element in the right half at every one:
+
+| Viewport | Layout | Hero | Count width | Half, less padding |
+|---|---|---|---|---|
+| 1920x1080 | split | 12rem | 501px | 912px |
+| 1600x900 | split | 12rem | 501px | 752px |
+| 1280x800 | split | 12rem | 501px | 592px |
+| 1200x800 | split | 12rem | 501px | 552px |
+| 1120x800 | split | 9rem | 375px | 512px |
+| 1000x800 | split | 9rem | 375px | 452px |
+| 901x800 | split | 9rem | 375px | 403px |
+| 900x800 | stacked | 8rem | 334px | 852px |
+| 820x1180 (portrait) | stacked | 8rem | 334px | 772px |
+| 620x900 | stacked | 6rem | 250px | 572px |
+
+Two breakpoints, both scoped to `.field--split` so the no-camera layout keeps 12rem throughout:
+
+- **1120px.** Halving the field halves the width the hero lives in, so the step-down point moves
+  up. `0 / 5` at 12rem measures 501px; half of 1120px less the stage's 48px of padding is 512px,
+  the last width where it fits without reflowing. Below that the hero steps to 9rem.
+- **900px, or any portrait orientation.** Stack instead of splitting: video above, readout below.
+  The readout row takes the larger share (`1.35fr` against `1fr`) because a 50/50 row split would
+  not keep the count dominant on a short viewport.
+
+**The participant floor is never approached.** The smallest hero anywhere in the table is 6rem —
+96px, three times the 2rem floor — and every other participant-band token is untouched.
 
 #### The honest limitation
 
-**Area is not salience.** A moving image attracts gaze pre-attentively in a way a static numeral
-does not, and peripheral vision is *more* motion-sensitive, not less — which is exactly where a
-corner pip sits. The size ratios above bound how much of the screen the video occupies; they do not
-bound how much attention it takes. Nothing in this file should be read as evidence that the count
-wins the gaze battle in a real room. That needs testing with real participants, and it is the
-single highest-value thing to test about this surface.
+The old corner-pip layout was defended with size ratios. That defence is gone: at 50/50 the video
+is not subordinate by area, and it never will be again. What remains true is narrower and worth
+stating plainly:
+
+- The count is the largest thing in its own half, at every supported size, measured.
+- **Area was never salience anyway.** A moving image attracts gaze pre-attentively in a way a
+  static numeral does not. That was the limitation of the pip layout too; the split simply makes
+  it unmistakable rather than arguable.
+
+Whether a participant mid-effort reads the count or watches themselves is now an open question that
+the layout does not settle, and nothing in this file should be read as evidence either way. It
+needs testing with real participants and remains the single highest-value thing to learn about this
+surface.
 
 #### Invariant 1 is untouched
 

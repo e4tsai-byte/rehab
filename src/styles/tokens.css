@@ -167,16 +167,8 @@
   --rail-h-min: 112px;
   --tap: 64px; /* facilitator minimum tap target */
 
-  /* Self-view. Large enough at the cue to actually judge framing; small enough
-     during the trial that it cannot contest the rep count. See DESIGN.md for
-     the area budget these two numbers are held to. */
-  --selfview-lg: 360px;
-  /* Sized to the BINDING AXIS, which is height, not area. At 208px the pip was
-     2.96x the count by area but only 1.23x by height, which is not the
-     "unambiguously subordinate" the brief asks for. 128px puts it at 2.0x on
-     height, 3.9x on width and 7.8x on area — subordinate on every axis, not
-     just the flattering one. */
-  --selfview-pip: 128px;
+  /* The self-view has no size token: it fills whatever half of the split the
+     layout gives it. See the `.field--split` rules in app.css. */
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -157,75 +157,71 @@ export function Trial({
 
   return (
     <div className="zones">
-      {/* ── Participant Field ───────────────────────────────────────────── */}
-      <div className="field field--locked">
-        {stage === 'cue' && (
-          /* Side by side when the camera is on, stacked when it is not. Stacking
-             both overflowed an 800px viewport and clipped the video at the top
-             and the cue hint at the bottom; the screen is wide and short, so the
-             spare room is horizontal. */
-          <div className={cameraLive ? 'cue cue--framing' : 'cue'}>
-            {/* Before the cue there is no number on screen, so the self-view can
-                be large: nothing exists yet for it to compete with, and this is
-                the moment framing actually has to be got right. */}
-            {cameraLive && (
-              <div className="cue__view">
-                <CameraSelfView attach={camera.attach} size="frame" />
-                <p className="cue__framing">{strings.camera.selfViewHint}</p>
-              </div>
-            )}
-            <div className="cue__text">
+      {/* ── Participant Field ─────────────────────────────────────────────
+          FIFTY-FIFTY SPLIT when the camera is live: self-view on the left, the
+          readout and everything else on the right. With no camera — or a denied
+          permission — there is no left half and the readout gets the whole
+          field, so the fallback is the layout this screen has always had.
+
+          The split runs at EVERY stage rather than only once the trial starts.
+          The brief permits the video to take the full field before the cue, but
+          the cue text has to live somewhere, and a video that fills the screen
+          and then jumps to half of it relayouts the participant's whole world at
+          the exact moment they are being asked to concentrate. Half of a 1280px
+          field is a 640px-wide, full-height pane — far larger than the 360px box
+          it replaces, so framing loses nothing by holding still. */}
+      <div className={cameraLive ? 'field field--locked field--split' : 'field field--locked'}>
+        {cameraLive && (
+          <div className="field__view">
+            {/* Framing rectangle only while positioning. Once the trial runs it
+                is noise: nobody is adjusting their chair mid-effort. */}
+            <CameraSelfView attach={camera.attach} guide={stage === 'cue'} />
+          </div>
+        )}
+
+        <div className="field__stage">
+          {stage === 'cue' && (
+            <div className="cue">
               <p className="cue__title">{strings.trial.cue}</p>
               <p className="cue__hint">{strings.trial.cueHint}</p>
+              {cameraLive && <p className="cue__framing">{strings.camera.selfViewHint}</p>}
             </div>
-          </div>
-        )}
+          )}
 
-        {stage === 'running' && (
-          <div className="readout">
-            <div className="readout__count">
-              <Digits value={strings.trial.repsOf(reps, PRESCRIBED_REPS)} />
+          {stage === 'running' && (
+            <div className="readout">
+              <div className="readout__count">
+                <Digits value={strings.trial.repsOf(reps, PRESCRIBED_REPS)} />
+              </div>
+              <div className="readout__unit">{strings.trial.repsLabel}</div>
+              <RepPips done={reps} />
+              {/* Announced politely so a screen reader follows without the visual
+                  field gaining a single extra character. */}
+              <p className="sr-only" aria-live="polite">
+                {strings.trial.srRepAnnounce(reps, PRESCRIBED_REPS)}
+              </p>
             </div>
-            <div className="readout__unit">{strings.trial.repsLabel}</div>
-            <RepPips done={reps} />
-            {/* Announced politely so a screen reader follows without the visual
-                field gaining a single extra character. */}
-            <p className="sr-only" aria-live="polite">
-              {strings.trial.srRepAnnounce(reps, PRESCRIBED_REPS)}
-            </p>
-          </div>
-        )}
+          )}
 
-        {stage === 'settled' && outcome && (
-          /* The participant sees 完成 and their pips. Nothing else.
-             The outcome nuance (未完成五次 / 手部支撐) lives in the rail, for the
-             facilitator. Putting "you did not complete five" in front of the
-             participant at 48px is exactly the harm the tone rule forbids:
-             a valid recorded outcome must not read as a failure. */
-          <div className="done">
-            <p className="done__word">{strings.trial.complete}</p>
-            <RepPips done={reps} />
-          </div>
-        )}
+          {stage === 'settled' && outcome && (
+            /* The participant sees 完成 and their pips. Nothing else.
+               The outcome nuance (未完成五次 / 手部支撐) lives in the rail, for the
+               facilitator. Putting "you did not complete five" in front of the
+               participant at 48px is exactly the harm the tone rule forbids:
+               a valid recorded outcome must not read as a failure. */
+            <div className="done">
+              <p className="done__word">{strings.trial.complete}</p>
+              <RepPips done={reps} />
+            </div>
+          )}
 
-        {stage === 'void' && (
-          <div className="void-note">
-            <p className="void-note__title">{strings.trial.voidTitle}</p>
-            <p className="void-note__body">{strings.trial.voidBody}</p>
-          </div>
-        )}
-
-        {/* Self-view during the timed trial: small, cornered, and OUT OF THE
-            READOUT'S GAZE PATH. Bottom-left, diagonally opposite the count's
-            optical centre — explicitly not beside the number, where the two
-            would contest the same fixation. It is absolutely positioned so it
-            cannot displace or resize the readout by existing.
-
-            Running stage only. Once the trial settles the self-view has no
-            function, so it goes rather than lingering as decoration. */}
-        {stage === 'running' && cameraLive && (
-          <CameraSelfView attach={camera.attach} size="pip" />
-        )}
+          {stage === 'void' && (
+            <div className="void-note">
+              <p className="void-note__title">{strings.trial.voidTitle}</p>
+              <p className="void-note__body">{strings.trial.voidBody}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Camera controls ─────────────────────────────────────────────────

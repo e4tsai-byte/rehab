@@ -227,15 +227,19 @@
 }
 
 /* During an active trial the field is locked: one number, one pip row, and the
-   subordinate self-view. `--ink-muted` fails 7:1 and is therefore banned here,
-   which makes the rule mechanical rather than a matter of vigilance. */
+   self-view. `--ink-muted` fails 7:1 and is therefore banned here, which makes
+   the rule mechanical rather than a matter of vigilance.
+
+   A GRID SHELL, not a centred column. With no camera it is one full-width cell
+   and behaves exactly as it always has; with the camera live it becomes two
+   equal columns. Padding lives on `.field__stage` rather than here, so the video
+   can reach the field's edges the way a video-call pane does. */
 .field--locked {
-  align-items: center;
-  justify-content: center;
-  gap: var(--s-8);
-  padding: var(--s-6);
+  display: grid;
+  grid-template-columns: 1fr;
+  place-items: center;
+  padding: 0;
   overflow: hidden;
-  /* Anchors the picture-in-picture self-view. */
   position: relative;
 
   /* The participant zone's BASE size is the participant floor, not the
@@ -244,6 +248,34 @@
      Without this, lowering the facilitator scale silently narrowed `.cue` and
      re-broke 工作人員 across a line. */
   font-size: var(--t-part);
+}
+
+/* Fifty-fifty. Equal columns rather than `auto 1fr`, so the readout half cannot
+   be squeezed by whatever aspect ratio the camera happens to deliver. */
+.field--split {
+  grid-template-columns: 1fr 1fr;
+}
+
+.field__view {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+}
+
+.field__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-8);
+  width: 100%;
+  height: 100%;
+  /* Grid children default to `min-width: auto`, which lets a 501px numeral push
+     the column wider than its 1fr share and break the 50/50. */
+  min-width: 0;
+  padding: var(--s-6);
 }
 
 .rail {
@@ -458,31 +490,10 @@
   text-align: center;
 }
 
-/* With the camera on, the self-view sits BESIDE the cue rather than above it.
-   Stacked, the two together are taller than an 800px viewport can give the
-   field, and the video clipped at the top while the hint clipped at the bottom.
-   The screen is wide and short; spend the horizontal room. */
-.cue--framing {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--s-12);
-}
-
-.cue__view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-3);
-  flex: 0 0 auto;
-}
-
-.cue__text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-4);
-  /* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line — sixteen CJK
-     characters at --t-part. Breaking 工作人員 mid-compound reads badly in
-     Chinese. `ch` resolves against --t-part via `.field--locked`; measured. */
+/* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line — sixteen CJK
+   characters at --t-part. Breaking 工作人員 mid-compound reads badly in Chinese.
+   `ch` resolves against --t-part via `.field--locked`; measured, not assumed. */
+.cue {
   max-width: 30ch;
 }
 
@@ -571,18 +582,18 @@
 /* ─── Self-view ──────────────────────────────────────────────────────────────
    See CameraSelfView.tsx and DESIGN.md. Mirrored, because a participant is
    adjusting their own body against it.
+
+   Fills its half of the split edge to edge, like the remote pane of a video
+   call. No radius and no border of its own: it is a structural half of the
+   field, not a card sitting on it, and the divider is the field's hairline.
    ──────────────────────────────────────────────────────────────────────────── */
 
 .selfview {
   position: relative;
-  flex: 0 0 auto;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line);
   background: var(--surface);
-  /* 4:3 from a 16:9 source crops the sides and keeps full height, which is the
-     right trade for framing a person who is about to stand up. */
-  aspect-ratio: 4 / 3;
 }
 
 .selfview__video {
@@ -599,22 +610,6 @@
   border: 2px dashed var(--surface-raised);
   border-radius: var(--r);
   pointer-events: none;
-}
-
-.selfview--frame {
-  width: var(--selfview-lg);
-}
-
-/* Bottom-LEFT, diagonally away from the centred readout, so the two never
-   contest the same fixation. Absolutely positioned so it cannot displace or
-   resize the number by existing. */
-.selfview--pip {
-  position: absolute;
-  left: var(--s-8);
-  bottom: var(--s-8);
-  width: var(--selfview-pip);
-  /* Quieter than the framing view: this one is glanceable, not studied. */
-  opacity: 0.92;
 }
 
 /* ─── Camera controls (facilitator zone) ─────────────────────────────────── */
@@ -1135,8 +1130,39 @@
     --t-hero: 8rem;
     --t-display: 4rem;
     --t-lead: 2.5rem;
-    --selfview-lg: 240px;
-    --selfview-pip: 104px;
+  }
+}
+
+/* ── The split's own breakpoints ──────────────────────────────────────────────
+   Halving the field halves the width the hero has to live in, so the point at
+   which the readout must step down moves UP. Both rules below are scoped to
+   `.field--split`: with no camera the readout owns the whole field and keeps
+   12rem at every one of these widths.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* 0 / 5 at 12rem measures 501px. Half of a 1120px viewport, less the stage's
+   48px of padding, is 512px — the last width where it fits without reflowing.
+   Below that the hero steps to 9rem (376px), which is still 4.7x the 2rem
+   participant floor. Measured, not estimated. */
+@media (min-width: 901px) and (max-width: 1120px) {
+  .field--split {
+    --t-hero: 9rem;
+  }
+}
+
+/* Below ~900px, or in portrait, stack instead of splitting: video above,
+   readout below. The readout row is given the larger share so the rep count
+   stays dominant, which a 50/50 row split would not guarantee on a short
+   viewport. */
+@media (max-width: 900px), (orientation: portrait) {
+  .field--split {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1.35fr);
+  }
+
+  .field__view {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
   }
 }
 

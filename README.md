@@ -41,7 +41,7 @@ printed sheet stays strictly black on white.
 | Surface | What it is |
 |---|---|
 | **Roster** | A 期 in progress, marked 前測 or 後測. Status per participant. Deliberately carries **no times**. |
-| **Trial** | The 5×STS itself. One number, five pips, a tracking indicator, and one large control. |
+| **Trial** | The 5×STS itself. Mirrored self-view on the left half, one number and five pips on the right. |
 | **Result** | One participant's time, immediately after. Where the number finally appears. |
 | **Sheet** | A4, one page, printable. **This is the product.** |
 
@@ -162,9 +162,12 @@ Measured in a headless browser, not eyeballed.
 - **Digits.** All ten digits measure **113.27 px** at the hero size, unchanged.
 - **Camera.** The self-view acquires a real 1280×720 stream, and **zero `<canvas>` elements exist
   in the DOM** while it is live. Denying permission leaves the trial flow fully working on fixtures.
-- **Gaze budget.** During a trial the rep count is **3.91× the self-view by width, 2.00× by height
-  and 7.82× by area**, with 611 px between their centres. Held to the weakest axis (height), not
-  the flattering one (area). See `DESIGN.md` for the honest limitation: area is not salience.
+- **Trial split.** The trial screen is two equal halves: mirrored self-view left, readout right.
+  Verified across **thirteen viewport sizes** — exact 50/50 where split, no horizontal overflow, no
+  clipping, and `.readout__count` the largest element in the right half at every one. Stacks below
+  900 px or in portrait. Smallest hero anywhere is 6rem, three times the 2rem participant floor.
+  With no camera the readout takes the whole field. See `DESIGN.md` for what this gave up: the rep
+  count is no longer the largest element on screen, only in its half.
 - **Reduced motion.** All four animations collapse to instant state swaps; content is never gated
   behind a transition.
 - **No horizontal overflow** at 1280×800 or 1600×900.
