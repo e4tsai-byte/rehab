@@ -132,6 +132,7 @@ export interface Strings {
     readonly placeRoster: string
     readonly placeTrial: (label: string) => string
     readonly placeResult: (label: string) => string
+    readonly placeTrialResult: (label: string) => string
     readonly placeSheet: string
     readonly phaseLabel: string
   }
@@ -167,6 +168,13 @@ export interface Strings {
     readonly correct: string
     readonly seatHeight: string
     readonly cm: string
+    readonly next: (label: string) => string
+    readonly noneLeft: string
+    readonly fullRecord: string
+    readonly flagIncomplete: (n: number) => string
+    readonly flagHandContact: (n: number) => string
+    readonly flagUnable: string
+    readonly flagProtocolInvalid: string
   }
   readonly correction: {
     readonly title: string
@@ -399,6 +407,7 @@ const zhTW: Strings = {
     placeRoster: '本期名單',
     placeTrial: (label) => `${label}．量測`,
     placeResult: (label) => `${label}．紀錄`,
+    placeTrialResult: (label) => `${label}．本次量測`,
     placeSheet: '報表',
     phaseLabel: '本期階段',
   },
@@ -444,6 +453,15 @@ const zhTW: Strings = {
     correct: '更正紀錄',
     seatHeight: '座高',
     cm: '公分',
+    next: (label) => `下一位：${label}`,
+    noneLeft: '回名單',
+    fullRecord: '查看完整紀錄',
+    // Descriptive, never evaluative. These are read out loud in a room, so they
+    // say what was measured and stop there.
+    flagIncomplete: (n) => `本次完成 ${n} 次，未達五次。這是有效的紀錄結果。`,
+    flagHandContact: (n) => `第 ${n} 次起偵測到手部支撐。時間仍完整記錄。`,
+    flagUnable: '記錄為無法進行。這是有效的紀錄結果。',
+    flagProtocolInvalid: '本次不符合雙手抱胸之測驗規範，時間僅供現場參考。',
   },
 
   correction: {

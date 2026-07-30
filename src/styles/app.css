@@ -1372,6 +1372,78 @@
   color: var(--ink-muted);
 }
 
+/* ─── Result ─────────────────────────────────────────────────────────────────
+   Post-trial. One person's time, and move on.
+
+   Sparse on purpose. The participant is still seated in front of this screen
+   with the rest of the class in the room, so the surface carries the time, a
+   state chip, two facts, and a plain-language flag — and nothing else. It shows
+   NO attempt history, NO voids, NO aborts and NO corrections; that record lives
+   on ParticipantDetail, which the facilitator reads at arm's length one person
+   at a time. See the header comment in Result.tsx for why this is a dignity
+   constraint rather than a layout preference.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.res {
+  padding: var(--s-8) var(--s-6);
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.res__primary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+/* The one prominent thing on the surface. --t-display rather than --t-hero: the
+   participant may glance at it, but this is not the locked field and a 192px
+   numeral here would compete with the rail action the facilitator needs next. */
+.res__time {
+  font-size: var(--t-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.res__time--none {
+  font-size: var(--t-fac-xl);
+  color: var(--ink-secondary);
+}
+
+.res__unit {
+  font-size: var(--t-fac-lg);
+  color: var(--ink-secondary);
+}
+
+.res__meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.res__fact {
+  font-size: var(--t-fac);
+  color: var(--ink-secondary);
+}
+
+/* Facilitator band, not display size. A valid outcome announced at 48px to a
+   seated participant reads as a verdict even when the words are neutral. Not
+   styled as an error, because none of these is one. */
+.res__flag {
+  font-size: var(--t-fac);
+  color: var(--ink-secondary);
+  line-height: 1.5;
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
 /* ─── Participant detail ─────────────────────────────────────────────────────
    Two phases side by side. NOT a trend: two assessment points is what the 期
    has, and they are shown as two blocks rather than as a series on a time axis.

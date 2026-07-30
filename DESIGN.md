@@ -328,6 +328,7 @@ number legible at three metres" or for a government funding report.
 | `DemoBanner` | Persistent honesty marker. Cannot be dismissed. One dense line. |
 | `AppHeader` | The path to where you are. Home, back, one `<h1>` per surface. |
 | `Setup` | Session setup. 據點, 期, phase, attendance, framing check. |
+| `Result` | Post-trial. This person's time, and move on. **No history — see above.** |
 | `ParticipantDetail` | One person, both phases, splits, full attempt history. |
 | `RepSplits` | Within-trial rep durations. Sequential, one series, direct-labelled. |
 | `Logo` | Placeholder mark in a dashed slot. Obviously provisional. |
@@ -494,7 +495,7 @@ tracking is circles and a square, outcomes are bars and polygons, camera signal 
 This product is a workflow. Five surfaces, and they nest:
 
 ```
-場次設定 ──► 本期名單 ──┬──► 王阿姨・量測
+場次設定 ──► 本期名單 ──┬──► 王阿姨・量測 ──► 王阿姨・本次量測 ──► 王阿姨・紀錄
                        ├──► 王阿姨・紀錄
                        └──► 報表
 ```
@@ -556,9 +557,52 @@ entirely rather than merely unstyled.
 Enrolment is **site-level and outlives any one 期**, so the picker defaults to the
 people already in this 期 rather than to the site's whole book.
 
+## Result — the post-trial surface
+
+Reached the instant a trial settles. **Its only job is this person's time, and
+move on.** The measured time prominently, any flag stated plainly, a primary
+action that names the next participant, and one quiet link into the full record.
+
+### It shows no history, and that is a dignity constraint
+
+**No attempt history, no voids, no aborts, no corrections.** Not collapsed behind
+a disclosure, not in a drawer, not in small type at the bottom. Not at all.
+
+The reason is the room, not the layout. When this screen is up the participant is
+still seated in front of it and the rest of the class is in the room looking at
+the same monitor. "Third attempt", "voided", "aborted: participant declined",
+"corrected from 5 reps to 4" are all true, all necessary to keep, and all nobody
+else's business. Putting someone's correction history on a large display in front
+of their class is the same harm that keeps times off the roster.
+
+The record is not hidden — it is one tap away on **ParticipantDetail**, which the
+facilitator reads at arm's length, one person at a time. Different surface,
+different reader, different position in the room.
+
+This was consolidated into ParticipantDetail once and reverted for exactly this
+reason. The constraint is restated in `Result.tsx`'s header so it survives the
+next round of simplification.
+
+### What it does show
+
+Flags are **descriptive, never evaluative**: 未完成五次 and 手部支撐 say what was
+measured and stop. They sit in the **facilitator band rather than at display
+size**, because a valid outcome announced at 48px to a seated participant reads
+as a verdict even when the words are neutral — the same reasoning that keeps
+outcome detail out of the trial screen's locked field.
+
+The time uses `--t-display` rather than `--t-hero`: the participant may glance at
+it, but this is not the locked field, and a 192px numeral would compete with the
+rail action the facilitator needs next.
+
+The primary action **names the next participant** (`下一位：黃阿姨`) and goes
+straight to their cue, because a class of twelve is run by one person and the
+next name is the thing they need next. With nobody left it falls back to the
+roster.
+
 ## Participant detail
 
-Reached from 查看紀錄. One person, this 期, both phases side by side, plus the
+Reached from 查看紀錄, and from Result's 查看完整紀錄. One person, this 期, both phases side by side, plus the
 full append-only attempt history.
 
 **Two boundaries, and neither may be crossed by anything added here.**

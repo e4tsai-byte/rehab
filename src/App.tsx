@@ -17,6 +17,7 @@ import type {
 import { useSession } from './hooks/useSession'
 import { strings } from './i18n/strings'
 import { ParticipantDetail } from './surfaces/ParticipantDetail'
+import { Result } from './surfaces/Result'
 import { Roster } from './surfaces/Roster'
 import { Setup } from './surfaces/Setup'
 import { Sheet } from './surfaces/Sheet'
@@ -26,9 +27,12 @@ import { CorrectionDialog } from './surfaces/dialogs/CorrectionDialog'
 /**
  * The surfaces nest, and the header renders that nesting as a path:
  *
- *   setup ──► roster ──┬──► trial
+ *   setup ──► roster ──┬──► trial ──► result ──► detail
  *                      ├──► detail
  *                      └──► sheet
+ *
+ * `result` is the post-trial surface: this person's time, and move on. It is
+ * deliberately NOT `detail` — see the dignity constraint in Result.tsx.
  *
  * `back` is therefore structural — the level above — rather than a visit
  * history. Someone who reaches 紀錄 from a finished trial goes UP to the
@@ -38,6 +42,9 @@ type View =
   | { kind: 'setup' }
   | { kind: 'roster' }
   | { kind: 'trial'; participantId: ParticipantId }
+  /** Immediately after a trial. Carries the settled outcome so the surface does
+      not have to re-derive which of several attempts it is showing. */
+  | { kind: 'result'; participantId: ParticipantId; outcome: Outcome }
   | { kind: 'detail'; participantId: ParticipantId }
   | { kind: 'sheet' }
 
@@ -79,6 +86,23 @@ export function App() {
     return block?.participants[0] ?? null
   }, [block, resolved])
 
+  /**
+   * The next person still to be measured, skipping the one just finished.
+   *
+   * Roster order, not "nearest after this index": a facilitator calls the class
+   * in list order, and after a mid-list redo the next name should still be the
+   * first outstanding one rather than whoever happens to sit below.
+   */
+  const nextOutstanding = useCallback(
+    (afterId: ParticipantId): Participant | null => {
+      for (const p of block?.participants ?? []) {
+        if (p.id !== afterId && currentTrialFor(resolved, p.id) === null) return p
+      }
+      return null
+    },
+    [block, resolved],
+  )
+
   const actions: ScenarioActions = {
     gotoRoster: (p) => {
       setPhase(p)
@@ -104,7 +128,7 @@ export function App() {
   }
 
   const current =
-    view.kind === 'trial' || view.kind === 'detail'
+    view.kind === 'trial' || view.kind === 'detail' || view.kind === 'result'
       ? participantsById.get(view.participantId)
       : undefined
   const currentTrial = current ? currentTrialFor(resolved, current.id) : null
@@ -126,6 +150,8 @@ export function App() {
   }
   if (view.kind === 'trial') {
     trail.push({ title: strings.nav.placeTrial(current?.label ?? ''), icon: 'trial' })
+  } else if (view.kind === 'result') {
+    trail.push({ title: strings.nav.placeTrialResult(current?.label ?? ''), icon: 'record' })
   } else if (view.kind === 'detail') {
     trail.push({ title: strings.nav.placeResult(current?.label ?? ''), icon: 'record' })
   } else if (view.kind === 'sheet') {
@@ -202,8 +228,22 @@ export function App() {
         <Trial
           participant={current}
           session={active}
-          onSettled={() => setView({ kind: 'detail', participantId: current.id })}
+          onSettled={(outcome) => setView({ kind: 'result', participantId: current.id, outcome })}
           onBack={goRoster}
+        />
+      )}
+
+      {view.kind === 'result' && current && (
+        <Result
+          participant={current}
+          outcome={view.outcome}
+          seatHeightCm={currentTrial?.original.seatHeightCm ?? null}
+          nextParticipant={nextOutstanding(current.id)}
+          onNext={() => {
+            const n = nextOutstanding(current.id)
+            setView(n ? { kind: 'trial', participantId: n.id } : { kind: 'roster' })
+          }}
+          onFullRecord={() => setView({ kind: 'detail', participantId: current.id })}
         />
       )}
 

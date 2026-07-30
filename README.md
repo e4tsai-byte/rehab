@@ -32,7 +32,7 @@ Node 22+. Built and verified on Node 26 / npm 11.
 Four surfaces plus a print artifact, under a header that renders **the path to where you are**:
 
 ```
-場次設定 ──► 本期名單 ──┬──► 王阿姨・量測
+場次設定 ──► 本期名單 ──┬──► 王阿姨・量測 ──► 王阿姨・本次量測 ──► 王阿姨・紀錄
                        ├──► 王阿姨・紀錄
                        └──► 報表
 ```
@@ -50,6 +50,7 @@ printed sheet stays strictly black on white.
 | **Setup** | 據點, 期, phase, today's attendance, camera framing check. Where a session is configured. |
 | **Roster** | A 期 in progress, marked 前測 or 後測. Status per participant. Deliberately carries **no times**. |
 | **Trial** | The 5×STS itself. Mirrored self-view on the left half, one number and five pips on the right. |
+| **Result** | Straight after a trial: the time, any flag, and the next participant's name. Deliberately carries **no attempt history** — the participant is still sitting in front of the screen. |
 | **Detail** | One participant, both phases, per-rep splits, 差值, and the full append-only attempt history. |
 | **Sheet** | A4, one page, printable. **This is the product.** |
 
@@ -147,8 +148,8 @@ which the first does not. Verified: all ten digits measure 113.27 px at the hero
 
 Measured in a headless browser, not eyeballed.
 
-- **All six screens audited**, not just the roster: 394 text nodes across setup, roster, detail,
-  trial cue, trial running and the sheet. Zero below 4.5:1, minimum 5.28:1. Zero controls under
+- **All seven screens audited**, not just the roster: 421 text nodes across setup, roster, detail,
+  trial cue, trial running, result and the sheet. Zero below 4.5:1, minimum 5.28:1. Zero controls under
   64 px once `<input>`s are resolved to their wrapping `<label>`, which is the actual tap target.
   One `<h1>` per surface, no duplicates.
 - **Roster fits the class.** All **12 of 12 rows fully visible at 1280×800 with no scrolling**
