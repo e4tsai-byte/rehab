@@ -5,89 +5,114 @@ Visual system for VeloCare Tier 1. Strategy lives in `PRODUCT.md`; hard invarian
 
 ## Theme
 
-**Single dark theme. No toggle.**
+**Single theme, positive polarity: dark ink on a cream ground. No toggle.**
 
-Scene sentence that produced it: *an analogue laboratory instrument under fluorescent light — a
-beam balance or a Tektronix scope, where the only colour on the whole device is the illuminated
-readout and everything else is machined neutral grey.*
+Scene sentence that produced it: *a surveyor's field notebook on a bench under fluorescent light —
+warm ruled paper, dense dark ink, one blue pencil used only where something must be marked, and
+nothing on the page that is not a measurement or a label.*
 
-That sentence forces three decisions:
+This replaces the earlier dark theme. The reversal is an **acuity decision, not a mood one**, and
+that distinction governs how the values are picked:
 
-1. **Surfaces are chroma 0.** Machined grey, not tinted. No warm neutral, no cool neutral. A
-   tinted surface would read as designed; this should read as manufactured.
-2. **The hero readout is near-white, not the accent hue.** Cataracts scatter light and flatten
-   contrast sensitivity. Chroma on a 12rem number costs real luminance contrast at 3 m, so the
-   number is achromatic and the seed colour is demoted to functional signalling only.
-3. **Near-black, not pure black.** `oklch(0.17 0 0)` rather than `0`. Pure black behind a
-   near-white 192px numeral produces halation on an LCD in a fluorescent room, which is worse for
-   an ageing eye than a slightly raised floor. Contrast is still 13:1.
+1. **The field is the brightest surface.** A bright field constricts the pupil, increasing depth of
+   field and reducing the visual cost of aberration and lens opacity for a 75–90 year old eye. The
+   whole justification rests on luminance, so luminance is what the cream is chosen for.
+2. **Cream, not white.** `oklch(0.955 0.014 88)`. Pure white under overhead fluorescent light
+   produces veiling glare that gives back what the pupil constriction won. Chroma stays under 0.02:
+   enough to read as warm paper, little enough that it never reads as a colour.
+3. **The hero readout stays achromatic.** Near-black ink, not the accent hue. Cataracts scatter
+   light and flatten contrast sensitivity; chroma on a 192px numeral costs real luminance contrast
+   at 3 m. This rule is independent of polarity and survived the flip unchanged.
+4. **The rail is still a different material.** It is now *darker* than the field where it used to be
+   lighter. The zone law never depended on which direction that difference ran, only that it exist.
 
-The printed sheet is a separate light surface. It shares the type family and nothing else.
+What did **not** change: the 7:1 participant floor, the ban on colour carrying meaning alone, the
+2rem participant floor, tabular figures, and the tap-target floor.
+
+The printed sheet is a separate surface and is **strictly black on white** — verified, not assumed.
+The cream must never reach `print.css`.
 
 ## Color
 
 OKLCH throughout. Strategy: **Restrained** — the floor for product register, and correct here.
-Accent carries state only, never decoration. Total chromatic area on screen at any moment is a
-single 16px indicator.
+Accent carries state only, never decoration.
+
+The chromatic range is a **light-to-dark blue ramp**. Blue rather than the old olive seed because
+on a warm cream ground a cool hue separates cleanly at every lightness, and because the ramp has to
+carry both a near-black ink and a mid-tone accent without either reading as a different family.
+Components never use a ramp step directly; they go through a semantic token, so the mapping lives
+in one place.
 
 ```css
-/* Surfaces — chroma exactly 0 */
---bg:              oklch(0.170 0 0);   /* room-facing field                     */
---surface:         oklch(0.225 0 0);   /* facilitator rail                      */
---surface-raised:  oklch(0.280 0 0);   /* controls, rows                        */
---line:            oklch(0.340 0 0);   /* hairlines                             */
---line-strong:     oklch(0.460 0 0);   /* focus ring, active borders            */
+/* Blue ramp — the primary chromatic range */
+--blue-50:  oklch(0.968 0.016 250);   --blue-500: oklch(0.560 0.148 250);
+--blue-100: oklch(0.928 0.034 250);   --blue-600: oklch(0.492 0.152 250);
+--blue-200: oklch(0.868 0.058 250);   --blue-700: oklch(0.424 0.140 250);
+--blue-300: oklch(0.782 0.088 250);   --blue-800: oklch(0.340 0.108 250);
+--blue-400: oklch(0.676 0.118 250);   --blue-900: oklch(0.262 0.070 250);
 
-/* Ink */
---ink:             oklch(0.970 0 0);   /* hero readout, participant text        */
---ink-secondary:   oklch(0.800 0 0);   /* participant-safe secondary            */
---ink-muted:       oklch(0.680 0 0);   /* facilitator-read text only            */
+/* Surfaces — cream, chroma under 0.02. The FIELD is the brightest. */
+--bg:              oklch(0.955 0.014 88);   /* room-facing field                */
+--surface:         oklch(0.911 0.018 88);   /* facilitator rail — darker         */
+--surface-raised:  oklch(0.981 0.008 88);   /* controls, rows — sit up           */
+--line:            oklch(0.848 0.021 88);   /* hairlines                         */
+--line-strong:     oklch(0.560 0.070 250);  /* focus ring, active borders        */
+
+/* Ink — near-black with a slight blue cast, so text belongs to the ramp's
+   family rather than reading as a neutral pasted on top. */
+--ink:             oklch(0.250 0.028 255);  /* hero readout, participant text    */
+--ink-secondary:   oklch(0.397 0.032 255);  /* participant-safe secondary        */
+--ink-muted:       oklch(0.468 0.028 255);  /* facilitator-read text only        */
 
 /* State — the machine. functional only */
---accent:          oklch(0.800 0.130 110);  /* tracking live (seed hue 110)     */
---alert:           oklch(0.700 0.170 30);   /* tracking LOST — the only alarm   */
+--accent:          var(--blue-700);         /* tracking live                    */
+--alert:           oklch(0.451 0.185 27);   /* tracking LOST — the only alarm   */
 
 /* Status channel — a PERSON'S outcome. Facilitator surfaces only. */
---st-measured:     oklch(0.800 0.100 110);  /* 已量測                            */
---st-partial:      oklch(0.800 0.090 240);  /* 未完成五次                        */
---st-protocol:     oklch(0.820 0.100 75);   /* 手部支撐                          */
---st-unable:       oklch(0.790 0.080 310);  /* 無法進行                          */
---st-discarded:    oklch(0.680 0 0);        /* 已作廢 — an absence, not a hue    */
+--st-measured:     oklch(0.403 0.145 250); /* 已量測    · blue                  */
+--st-partial:      oklch(0.390 0.095 195); /* 未完成五次 · teal                  */
+--st-protocol:     oklch(0.410 0.105 65);  /* 手部支撐  · amber                 */
+--st-unable:       oklch(0.416 0.135 310); /* 無法進行  · violet                */
+--st-discarded:    var(--ink-muted);       /* 已作廢 — an absence, not a hue    */
 ```
 
 ### Contrast — measured, not calculated
 
 Every number below was read back in the browser by painting the token to a canvas and computing
-WCAG relative luminance. **Two earlier revisions of this file carried hand-computed ratios that
-were wrong in both directions**, including a claimed 3.5:1 failure that measures 5.04:1. OKLCH
+WCAG relative luminance. **Three revisions of this file have now carried hand-computed ratios that
+were wrong in both directions**, most recently the first draft of the cream palette, whose
+estimates were off by up to 1.2 ratio points and would have shipped `--ink-muted` at 3.80:1. OKLCH
 lightness is not a proxy for contrast ratio; re-measure after any token change.
 
 | Token | `--bg` | `--surface` | `--surface-raised` |
 |---|---|---|---|
-| `--ink` | **17.58** | 15.63 | 13.34 |
-| `--ink-secondary` | **10.29** | 9.15 | 7.81 |
-| `--ink-muted` | **6.64** | 5.91 | 5.04 |
-| `--accent` | **10.46** | 9.30 | 7.94 |
-| `--alert` | **6.67** | 5.93 | 5.06 |
-| `--st-measured` | **10.43** | 9.27 | 7.91 |
-| `--st-partial` | **10.40** | 9.24 | 7.89 |
-| `--st-protocol` | **10.85** | 9.64 | 8.23 |
-| `--st-unable` | **9.65** | 8.58 | 7.33 |
-| `--st-discarded` | **6.64** | 5.91 | 5.04 |
+| `--ink` | **14.10** | 12.29 | 15.24 |
+| `--ink-secondary` | **8.19** | 7.14 | 8.85 |
+| `--ink-muted` | **6.06** | 5.28 | 6.55 |
+| `--accent` | **7.21** | 6.29 | 7.80 |
+| `--alert` | **7.14** | 6.22 | 7.72 |
+| `--st-measured` | **7.88** | 6.87 | 8.52 |
+| `--st-partial` | **7.69** | 6.70 | 8.31 |
+| `--st-protocol` | **7.97** | 6.95 | 8.62 |
+| `--st-unable` | **8.09** | 7.05 | 8.74 |
+| `--st-discarded` | **6.06** | 5.28 | 6.55 |
 
-All three ink tokens clear 4.5:1 on all three surfaces. Only `--ink` and `--ink-secondary` clear
-the **7:1 participant floor**, so `--ink-muted` is confined to facilitator-read text.
+All three ink tokens clear 4.5:1 on all three surfaces. `--ink` and `--ink-secondary` clear the
+**7:1 participant floor** on `--bg`, which is the surface the participant field is painted in;
+`--ink-muted` does not, and is confined to facilitator-read text.
 
 **The scoped guarantee.** `--ink-muted` never appears inside **`.field--locked`** — the trial
 screen while a trial is live — and that is verified rather than asserted: every text node in the
-locked field measures 10.29:1 or better. The looser claim, that it never appears in `.field` at
-all, is **false**: the roster occupies the full field between trials and uses `--ink-muted` for
-row ids and metadata, at 6.64:1. That is correct, because the roster is read by the facilitator,
-not by someone mid-effort at 3 m. The floor applies to participant-facing surfaces, and the
-relaxed zone is not one.
+locked field measures **8.19:1 or better** against a 7:1 floor. The looser claim, that it never
+appears in `.field` at all, is **false**: the roster occupies the full field between trials and
+uses `--ink-muted` for row ids and metadata, at 6.06:1. That is correct, because the roster is read
+by the facilitator, not by someone mid-effort at 3 m. The floor applies to participant-facing
+surfaces, and the relaxed zone is not one.
 
-`--accent-quiet` existed in an earlier draft and has been removed: nothing used it, and at
-4.05:1 on `--surface` it could not have carried text anyway.
+Note the ordering is no longer monotonic across the three surfaces: `--surface-raised` is now
+*lighter* than `--bg`, so ratios against it are the highest rather than the lowest. That is the
+polarity flip showing up in the table, and it is why the whole table was re-measured rather than
+rescaled.
 
 ### Colour never carries meaning alone
 
@@ -137,9 +162,11 @@ The part of the old rule that was actually load-bearing is kept intact:
 1. **No outcome state is red.** `--alert` (hue 30) still means the MACHINE failed — tracking lost,
    void — and never that a person did badly. `PRODUCT.md`: "failure states are not failures." A
    participant who used their hands did not malfunction, and a red row would tell them they did.
-2. **Hue is category, not quality.** The four chromatic outcome tones measure 9.65–10.85:1 on
-   `--bg`, a spread of barely one ratio point, so none of them pops as an alarm relative to the
-   others. It reads as a patch panel, not a traffic light. This is measured, not asserted.
+2. **Hue is category, not quality.** The four chromatic outcome tones are tuned to equal *measured
+   luminance* rather than to equal OKLCH lightness — not the same thing, which is why each hue
+   carries a slightly different L. They land at **7.69–8.09:1** on `--bg`, a spread of 0.40 of a
+   ratio point, so none of them pops as an alarm relative to the others. It reads as a patch panel,
+   not a traffic light. This is measured, not asserted.
 3. **Never inside `.field--locked`.** The participant field during a live trial renders no chip at
    all, so it stays exactly as austere as it was. The trial screenshot is unchanged.
 4. **Colour is still never alone.** Every state keeps its word and its SVG shape. Delete every
@@ -242,10 +269,12 @@ audiences.**
 │                                            │
 │         PARTICIPANT FIELD  ~72vh           │   --bg
 │                                            │
-│   During an active trial this zone         │
-│   contains EXACTLY ONE number and one      │
-│   pip row. Nothing else may enter it.      │
-│                                            │
+│   During an active trial this zone holds   │
+│   ONE number, one pip row, and the         │
+│   subordinate self-view. Nothing else.     │
+│   ┌────┐                                   │
+│   │self│  <- corner. never beside the      │
+│   └────┘     number.                       │
 ├────────────────────────────────────────────┤   1px --line
 │  FACILITATOR RAIL  ~28vh        --surface  │
 │  All controls. All machine state.          │
@@ -257,9 +286,9 @@ audiences.**
 - The rail is a **different surface lightness**, so it reads as a separate device panel rather
   than as part of the readout. This is the whole trick: the two audiences are separated by
   material, not by font size.
-- **During an active trial the Participant Field is locked to one number plus pips.** No clock, no
-  per-rep list, no name, no logo. `--ink-muted` is banned from this zone by contrast, which makes
-  the rule mechanical.
+- **During an active trial the Participant Field is locked to one number, the pips, and the
+  self-view.** No clock, no per-rep list, no name, no logo. `--ink-muted` is banned from this zone
+  by contrast, which makes the rule mechanical.
 - **Between trials the zone law relaxes.** Roster and result may occupy the full field, because
   nobody is mid-effort and the facilitator is the only reader.
 - Facilitator controls: **≥64px tap targets**, ≥16px gaps so a hurried thumb cannot hit two.
@@ -292,36 +321,83 @@ number legible at three metres" or for a government funding report.
 | `Sheet` | The A4 print surface. Light theme, separate scale in pt/mm. |
 | `ScenarioSwitcher` | Overlay, keypress-reachable, absent from print. |
 | `DemoBanner` | Persistent honesty marker. Cannot be dismissed. One dense line. |
-| `CameraPreview` | Framing preview. Opt-in, cue stage only, `<video>` and nothing else. |
+| `AppHeader` | Where you are, how to get back, which phase. One `<h1>` per surface. |
+| `Logo` | Placeholder mark in a dashed slot. Obviously provisional. |
+| `Icon` | Wayfinding and action glyphs. SVG, never a font glyph. |
+| `CameraSelfView` | Mirrored participant self-view. `frame` and `pip` sizes. |
+| `CameraControls` | Facilitator half: opt-in button, privacy text, unavailable paths. |
 
-### The framing preview
+### The self-view and the framing preview
 
 Functional, not decorative. A Tier 1 trial **cannot pause**: tracking loss voids it and forces a
-restart from the cue with an older adult already out of the chair. The moment before the start
-press is the only cheap opportunity to catch a bad camera position, so this earns its space.
+restart from the cue with an older adult already out of the chair. Framing has to be right before
+the start press, and the participant benefits from seeing themselves the way they would in a video
+call.
 
-- **Opt-in behind a button.** Mounting the panel requests nothing. A stranger opening the demo URL
-  is never hit with an unasked permission dialog.
-- **Preview only, and invariant 1 is untouched.** `useCameraPreview.ts` obtains a `MediaStream` and
-  binds it to a `<video>`. There is no canvas, no `drawImage`, no `getImageData`, no
-  `ImageCapture`, no `MediaRecorder`, no pose estimation, no landmark extraction, no frame buffer,
-  no upload, no storage. Verified in the browser: **zero `<canvas>` elements exist in the DOM while
-  the preview is live.**
-- **Liveness is not image data.** It comes from `MediaStreamTrack` events plus
-  `requestVideoFrameCallback` *metadata* (presented-frame counts and timestamps). Neither exposes
-  pixels.
-- **It reports 鏡頭訊號, not tracking confidence.** This build runs no pose estimation, so a
-  confidence figure would be invented. What it can honestly report is whether frames are still
-  arriving, which is also what actually predicts the void.
-- **Prominent at cue, gone during the trial.** The panel is unmounted for every other stage; what
-  remains is a one-line chip in the rail. The participant field stays locked to the number and
-  pips, and nothing competes with them.
-- **Every unavailable path is ordinary, not an error.** Permission denied, no camera, insecure
-  origin, no browser support: all render as plain text and none of them stops the fixture demo.
-- The privacy statement sits **next to the live image**, not in a settings page.
+It is split in two, because the two audiences want different things from the same stream:
 
-Every interactive component ships default / hover / focus-visible / active / disabled. Focus ring
-is `--line-strong`, 3px, offset 2px — visible on both surface lightnesses.
+| | Where | Audience |
+|---|---|---|
+| `CameraSelfView` | Participant field | The participant, adjusting their own position |
+| `CameraControls` | Facilitator zone | The facilitator: opt-in button, privacy text, status |
+
+**Mirrored.** `transform: scaleX(-1)`. A self-view is the one case where the mirrored image is
+correct: the participant is adjusting their own body against it, and unmirrored, leaning left moves
+your image right. An earlier revision had a second unmirrored feed for the facilitator on the
+argument that mirroring makes "move them left" mean the wrong thing. That argument loses: the
+facilitator is standing beside the person and can see them directly, and from the screen they only
+need "is the whole person inside the box", which mirroring does not affect.
+
+#### The gaze budget
+
+The rep count must remain the largest element on screen, unambiguously. That is a measurable claim,
+so it is measured, and it is held to the **weakest axis rather than the flattering one**:
+
+| | Count | Self-view (pip) | Ratio |
+|---|---|---|---|
+| Width | 501px | 128px | **3.91x** |
+| Height | 192px | 96px | **2.00x** |
+| Area | 96,192px² | 12,288px² | **7.82x** |
+| Centre-to-centre separation | | | **611px** |
+
+An earlier size (208px) was 2.96x by area but only **1.23x by height**, which is not unambiguous.
+Area is the flattering axis for a wide numeral against a 4:3 box; height is the binding one, and
+128px is the size that puts the pip at 2.0x on it.
+
+Placement is **bottom-left, diagonally opposite the centred readout** — deliberately not beside the
+number, where the two would contest the same fixation. It is absolutely positioned so it cannot
+displace or resize the readout by existing, and it is rendered at the running stage only: once the
+trial settles the self-view has no function, so it goes rather than lingering as decoration.
+
+At the cue stage the self-view is large (360px) and sits **beside** the cue text rather than above
+it. Stacked, the two together overflowed an 800px viewport and clipped the video at the top and the
+cue hint at the bottom. The screen is wide and short; spend the horizontal room.
+
+#### The honest limitation
+
+**Area is not salience.** A moving image attracts gaze pre-attentively in a way a static numeral
+does not, and peripheral vision is *more* motion-sensitive, not less — which is exactly where a
+corner pip sits. The size ratios above bound how much of the screen the video occupies; they do not
+bound how much attention it takes. Nothing in this file should be read as evidence that the count
+wins the gaze battle in a real room. That needs testing with real participants, and it is the
+single highest-value thing to test about this surface.
+
+#### Invariant 1 is untouched
+
+`useCameraPreview.ts` obtains a `MediaStream` and binds it to a `<video>`. There is no canvas, no
+`drawImage`, no `getImageData`, no `ImageCapture`, no `MediaRecorder`, no pose estimation, no
+landmark extraction, no frame buffer, no upload, no storage. Verified in the browser: **zero
+`<canvas>` elements exist in the DOM while the preview is live.**
+
+Liveness comes from `MediaStreamTrack` events plus `requestVideoFrameCallback` *metadata*
+(presented-frame counts and timestamps). Neither exposes pixels. It reports **鏡頭訊號** (camera
+signal), not tracking confidence: this build runs no pose estimation, so a confidence figure would
+be invented. What it can honestly report is whether frames are still arriving, which is also what
+actually predicts the void this preview exists to prevent.
+
+Every unavailable path — permission denied, no camera, insecure origin, no browser support — is
+ordinary text at the same weight as the idle copy, because none of them is an error and none stops
+the fixture demo working.
 
 ### Roster carries no times
 
@@ -330,18 +406,102 @@ design doc names this as the most likely route to facilitator veto and a real di
 roster shows **status only**: outstanding, done, protocol-invalid, unable. Numbers live on the
 result surface (one participant at a time) and on the sheet (which the site lead reads alone).
 
+## Icons
+
+Icons exist for **wayfinding and status scanning**, which helps an older user base and adds a
+channel alongside word and shape so colour is never carrying meaning alone.
+
+Two components, and the split is the policy rather than an accident:
+
+| | Answers | Used for |
+|---|---|---|
+| `Shape` | "what **state** is this in" | Outcome and tracking marks |
+| `Icon` | "what **place** is this" / "what will this **do**" | Header surfaces, control verbs |
+
+**Rules:**
+
+- **Every icon answers one of those two questions.** An icon added to make a screen feel friendlier
+  is the consumer-fitness failure the anti-references rule out, and does not ship. No celebration
+  marks, no encouragement glyphs, no mascots, no progress ornaments.
+- **SVG, never font glyphs.** Noto Sans TC has no coverage for arrows, cameras or document marks,
+  and an uncovered codepoint renders as a tofu box — worse than no icon, because the user cannot
+  tell it is missing rather than broken. Same argument as `Digits` and `Shape`.
+- **Never the sole carrier of meaning.** Every icon is `aria-hidden` and sits beside a text label;
+  `RailButton` has no icon-only variant, deliberately.
+- **`currentColor` throughout**, so an icon inherits the contrast of the text beside it and cannot
+  drift below the floor independently.
+
+Three disjoint shape families exist so a facilitator glancing sideways never confuses them:
+tracking is circles and a square, outcomes are bars and polygons, camera signal is a stepped meter.
+
+## Navigation — hub and spoke
+
+This product is a workflow, not a website, and a row of top-level tabs would misdescribe it. There
+are four surfaces and only one is a place you dwell: **the roster is the hub**, and trial, result
+and sheet are spokes entered for one participant or one task and returned from. A tab bar would
+imply you can be "in" the trial surface without a participant, which is not a state that exists.
+
+The header carries exactly three things:
+
+1. **Where you are** — the current surface, named, with its icon. This is the page's `<h1>`, so
+   every surface now has exactly one and the heading order is well-formed. Before this the trial
+   screen had no heading at all.
+2. **How to get back** — one control, one destination, one label, one position, on every spoke. A
+   facilitator never has to learn a second way back or decide which back is the right one. This is
+   why `回名單` was removed from the trial rail and `關閉` from the sheet toolbar: two controls to
+   one destination is one too many.
+3. **Which phase** — pre or post, **read-only**. Wayfinding, not a control. Switching phase is a
+   facilitator action and lives in the rail, because a thing that changes what you are recording
+   must not sit one pixel from a thing that only says where you are.
+
+Everything else stays put. The rail keeps the primary forward action on each surface, which is what
+a standing operator's thumb is already aimed at. **The header is for orientation; the rail is for
+doing.**
+
+A judge opening the demo URL cold reaches every surface from the roster without the scenario
+switcher: `開始量測` on any outstanding row, `查看紀錄` on any measured row, `產生報表` in the rail.
+
+## The logo slot
+
+Deliberately provisional. There is no brand for this product yet and inventing one here would be a
+claim the project cannot back, so the slot is filled with something that reads unmistakably as a
+placeholder rather than as a weak logo: the mark sits in a **dashed outline**, the standard
+convention for artwork-pending, and carries a 標誌暫定 label. Whoever designs the real identity
+replaces `Logo.tsx`; nothing else needs to change.
+
 ## Spacing & radii
 
 ```css
 --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;
 --s-6: 1.5rem;   --s-8: 2rem;     --s-12: 3rem;    --s-16: 4rem;   --s-24: 6rem;
 
---r-sm: 2px;  --r: 4px;  --r-lg: 6px;   /* instrument, not app. no pills. */
+--r-xs: 3px;   /* status marks, chips, hairline insets   */
+--r-sm: 6px;   /* inputs, small controls, badges         */
+--r:    10px;  /* buttons, roster rows, form options     */
+--r-lg: 14px;  /* panels, dialogs, video surfaces        */
+--r-xl: 20px;  /* large containers only                  */
 ```
 
 Rhythm is varied deliberately: the rail is dense (`--s-3`/`--s-4`), the participant field is
 extremely sparse (`--s-16`/`--s-24`). The contrast in density is itself the signal that the two
 zones belong to different readers.
+
+### The radius scale
+
+The original 2 / 4 / 6px read as machined metal, which suited the dark instrument theme. At twelve
+roster rows it also read as twelve hard rectangles stacked, and hard rectangles are tiring to scan.
+The scale above is softer without becoming an app.
+
+Rules, so this stays a scale rather than a habit:
+
+- **Every radius comes from the scale.** No ad-hoc values anywhere. If something needs a radius the
+  scale does not have, the scale is wrong and gets changed here first.
+- **Pick by size of thing, not by feel.** A 20px radius on a 64px control looks inflated; a 6px
+  radius on a dialog looks unfinished. The step tracks the element's size.
+- **The ceiling is 20px and it is for large containers only.** Nothing is pill-shaped. A fully
+  rounded control reads as a consumer app badge, which the anti-references rule out.
+- **One exception, and it is geometric rather than stylistic:** the rep pip is `border-radius: 50%`
+  because a pip is a circle. It is the only 50% radius in the product.
 
 ## z-index scale
 
@@ -393,7 +553,8 @@ A first-class surface, not an export. Light theme, own scale.
 
 Restating, because it applies before every rule above:
 
-- Participant-facing: nothing below `2rem`; hero ~`12rem`; contrast ≥7:1 (achieved: 8.5–13.3:1).
+- Participant-facing: nothing below `2rem`; hero ~`12rem`; contrast ≥7:1 (achieved: 8.19–14.10:1
+  on the cream ground, measured through a canvas).
 - Colour never alone — colour + word + shape, always.
 - Facilitator tap targets ≥64px; no hover-only affordances.
 - `prefers-reduced-motion` honoured on all four animations.

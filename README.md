@@ -4,7 +4,10 @@ Frontend for the Tier 1 measurement surface: an automated **five-times sit-to-st
 for community elder-care centres in Taiwan, and the one-page sheet a site files with its funding
 report.
 
-**This build is fixtures only. There is no camera, no pose estimation, and no measurement.**
+**This build is fixtures only. Every rep count and every time is simulated — there is no pose
+estimation and no measurement.** The one real camera code path is an opt-in framing preview and
+participant self-view: it binds a `MediaStream` to a `<video>` and does nothing else. No canvas, no
+capture, no analysis, no retention.
 
 Read `PRODUCT.md` for who this is for and `DESIGN.md` for the visual system. Both outrank this
 file, and `CLAUDE.md`'s hard invariants outrank all three.
@@ -26,7 +29,14 @@ Node 22+. Built and verified on Node 26 / npm 11.
 
 ## What you are looking at
 
-Three surfaces plus a print artifact.
+Three surfaces plus a print artifact, under a **hub-and-spoke header**: the roster is the hub, and
+trial / result / sheet are spokes you return from by one control in one position on every surface.
+The header answers where you are; the rail carries the forward action. Everything is reachable from
+the roster without the scenario switcher.
+
+The theme is **positive polarity — dark ink on a cream ground**. That is an acuity decision: a
+bright field constricts the pupil, which increases depth of field for a 75–90 year old reader. The
+printed sheet stays strictly black on white.
 
 | Surface | What it is |
 |---|---|
@@ -134,21 +144,27 @@ Measured in a headless browser, not eyeballed.
   the 64 px tap floor is 768 px of rows alone, which does not fit under an 800 px viewport at any
   type size, so the tap target rather than the typography is the binding constraint.
 - **Contrast.** Full-page audit resolves every colour through a canvas (`getComputedStyle` returns
-  `oklch()` verbatim, so string parsing silently reports 1.00:1). 75 text nodes, **zero below
-  4.5:1**, minimum 5.91:1. Every text node in the locked participant field measures **≥10.29:1**
-  against a 7:1 floor. Token matrix is in `DESIGN.md`; all values there are measured, and two
-  earlier hand-computed sets were wrong.
+  `oklch()` verbatim, so string parsing silently reports 1.00:1). 85 text nodes, **zero below
+  4.5:1**, minimum 5.28:1. Every text node in the locked participant field measures **≥8.19:1**
+  against a 7:1 floor. Token matrix is in `DESIGN.md`; all values there are measured, and three
+  hand-computed sets have now been wrong — including the first draft of this cream palette, whose
+  estimates would have shipped `--ink-muted` at 3.80:1.
 - **Print.** The sheet is **889 px of content against 1017 px of A4 printable height** (297 mm less
   28 mm of `@page` margin) — 33.8 mm of headroom, one page. Emitting a PDF returns a single page.
   Note the app shell needs its `height:100%` / `overflow:hidden` flattened in `@media print`, or a
   sheet that fits paginates to two pages anyway.
+- **Print stays black on white.** The screen's cream ground does not leak onto paper: under print
+  emulation the sheet background measures pure `255,255,255` and **all 104 text nodes measure
+  chroma 0 on both foreground and background**. Verified, not assumed.
 - **Tap targets.** Zero facilitator controls under 64 px; smallest measured row is 66 px. (The
   scenario switcher toggle is 44 px: a demo-only affordance, absent from the product and from
   print.)
 - **Digits.** All ten digits measure **113.27 px** at the hero size, unchanged.
-- **Camera.** The framing preview acquires a real 1280×720 stream, and **zero `<canvas>` elements
-  exist in the DOM** while it is live. Denying permission leaves the trial flow fully working on
-  fixtures.
+- **Camera.** The self-view acquires a real 1280×720 stream, and **zero `<canvas>` elements exist
+  in the DOM** while it is live. Denying permission leaves the trial flow fully working on fixtures.
+- **Gaze budget.** During a trial the rep count is **3.91× the self-view by width, 2.00× by height
+  and 7.82× by area**, with 611 px between their centres. Held to the weakest axis (height), not
+  the flattering one (area). See `DESIGN.md` for the honest limitation: area is not salience.
 - **Reduced motion.** All four animations collapse to instant state swaps; content is never gated
   behind a transition.
 - **No horizontal overflow** at 1280×800 or 1600×900.

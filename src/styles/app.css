@@ -5,23 +5,174 @@
 .app {
   height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr;
+  /* header · demo banner · zones */
+  grid-template-rows: auto auto 1fr;
   overflow: hidden;
 }
 
-/* ─── Demo banner ────────────────────────────────────────────────────────── */
+/* ─── Header ─────────────────────────────────────────────────────────────────
+   Where am I, how do I get back, which phase. See AppHeader.tsx for why this is
+   a hub-and-spoke header rather than a nav bar.
+   ──────────────────────────────────────────────────────────────────────────── */
 
-/* Persistent, but it is a disclosure and not content: it must be unmissable to
-   a stranger and cost the facilitator as little vertical space as possible. The
-   roster is the surface that pays for this strip, so it is kept to one dense
-   line rather than the three-line block it had become. */
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: var(--s-2) var(--s-6);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line);
+  min-height: 80px;
+}
+
+.hdr__where {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Full 64px facilitator tap target, same as every other control. An earlier
+   revision made this 44px on the argument that navigation is not a task control
+   and that 64px dominated the header. That argument does not survive the actual
+   constraint: the floor is about a hurried standing user's thumb, and a
+   facilitator reaching for "back" mid-class is exactly that user. The header
+   grew to fit it, and the roster still holds twelve rows. */
+.hdr__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  font-size: var(--t-fac-sm);
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.hdr__back:hover {
+  background: var(--blue-50);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.hdr__sep {
+  color: var(--ink-muted);
+  font-size: var(--t-fac-sm);
+}
+
+.hdr__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-fac-lg);
+  font-weight: 500;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.hdr__title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Read-only. The control that changes phase lives in the rail, because a thing
+   that changes what you are recording must not sit beside a thing that only
+   says where you are. */
+.hdr__phase {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex: 0 0 auto;
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.hdr__phase-label {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.hdr__phase-value {
+  font-size: var(--t-fac);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ─── Logo placeholder ───────────────────────────────────────────────────── */
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 0 0 auto;
+}
+
+/* The dashed outline is the whole point: it is the standard convention for
+   "artwork pending" and stops this reading as a weak real logo. */
+.logo__slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--accent);
+}
+
+.logo__mark {
+  width: 22px;
+  height: 22px;
+}
+
+.logo__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.logo__word {
+  font-size: var(--t-fac);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.logo__provisional {
+  font-size: 0.6875rem;
+  color: var(--ink-muted);
+}
+
+/* ─── Icons ──────────────────────────────────────────────────────────────── */
+
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+/* ─── Demo banner ────────────────────────────────────────────────────────── */
+/* Persistent, but a disclosure rather than content: unmissable to a stranger,
+   and as cheap in vertical space as possible. The roster pays for this strip. */
+
 .demo {
   display: flex;
   align-items: baseline;
   gap: var(--s-3);
   flex-wrap: wrap;
   padding: var(--s-2) var(--s-6);
-  background: var(--surface-raised);
+  background: var(--blue-50);
   border-bottom: 1px solid var(--line);
   font-size: var(--t-fac-sm);
   line-height: 1.35;
@@ -32,14 +183,11 @@
   font-weight: 700;
   color: var(--ink);
   border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-xs);
   padding: 0.1em 0.55em;
   white-space: nowrap;
 }
 
-/* --ink-secondary (7.81:1 here) rather than --ink-muted (5.04:1). Both clear
-   4.5:1; this is a legibility preference for a persistent honesty notice a
-   stranger must actually read, not a contrast fix. */
 .demo__detail {
   color: var(--ink-secondary);
 }
@@ -58,7 +206,9 @@
 /* ─── The zone law ───────────────────────────────────────────────────────────
    Participant Field on top, Facilitator Rail below, separated by MATERIAL
    (different surface lightness) rather than by font size. That separation is
-   the whole resolution of one-monitor-two-audiences.
+   the whole resolution of one-monitor-two-audiences, and it survives the
+   polarity flip: the field is now the BRIGHTEST surface and the rail is darker,
+   where before the field was darkest.
    ──────────────────────────────────────────────────────────────────────────── */
 
 .zones {
@@ -76,22 +226,23 @@
   flex-direction: column;
 }
 
-/* During an active trial the field is locked: one number, one pip row. Nothing
-   else may enter. `--ink-muted` fails 7:1 and is therefore banned here, which
-   makes the rule mechanical rather than a matter of vigilance. */
+/* During an active trial the field is locked: one number, one pip row, and the
+   subordinate self-view. `--ink-muted` fails 7:1 and is therefore banned here,
+   which makes the rule mechanical rather than a matter of vigilance. */
 .field--locked {
   align-items: center;
   justify-content: center;
-  gap: var(--s-12);
-  padding: var(--s-8);
+  gap: var(--s-8);
+  padding: var(--s-6);
   overflow: hidden;
+  /* Anchors the picture-in-picture self-view. */
+  position: relative;
 
   /* The participant zone's BASE size is the participant floor, not the
-     facilitator body size. This is not cosmetic: `ch` and `em` inside this zone
-     resolve against it, so measure-widths tuned for participant text stay tuned.
+     facilitator body size. Not cosmetic: `ch` and `em` inside this zone resolve
+     against it, so measure-widths tuned for participant text stay tuned.
      Without this, lowering the facilitator scale silently narrowed `.cue` and
-     re-broke 工作人員 across a line — the exact compound the max-width below
-     exists to protect. Anything measured in `ch` in here depends on this rule. */
+     re-broke 工作人員 across a line. */
   font-size: var(--t-part);
 }
 
@@ -144,6 +295,10 @@
 /* ─── Buttons ────────────────────────────────────────────────────────────── */
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
   min-height: var(--tap);
   min-width: var(--tap);
   padding: 0 var(--s-6);
@@ -159,11 +314,11 @@
 }
 
 .btn:hover:not(:disabled) {
-  background: oklch(0.34 0 0);
+  background: var(--blue-50);
 }
 
 .btn:active:not(:disabled) {
-  background: oklch(0.31 0 0);
+  background: var(--blue-100);
 }
 
 .btn:disabled {
@@ -173,24 +328,28 @@
   border-color: var(--line);
 }
 
+/* The primary action carries the accent rather than plain dark ink: on a cream
+   ground a near-black block is heavier than anything else on screen, and the
+   blue reads as "the thing to press" without shouting. Cream on accent measures
+   7.21:1. */
 .btn--primary {
   min-height: 88px;
-  padding: 0 var(--s-12);
+  padding: 0 var(--s-8);
   font-size: var(--t-fac-lg);
   font-weight: 700;
-  background: var(--ink);
+  background: var(--accent);
   color: var(--bg);
-  border-color: var(--ink);
+  border-color: var(--accent);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: oklch(0.88 0 0);
-  border-color: oklch(0.88 0 0);
+  background: var(--blue-800);
+  border-color: var(--blue-800);
 }
 
 .btn--primary:active:not(:disabled) {
-  background: oklch(0.82 0 0);
-  border-color: oklch(0.82 0 0);
+  background: var(--blue-900);
+  border-color: var(--blue-900);
 }
 
 .btn--quiet {
@@ -205,6 +364,9 @@
 }
 
 /* ─── State chip ─────────────────────────────────────────────────────────── */
+/* Tone is the THIRD channel, never the first. Every chip already carries a word
+   and an SVG shape; removing all colour below leaves the surface fully
+   readable. See --st-* in tokens.css for why none of these is red. */
 
 .chip {
   display: inline-flex;
@@ -231,10 +393,6 @@
   font-size: var(--t-lead);
   font-weight: 500;
 }
-
-/* Tone is the THIRD channel, never the first. Every chip already carries a word
-   and an SVG shape; removing all colour below must leave the surface fully
-   readable, and it does. See --st-* in tokens.css for why none of these is red. */
 
 .chip--neutral {
   color: var(--ink-secondary);
@@ -298,10 +456,33 @@
   align-items: center;
   gap: var(--s-6);
   text-align: center;
+}
+
+/* With the camera on, the self-view sits BESIDE the cue rather than above it.
+   Stacked, the two together are taller than an 800px viewport can give the
+   field, and the video clipped at the top while the hint clipped at the bottom.
+   The screen is wide and short; spend the horizontal room. */
+.cue--framing {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--s-12);
+}
+
+.cue__view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 0 0 auto;
+}
+
+.cue__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
   /* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line — sixteen CJK
-     characters at --t-part. Breaking 工作人員 mid-compound reads badly in Chinese.
-     `ch` here resolves against --t-part via `.field--locked`; measured, not
-     assumed. */
+     characters at --t-part. Breaking 工作人員 mid-compound reads badly in
+     Chinese. `ch` resolves against --t-part via `.field--locked`; measured. */
   max-width: 30ch;
 }
 
@@ -318,6 +499,11 @@
   text-wrap: pretty;
   /* Prevents breaks before closing punctuation and other prohibited positions. */
   line-break: strict;
+}
+
+.cue__framing {
+  font-size: var(--t-part);
+  color: var(--ink-secondary);
 }
 
 /* Terminal state. Reads 完成. Never 停止. */
@@ -365,7 +551,7 @@
     background: var(--surface);
   }
   35% {
-    background: oklch(0.32 0.06 30);
+    background: oklch(0.87 0.07 27);
   }
   100% {
     background: var(--surface);
@@ -382,6 +568,95 @@
   }
 }
 
+/* ─── Self-view ──────────────────────────────────────────────────────────────
+   See CameraSelfView.tsx and DESIGN.md. Mirrored, because a participant is
+   adjusting their own body against it.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.selfview {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  /* 4:3 from a 16:9 source crops the sides and keeps full height, which is the
+     right trade for framing a person who is about to stand up. */
+  aspect-ratio: 4 / 3;
+}
+
+.selfview__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.selfview__guide {
+  position: absolute;
+  inset: 6% 20%;
+  border: 2px dashed var(--surface-raised);
+  border-radius: var(--r);
+  pointer-events: none;
+}
+
+.selfview--frame {
+  width: var(--selfview-lg);
+}
+
+/* Bottom-LEFT, diagonally away from the centred readout, so the two never
+   contest the same fixation. Absolutely positioned so it cannot displace or
+   resize the number by existing. */
+.selfview--pip {
+  position: absolute;
+  left: var(--s-8);
+  bottom: var(--s-8);
+  width: var(--selfview-pip);
+  /* Quieter than the framing view: this one is glanceable, not studied. */
+  opacity: 0.92;
+}
+
+/* ─── Camera controls (facilitator zone) ─────────────────────────────────── */
+
+.camctl {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  padding: var(--s-3) var(--s-6);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.camctl__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.camctl__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-fac);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.camctl__note {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+  line-height: 1.45;
+  max-width: 72ch;
+  text-wrap: pretty;
+}
+
+.camctl__actions {
+  flex: 0 0 auto;
+}
+
 /* ─── Pips ───────────────────────────────────────────────────────────────── */
 
 .pips {
@@ -389,6 +664,8 @@
   gap: var(--s-4);
 }
 
+/* The only 50% radius in the product. A pip is a circle because it is a circle,
+   not because rounded things are friendly. */
 .pip {
   width: 2.25rem;
   height: 2.25rem;
@@ -412,56 +689,28 @@
   }
 }
 
-/* ─── Roster ─────────────────────────────────────────────────────────────── */
-
-/* ── Roster ───────────────────────────────────────────────────────────────────
+/* ─── Roster ─────────────────────────────────────────────────────────────────
    ACCEPTANCE TEST: all twelve rows visible at 1280x800 without scrolling.
 
-   This is a facilitator surface, not a participant one. It is read at arm's
-   length by someone standing at the machine running a class of twelve, and the
-   single question it answers is "who is left". A roster you have to scroll
-   cannot answer that question, so fitting the whole class on screen outranks
-   every other property of this surface.
+   A facilitator surface, read at arm's length by someone standing at the
+   machine running a class of twelve. The single question it answers is "who is
+   left", and a roster you have to scroll cannot answer it.
 
    Two columns rather than one. Twelve rows at the 64px tap floor is 768px of
-   rows alone, which does not fit under an 800px viewport at any type size —
-   the tap target, not the typography, is the binding constraint. Splitting the
-   list is the only move that respects both. Multi-column rather than grid so
-   the fill order stays top-to-bottom within a column (the order a facilitator
-   calls people in) and so it degrades to one column with no JS.
+   rows alone, which does not fit under an 800px viewport at any type size — the
+   tap target, not the typography, is the binding constraint. Multi-column
+   rather than grid so fill order stays top-to-bottom within a column (the order
+   a facilitator calls people in) and so it degrades to one column with no JS.
    ──────────────────────────────────────────────────────────────────────────── */
 
 .roster {
-  padding: var(--s-6) var(--s-6) var(--s-8);
+  padding: var(--s-4) var(--s-6) var(--s-6);
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
   max-width: 1320px;
   width: 100%;
   margin: 0 auto;
-}
-
-.roster__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-6);
-  flex-wrap: wrap;
-}
-
-/* --t-fac-lg, not --t-lead. --t-lead is a PARTICIPANT-band token (3rem) and had
-   no business on a facilitator surface; that leak is what oversized this screen. */
-.roster__title {
-  font-size: var(--t-fac-lg);
-  font-weight: 500;
-}
-
-.roster__phase {
-  font-size: var(--t-fac);
-  color: var(--ink-secondary);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
-  padding: 0.1em 0.6em;
 }
 
 .roster__meta {
@@ -488,7 +737,7 @@
   align-items: center;
   gap: var(--s-3);
   padding: 0 var(--s-3);
-  background: var(--surface);
+  background: var(--surface-raised);
   border: 1px solid var(--line);
   border-radius: var(--r);
   min-height: var(--tap);
@@ -498,6 +747,8 @@
   break-inside: avoid;
 }
 
+/* Measured rows recede; outstanding rows sit up on the raised surface. The
+   contrast is the scan signal, alongside the status hue. */
 .row--done {
   background: transparent;
 }
@@ -516,7 +767,7 @@
   min-width: 5ch;
 }
 
-/* The roster carries NO TIMES. Ten older adults listed with their times in a
+/* The roster carries NO TIMES. Twelve older adults listed with their times in a
    small shared room is a leaderboard, which the design doc names as the most
    likely route to facilitator veto. Numbers live on the result surface (one
    person at a time) and on the sheet (read alone by the site lead). */
@@ -539,10 +790,10 @@
 /* ─── Result ─────────────────────────────────────────────────────────────── */
 
 .result {
-  padding: var(--s-8) var(--s-6) var(--s-12);
+  padding: var(--s-6) var(--s-6) var(--s-8);
   display: flex;
   flex-direction: column;
-  gap: var(--s-8);
+  gap: var(--s-6);
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
@@ -555,9 +806,9 @@
   flex-wrap: wrap;
 }
 
-/* Facilitator band. The result surface is operated by staff; only the measured
-   time below stays large, and that is a hierarchy decision about the surface's
-   primary content, not the participant floor being applied here. */
+/* Facilitator band. Only the measured time below stays large, and that is a
+   hierarchy decision about the surface's primary content, not the participant
+   floor being applied here. */
 .result__title {
   font-size: var(--t-fac-lg);
   font-weight: 500;
@@ -644,11 +895,11 @@
    and Esc for free rather than reinventing them. */
 
 .dlg::backdrop {
-  background: oklch(0.1 0 0 / 0.72);
+  background: oklch(0.25 0.02 255 / 0.45);
 }
 
 .dlg {
-  background: var(--surface);
+  background: var(--surface-raised);
   color: var(--ink);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-lg);
@@ -656,6 +907,7 @@
   max-width: 44rem;
   width: calc(100vw - var(--s-8) * 2);
   font-size: var(--t-fac);
+  box-shadow: 0 12px 40px oklch(0.25 0.02 255 / 0.18);
 
   /* The global `* { margin: 0 }` reset kills the UA stylesheet's `margin: auto`,
      which is what centres a native <dialog>. Without this it pins to top-left. */
@@ -701,18 +953,18 @@
   padding: 0 var(--s-4);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  background: var(--surface-raised);
+  background: var(--bg);
   cursor: pointer;
 }
 
 .opt:hover {
-  background: oklch(0.32 0 0);
+  background: var(--blue-50);
 }
 
 .opt input {
   width: 1.5rem;
   height: 1.5rem;
-  accent-color: var(--ink);
+  accent-color: var(--accent);
   flex: 0 0 auto;
 }
 
@@ -747,12 +999,16 @@
   text-align: center;
 }
 
-/* ─── Sheet screen chrome ────────────────────────────────────────────────── */
+/* ─── Sheet screen chrome ────────────────────────────────────────────────────
+   The area AROUND the sheet, on screen only. Deliberately darker than both the
+   app and the paper, so the white sheet reads as a physical page on a desk.
+   None of this reaches the printer — see print.css.
+   ──────────────────────────────────────────────────────────────────────────── */
 
 .sheet-screen {
-  background: oklch(0.24 0 0);
+  background: oklch(0.86 0.014 88);
   min-height: 100%;
-  padding: var(--s-8) var(--s-4) var(--s-16);
+  padding: var(--s-6) var(--s-4) var(--s-16);
   overflow: auto;
 }
 
@@ -760,7 +1016,7 @@
   display: flex;
   gap: var(--s-4);
   justify-content: center;
-  margin-bottom: var(--s-8);
+  margin-bottom: var(--s-6);
   flex-wrap: wrap;
 }
 
@@ -773,124 +1029,17 @@
 }
 
 .sheet {
-  box-shadow: 0 2px 24px oklch(0 0 0 / 0.5);
-}
-
-/* ─── Framing preview ─────────────────────────────────────────────────────────
-   FUNCTIONAL, NOT DECORATIVE. A Tier 1 trial cannot pause: tracking loss voids
-   it and forces a restart from the cue, with an older adult already out of the
-   chair. Confirming framing BEFORE the start press is the only cheap moment to
-   catch a bad camera position, so this earns its space.
-
-   INVARIANT 1 IS UNTOUCHED. This is a <video> element bound to a MediaStream and
-   nothing else. There is no canvas, no getImageData, no pose estimation, no
-   landmark extraction, no frame buffer, no upload. Liveness comes from
-   MediaStreamTrack events and requestVideoFrameCallback METADATA (presented
-   frame counts and timestamps), never from pixels. Nothing is retained: the
-   stream stops on collapse and on unmount, and there is no code path that can
-   read a frame out of this element.
-
-   It lives in the facilitator zone, below the participant field, and it is only
-   ever mounted at the cue stage. During a live trial it is gone entirely and
-   what remains is a one-line signal chip in the rail — the participant field
-   stays locked to the number and pips, and nothing here competes with them.
-   ──────────────────────────────────────────────────────────────────────────── */
-
-.cam {
-  background: var(--surface);
-  border-top: 1px solid var(--line);
-  padding: var(--s-3) var(--s-6);
-  display: flex;
-  align-items: center;
-  gap: var(--s-6);
-}
-
-.cam__stage {
-  position: relative;
-  width: calc(var(--cam-h) * 16 / 9);
-  height: var(--cam-h);
-  flex: 0 0 auto;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-
-.cam__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  /* Deliberately NOT mirrored. The operator is judging whether a seated
-     participant is fully in frame, not looking at themselves; a mirrored image
-     makes "move them left" mean the wrong thing. */
-}
-
-/* CSS-only framing guide. Borders over the video, not a canvas — drawing this
-   with a canvas would mean compositing the frame, which invariant 1 forbids. */
-.cam__guide {
-  position: absolute;
-  inset: 8% 18%;
-  border: 2px dashed var(--line-strong);
-  border-radius: var(--r-sm);
-  pointer-events: none;
-}
-
-.cam__side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-2);
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.cam__title {
-  font-size: var(--t-fac);
-  font-weight: 500;
-  color: var(--ink);
-}
-
-/* The privacy statement sits next to the preview, not in a settings page. A
-   stranger looking at a live camera feed should be able to read what it does
-   without leaving the screen. */
-.cam__note {
-  font-size: var(--t-fac-sm);
-  color: var(--ink-secondary);
-  line-height: 1.45;
-  max-width: 52ch;
-  text-wrap: pretty;
-}
-
-.cam__actions {
-  display: flex;
-  gap: var(--s-3);
-  flex-wrap: wrap;
-  margin-top: var(--s-1);
-}
-
-/* Unavailable is a normal state, not an error: no camera, a denied permission
-   or an insecure origin all leave the fixture demo fully working. Styled as
-   plain text rather than as a warning for that reason. */
-.cam__fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: var(--s-4);
-  text-align: center;
-  font-size: var(--t-fac-sm);
-  color: var(--ink-secondary);
-  text-wrap: pretty;
+  box-shadow: 0 2px 20px oklch(0.25 0.02 255 / 0.22);
 }
 
 /* ─── Scenario switcher ──────────────────────────────────────────────────── */
 
-/* TOP-right. The whole bottom edge belongs to the facilitator rail: bottom-right
-   is the primary action and bottom-left is the block context. Earlier revisions
-   put this demo affordance on top of each of them in turn. */
+/* TOP-right, below the header. The whole bottom edge belongs to the facilitator
+   rail: bottom-right is the primary action and bottom-left is the block
+   context. Earlier revisions put this demo affordance on top of each in turn. */
 .scn {
   position: fixed;
-  inset: var(--s-2) var(--s-4) auto auto;
+  inset: 132px var(--s-4) auto auto;
   z-index: var(--z-scenario);
   background: var(--surface-raised);
   border: 1px solid var(--line-strong);
@@ -899,7 +1048,7 @@
   max-width: 27rem;
   max-height: 78vh;
   overflow: auto;
-  box-shadow: 0 8px 32px oklch(0 0 0 / 0.55);
+  box-shadow: 0 8px 32px oklch(0.25 0.02 255 / 0.2);
   font-size: var(--t-fac-sm);
 }
 
@@ -916,7 +1065,6 @@
   font-weight: 700;
 }
 
-/* --ink-secondary throughout this panel: it sits on --surface-raised. */
 .scn__hint {
   color: var(--ink-secondary);
   margin-bottom: var(--s-4);
@@ -942,31 +1090,31 @@
   min-height: 44px;
   padding: 0 var(--s-3);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--surface);
+  border-radius: var(--r-sm);
+  background: var(--bg);
   color: var(--ink-secondary);
   font-size: var(--t-fac-sm);
 }
 
 .scn__btn:hover {
-  background: oklch(0.32 0 0);
+  background: var(--blue-50);
   color: var(--ink);
 }
 
 .scn__btn--on {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--accent);
+  color: var(--accent);
   font-weight: 700;
 }
 
 .scn__toggle {
   position: fixed;
-  inset: var(--s-2) var(--s-4) auto auto;
+  inset: 132px var(--s-4) auto auto;
   z-index: var(--z-scenario);
   min-height: 44px;
   padding: 0 var(--s-4);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-sm);
   background: var(--surface-raised);
   color: var(--ink-secondary);
   font-size: var(--t-fac-sm);
@@ -987,7 +1135,8 @@
     --t-hero: 8rem;
     --t-display: 4rem;
     --t-lead: 2.5rem;
-    --cam-h: 148px;
+    --selfview-lg: 240px;
+    --selfview-pip: 104px;
   }
 }
 
@@ -1011,15 +1160,14 @@
     width: auto;
   }
 
-  /* Stack the preview above its explanation rather than shrinking it to a
-     thumbnail: a framing check you cannot see is worse than no framing check. */
-  .cam {
+  .hdr {
+    flex-wrap: wrap;
+    gap: var(--s-3);
+  }
+
+  .camctl {
     flex-direction: column;
     align-items: stretch;
     padding: var(--s-3) var(--s-4);
-  }
-
-  .cam__stage {
-    width: 100%;
   }
 }

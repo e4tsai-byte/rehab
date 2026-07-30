@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AppHeader, type Place } from './components/AppHeader'
 import { DemoBanner } from './components/DemoBanner'
 import { RailButton } from './components/RailButton'
 import { ScenarioSwitcher, type ScenarioActions } from './components/ScenarioSwitcher'
@@ -107,6 +108,20 @@ export function App() {
   const resultOutcome: Outcome | null =
     view.kind === 'result' ? (view.synthetic ?? currentTrial?.outcome ?? null) : null
 
+  /* Hub and spoke: the roster is the only surface without a way back, which is
+     what identifies it as the hub. Everything else returns to exactly one
+     place, by exactly one control. */
+  const place: Place =
+    view.kind === 'roster'
+      ? { title: strings.nav.placeRoster, icon: 'roster' }
+      : view.kind === 'sheet'
+        ? { title: strings.nav.placeSheet, icon: 'sheet' }
+        : view.kind === 'trial'
+          ? { title: strings.nav.placeTrial(current?.label ?? ''), icon: 'trial' }
+          : { title: strings.nav.placeResult(current?.label ?? ''), icon: 'record' }
+
+  const phaseWord = phase === 'pre' ? strings.phase.pre : strings.phase.post
+
   async function submitCorrection(outcome: Outcome, note: CorrectionNote) {
     setCorrecting(false)
     if (!current || !currentTrial || !active) return
@@ -121,6 +136,11 @@ export function App() {
 
   return (
     <div className="app">
+      <AppHeader
+        place={place}
+        phaseWord={phaseWord}
+        onBack={view.kind === 'roster' ? undefined : () => setView({ kind: 'roster' })}
+      />
       <DemoBanner simulated={src.isSimulated} />
 
       {view.kind === 'roster' && (
@@ -128,7 +148,6 @@ export function App() {
           <div className="field">
             <Roster
               block={block}
-              session={active}
               resolved={resolved}
               onStart={(p) => setView({ kind: 'trial', participantId: p.id })}
               onReview={(p) => setView({ kind: 'result', participantId: p.id })}
@@ -141,10 +160,13 @@ export function App() {
             </div>
             <div className="rail__spacer" />
             <div className="rail__actions">
-              <RailButton onClick={() => setPhase(phase === 'post' ? 'pre' : 'post')}>
+              <RailButton
+                icon="phase-swap"
+                onClick={() => setPhase(phase === 'post' ? 'pre' : 'post')}
+              >
                 {phase === 'post' ? strings.nav.switchToPre : strings.nav.switchToPost}
               </RailButton>
-              <RailButton variant="primary" onClick={() => setView({ kind: 'sheet' })}>
+              <RailButton variant="primary" icon="sheet" onClick={() => setView({ kind: 'sheet' })}>
                 {strings.roster.openSheet}
               </RailButton>
             </div>
@@ -183,12 +205,7 @@ export function App() {
       )}
 
       {view.kind === 'sheet' && (
-        <Sheet
-          block={block}
-          sessions={sessions}
-          allResolved={allResolved}
-          onClose={() => setView({ kind: 'roster' })}
-        />
+        <Sheet block={block} sessions={sessions} allResolved={allResolved} />
       )}
 
       <ScenarioSwitcher

@@ -16,6 +16,7 @@ export interface Strings {
   readonly app: {
     readonly name: string
     readonly assessmentName: string
+    readonly logoProvisional: string
   }
   readonly demo: {
     readonly badge: string
@@ -71,9 +72,19 @@ export interface Strings {
   readonly nav: {
     readonly switchToPre: string
     readonly switchToPost: string
+    /** Landmark label for the back-to-hub control. */
+    readonly whereLabel: string
+    readonly backToRoster: string
+    readonly placeRoster: string
+    readonly placeTrial: (label: string) => string
+    readonly placeResult: (label: string) => string
+    readonly placeSheet: string
+    readonly phaseLabel: string
   }
   readonly camera: {
     readonly title: string
+    readonly selfView: string
+    readonly selfViewHint: string
     readonly privacy: string
     readonly enable: string
     readonly disable: string
@@ -198,6 +209,8 @@ const zhTW: Strings = {
   app: {
     name: 'VeloCare',
     assessmentName: '五次起立坐下量測',
+    // Marks the logo slot as artwork-pending. Removed when a real identity lands.
+    logoProvisional: '標誌暫定',
   },
 
   demo: {
@@ -268,10 +281,19 @@ const zhTW: Strings = {
   nav: {
     switchToPre: '切換至前測',
     switchToPost: '切換至後測',
+    whereLabel: '目前位置',
+    backToRoster: '回本期名單',
+    placeRoster: '本期名單',
+    placeTrial: (label) => `${label}．量測`,
+    placeResult: (label) => `${label}．紀錄`,
+    placeSheet: '報表',
+    phaseLabel: '本期階段',
   },
 
   camera: {
     title: '鏡頭取景',
+    selfView: '自己的畫面',
+    selfViewHint: '請確認整個人都在框內。',
     // Stated next to the live image, not buried in a settings page. Must stay
     // literally true of the code in useCameraPreview.ts: preview only, no
     // capture, no analysis, no retention.

@@ -1,69 +1,103 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    VeloCare design tokens. Source of truth is DESIGN.md.
-   Single dark theme, no toggle. Surfaces are chroma exactly 0 (machined grey,
-   not tinted). The seed hue (110, olive) appears ONLY as functional state.
+
+   POSITIVE POLARITY: dark ink on a cream ground. Single theme, no toggle.
+
+   This is an ACUITY decision, not a mood one, and the distinction matters when
+   picking values. A bright field constricts the pupil, which increases depth of
+   field and reduces the effect of optical aberration and lens opacity — all of
+   which generally helps a 75-90 year old reader. That reasoning only holds if
+   the ground is bright; it says nothing about it being pretty. So the cream is
+   chosen for luminance first: high L, low chroma, and NOT white, because a pure
+   white field under overhead fluorescent light produces veiling glare that costs
+   back everything the pupil constriction won.
+
+   The chromatic range is a light-to-dark BLUE ramp. Blue rather than the old
+   olive seed because on a warm cream ground a cool hue separates cleanly at
+   every lightness, and because the ramp has to carry both the darkest ink and a
+   mid-tone accent without either reading as a different colour family.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Surfaces ── chroma exactly 0. Do not tint. ───────────────────────── */
-  --bg: oklch(0.17 0 0); /* room-facing participant field   */
-  --surface: oklch(0.225 0 0); /* facilitator rail                */
-  --surface-raised: oklch(0.28 0 0); /* controls, roster rows           */
-  --line: oklch(0.34 0 0); /* hairlines                       */
-  --line-strong: oklch(0.46 0 0); /* focus ring, active borders      */
+  /* ── Blue ramp ── the primary chromatic range, light to dark ────────────
+     Semantic tokens below map onto these. Never use a step directly in a
+     component; go through a semantic token so the mapping stays in one place. */
+  --blue-50: oklch(0.968 0.016 250);
+  --blue-100: oklch(0.928 0.034 250);
+  --blue-200: oklch(0.868 0.058 250);
+  --blue-300: oklch(0.782 0.088 250);
+  --blue-400: oklch(0.676 0.118 250);
+  --blue-500: oklch(0.560 0.148 250);
+  --blue-600: oklch(0.492 0.152 250);
+  --blue-700: oklch(0.424 0.140 250);
+  --blue-800: oklch(0.340 0.108 250);
+  --blue-900: oklch(0.262 0.070 250);
 
-  /* ── Ink ──────────────────────────────────────────────────────────────── */
-  --ink: oklch(0.97 0 0);
-  --ink-secondary: oklch(0.8 0 0);
-  --ink-muted: oklch(0.68 0 0); /* facilitator-read text only */
+  /* ── Surfaces ── cream. Chroma stays under 0.02: enough to read as warm
+     paper rather than as grey, little enough that it never reads as a colour.
+     The participant field is the BRIGHTEST surface, which is the whole point of
+     the polarity flip; the rail is darker so it still reads as a separate
+     device panel by material rather than by font size. ─────────────────────── */
+  --bg: oklch(0.955 0.014 88); /* room-facing participant field    */
+  --surface: oklch(0.911 0.018 88); /* facilitator rail                 */
+  --surface-raised: oklch(0.981 0.008 88); /* rows, controls — sit up from rail */
+  --line: oklch(0.848 0.021 88); /* hairlines                        */
+  --line-strong: oklch(0.560 0.070 250); /* focus ring, active borders       */
+
+  /* ── Ink ── near-black, carrying a slight blue cast so text belongs to the
+     same family as the ramp rather than reading as a neutral pasted on top. */
+  --ink: oklch(0.250 0.028 255); /* hero readout, participant text   */
+  --ink-secondary: oklch(0.397 0.032 255); /* participant-safe secondary       */
+  --ink-muted: oklch(0.468 0.028 255); /* facilitator-read text only       */
 
   /* MEASURED contrast, not calculated. Every ratio below was read back by
      painting the token to a canvas and computing WCAG relative luminance in the
-     browser; two earlier revisions of this file carried hand-computed numbers
-     that were all wrong in both directions. Re-measure after any token change
-     rather than reasoning about OKLCH lightness.
+     browser; hand-computed numbers have been wrong here in both directions
+     twice. OKLCH lightness is not a proxy for contrast ratio. Re-measure after
+     any token change rather than reasoning about the L value.
 
                         --bg    --surface  --surface-raised
-       --ink            17.58     15.63       13.34
-       --ink-secondary  10.29      9.15        7.81
-       --ink-muted       6.64      5.91        5.04
-       --accent         10.46      9.30        7.94
-       --alert           6.67      5.93        5.06
+       --ink            14.10     12.29       15.24
+       --ink-secondary   8.19      7.14        8.85
+       --ink-muted       6.06      5.28        6.55
+       --accent          7.21      6.29        7.80
+       --alert           7.14      6.22        7.72
+       --st-measured     7.88      6.87        8.52
+       --st-partial      7.69      6.70        8.31
+       --st-protocol     7.97      6.95        8.62
+       --st-unable       8.09      7.05        8.74
+       --st-discarded    6.06      5.28        6.55
 
-     All three ink tokens clear 4.5:1 on all three surfaces. Only --ink and
-     --ink-secondary clear the 7:1 participant floor, so --ink-muted is confined
-     to facilitator-read text: the rail, the roster metadata, dialog legends.
-     It never appears inside .field--locked, which is verified: every text node
-     in the locked participant field measures 10.29:1 or better. */
+     --ink and --ink-secondary clear the 7:1 participant floor on --bg, which is
+     the participant field's surface. --ink-muted does not, and is therefore
+     confined to facilitator-read text: the rail, roster metadata, dialog
+     legends. It never appears inside `.field--locked`, which is verified rather
+     than asserted. */
 
-  /* ── State ── functional only, never decoration ───────────────────────── */
-  --accent: oklch(0.8 0.13 110); /* tracking live · 10.46:1 on --bg      */
-  --alert: oklch(0.7 0.17 30); /* tracking LOST · 6.67:1 · rail only   */
+  /* ── State ── THE MACHINE. functional only, never decoration ───────────── */
+  --accent: var(--blue-700); /* tracking live                    */
+  --alert: oklch(0.451 0.185 27); /* tracking LOST — the only alarm   */
 
-  /* ── Status channel ── FACILITATOR SURFACES ONLY ─────────────────────────
-     Twelve rows whose states differ only by a small grey glyph are not
-     scannable, so outcome states carry a hue IN ADDITION TO their word and
-     shape. Three rules keep this from becoming a dashboard:
+  /* ── Status channel ── A PERSON'S OUTCOME. Facilitator surfaces only ──────
+     Unchanged in logic from the dark build; only the values moved to survive
+     the polarity flip. The three rules that make this safe still hold:
 
-     1. HUE IS CATEGORY, NOT QUALITY. All five sit in the same narrow
-        lightness band (0.79-0.82) so none pops as an alarm and the row set
-        reads as a patch panel rather than a traffic light. A participant who
-        needed their hands did not do worse than one who did not.
-     2. RED IS NOT AMONG THEM. `--alert` (hue 30) stays reserved for the
-        MACHINE failing — tracking lost, void. It never describes a person's
-        outcome. This is the one part of the old achromatic rule that was
-        load-bearing rather than incidental, and it is preserved exactly.
-     3. NEVER INSIDE `.field--locked`. The participant field during a live
-        trial stays achromatic. These tokens appear on the roster, the result
-        surface and the rail, and nowhere else.
-
-     Ratios are MEASURED through a canvas, against --surface (roster rows
-     awaiting) and --bg (roster rows done, which are transparent). */
-  --st-measured: oklch(0.8 0.1 110); /* recorded · seed olive     */
-  --st-partial: oklch(0.8 0.09 240); /* fewer than five · blue    */
-  --st-protocol: oklch(0.82 0.1 75); /* hand support · amber      */
-  --st-unable: oklch(0.79 0.08 310); /* not attempted · violet    */
-  --st-discarded: oklch(0.68 0 0); /* voided · grey, an absence */
+     1. HUE IS CATEGORY, NOT QUALITY. The four chromatic tones are tuned to
+        equal MEASURED LUMINANCE, not to equal OKLCH lightness — those are not
+        the same thing, which is why each hue carries a slightly different L.
+        They land at 7.69-8.09:1 on --bg, a spread of 0.40 of a ratio point, so
+        no row pops as an alarm relative to its neighbours. The set reads as a
+        patch panel, not a traffic light.
+     2. RED IS NOT AMONG THEM. `--alert` stays reserved for the MACHINE failing.
+        It never describes a person's outcome. A participant who needed their
+        hands did not malfunction, and a red row would tell them they did.
+     3. NEVER INSIDE `.field--locked`. These render on the roster, the result
+        surface and the rail. The locked participant field carries no chip. */
+  --st-measured: oklch(0.403 0.145 250); /* recorded        · blue    */
+  --st-partial: oklch(0.390 0.095 195); /* fewer than five · teal    */
+  --st-protocol: oklch(0.410 0.105 65); /* hand support    · amber   */
+  --st-unable: oklch(0.416 0.135 310); /* not attempted   · violet  */
+  --st-discarded: var(--ink-muted); /* voided — an absence       */
 
   /* ── Type ─────────────────────────────────────────────────────────────── */
   --font: 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei',
@@ -78,21 +112,14 @@
   --t-part: 2rem; /*  32px · participant floor    */
 
   /* Facilitator band · NOT the participant band. Read at roughly 0.6 m by a
-     standing operator who is looking at the machine, not from 3 m by someone
-     mid-effort. The 2rem floor does not apply here and applying it was a
-     mistake: at the old sizes only three of twelve roster rows were on screen,
-     which cost the facilitator the one thing the roster is for — seeing who is
-     left. These are ordinary working-UI sizes.
-
-     The floor that DOES still apply here is the 64px tap target: that
-     constraint is about a hurried standing user, not about visual acuity, and
-     is unaffected by type size.
+     standing operator looking at the machine, not from 3 m by someone
+     mid-effort. Ordinary working-UI sizes; the 2rem floor does not apply here
+     and applying it cost the roster nine of its twelve rows.
 
      Nothing in `.field--locked` uses these tokens — the locked field is built
      from --t-hero / --t-display / --t-part only. That is what makes the
-     participant floor mechanical rather than a matter of vigilance, and it is
-     why this scale can be lowered without touching the participant guarantee. */
-  --t-fac-xl: 1.75rem; /* 28px · facilitator emphasis (edited value) */
+     participant floor mechanical rather than a matter of vigilance. */
+  --t-fac-xl: 1.75rem; /* 28px · facilitator emphasis            */
   --t-fac-lg: 1.25rem; /* 20px · row primary, dialog titles      */
   --t-fac: 1.0625rem; /* 17px · controls, body, labels          */
   --t-fac-sm: 0.9375rem; /* 15px · metadata floor                  */
@@ -109,14 +136,24 @@
   --s-16: 4rem;
   --s-24: 6rem;
 
-  /* ── Radii ── instrument, not app. No pills. ──────────────────────────── */
-  --r-sm: 2px;
-  --r: 4px;
-  --r-lg: 6px;
+  /* ── Radii ── a real scale, used consistently. Softened from the original
+     2/4/6px, which read as machined metal and, at twelve roster rows, as
+     twelve hard rectangles stacked. Rounder is calmer to scan.
+
+     RESTRAINT IS PART OF THE SCALE. The ceiling is 20px and it applies to large
+     containers only. Nothing is pill-shaped: a fully rounded control reads as a
+     consumer app badge, which the anti-references rule out. The only 50% radius
+     in the product is the rep pip, which is a circle because it is a circle. */
+  --r-xs: 3px; /* status marks, chips, hairline insets   */
+  --r-sm: 6px; /* inputs, small controls, badges         */
+  --r: 10px; /* buttons, roster rows, form options     */
+  --r-lg: 14px; /* panels, dialogs, video surfaces        */
+  --r-xl: 20px; /* large containers only                  */
 
   /* ── z-index ── semantic, never arbitrary ─────────────────────────────── */
   --z-base: 0;
   --z-rail: 10;
+  --z-header: 15;
   --z-overlay: 20;
   --z-scenario: 30;
 
@@ -127,16 +164,19 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint. no bounce. */
 
   /* ── Layout ───────────────────────────────────────────────────────────── */
-  /* Tall enough for an 88px primary control plus padding, and no taller. Was
-     156px, which was sized around the old oversized rail type; with the
-     facilitator band corrected the same controls fit in 112px, and the 44px
-     recovered goes to the roster where it buys most of a row. */
   --rail-h-min: 112px;
   --tap: 64px; /* facilitator minimum tap target */
 
-  /* Framing preview. Large enough to actually judge whether a seated person is
-     fully in frame, which is the entire point of it. */
-  --cam-h: 208px;
+  /* Self-view. Large enough at the cue to actually judge framing; small enough
+     during the trial that it cannot contest the rep count. See DESIGN.md for
+     the area budget these two numbers are held to. */
+  --selfview-lg: 360px;
+  /* Sized to the BINDING AXIS, which is height, not area. At 208px the pip was
+     2.96x the count by area but only 1.23x by height, which is not the
+     "unambiguously subordinate" the brief asks for. 128px puts it at 2.0x on
+     height, 3.9x on width and 7.8x on area — subordinate on every axis, not
+     just the flattering one. */
+  --selfview-pip: 128px;
 }
 
 @media (prefers-reduced-motion: reduce) {

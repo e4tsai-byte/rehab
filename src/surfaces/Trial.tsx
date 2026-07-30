@@ -18,7 +18,8 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef, useState } from 'react'
-import { CameraPreview } from '../components/CameraPreview'
+import { CameraControls } from '../components/CameraControls'
+import { CameraSelfView } from '../components/CameraSelfView'
 import { Digits } from '../components/Digits'
 import { RailButton } from '../components/RailButton'
 import { RepPips } from '../components/RepPips'
@@ -152,15 +153,31 @@ export function Trial({
   }
 
   const trackChip = trackingDisplay(stage === 'void' ? 'lost' : tracking)
+  const cameraLive = camera.status === 'live'
 
   return (
     <div className="zones">
       {/* ── Participant Field ───────────────────────────────────────────── */}
       <div className="field field--locked">
         {stage === 'cue' && (
-          <div className="cue">
-            <p className="cue__title">{strings.trial.cue}</p>
-            <p className="cue__hint">{strings.trial.cueHint}</p>
+          /* Side by side when the camera is on, stacked when it is not. Stacking
+             both overflowed an 800px viewport and clipped the video at the top
+             and the cue hint at the bottom; the screen is wide and short, so the
+             spare room is horizontal. */
+          <div className={cameraLive ? 'cue cue--framing' : 'cue'}>
+            {/* Before the cue there is no number on screen, so the self-view can
+                be large: nothing exists yet for it to compete with, and this is
+                the moment framing actually has to be got right. */}
+            {cameraLive && (
+              <div className="cue__view">
+                <CameraSelfView attach={camera.attach} size="frame" />
+                <p className="cue__framing">{strings.camera.selfViewHint}</p>
+              </div>
+            )}
+            <div className="cue__text">
+              <p className="cue__title">{strings.trial.cue}</p>
+              <p className="cue__hint">{strings.trial.cueHint}</p>
+            </div>
           </div>
         )}
 
@@ -197,20 +214,28 @@ export function Trial({
             <p className="void-note__body">{strings.trial.voidBody}</p>
           </div>
         )}
+
+        {/* Self-view during the timed trial: small, cornered, and OUT OF THE
+            READOUT'S GAZE PATH. Bottom-left, diagonally opposite the count's
+            optical centre — explicitly not beside the number, where the two
+            would contest the same fixation. It is absolutely positioned so it
+            cannot displace or resize the readout by existing.
+
+            Running stage only. Once the trial settles the self-view has no
+            function, so it goes rather than lingering as decoration. */}
+        {stage === 'running' && cameraLive && (
+          <CameraSelfView attach={camera.attach} size="pip" />
+        )}
       </div>
 
-      {/* ── Framing preview ──────────────────────────────────────────────────
-          Cue stage only. A Tier 1 trial cannot pause and tracking loss voids it,
-          so the moment before the start press is the only cheap chance to fix a
-          bad camera position.
-
-          It is unmounted for every other stage, which is what keeps the promise
-          that it never competes with the number: during a live trial the only
-          thing left is a one-line chip in the rail below. */}
+      {/* ── Camera controls ─────────────────────────────────────────────────
+          Cue stage only, and controls only — the image itself is up in the
+          participant field. A Tier 1 trial cannot pause and tracking loss voids
+          it, so the moment before the start press is the only cheap chance to
+          fix a bad camera position, and the only moment these controls matter. */}
       {stage === 'cue' && (
-        <CameraPreview
+        <CameraControls
           status={camera.status}
-          attach={camera.attach}
           onStart={() => void camera.start()}
           onStop={camera.stop}
         />
@@ -252,15 +277,14 @@ export function Trial({
         <div className="rail__spacer" />
 
         <div className="rail__actions">
+          {/* No 回名單 here: the header carries back on every surface, and two
+              controls to one destination is one too many. */}
           {stage === 'cue' && (
             <>
-              <RailButton variant="quiet" onClick={onBack}>
-                {strings.trial.backToRoster}
-              </RailButton>
               <RailButton variant="quiet" onClick={() => setAskUnable(true)}>
                 {strings.unable.action}
               </RailButton>
-              <RailButton variant="primary" onClick={() => void begin()}>
+              <RailButton variant="primary" icon="start" onClick={() => void begin()}>
                 {strings.trial.begin}
               </RailButton>
             </>
@@ -276,20 +300,15 @@ export function Trial({
           )}
 
           {stage === 'settled' && outcome && (
-            <RailButton variant="primary" onClick={() => onSettled(outcome)}>
+            <RailButton variant="primary" icon="record" onClick={() => onSettled(outcome)}>
               {strings.trial.viewResult}
             </RailButton>
           )}
 
           {stage === 'void' && (
-            <>
-              <RailButton variant="quiet" onClick={onBack}>
-                {strings.trial.backToRoster}
-              </RailButton>
-              <RailButton variant="primary" onClick={restart}>
-                {strings.trial.restart}
-              </RailButton>
-            </>
+            <RailButton variant="primary" onClick={restart}>
+              {strings.trial.restart}
+            </RailButton>
           )}
         </div>
       </div>

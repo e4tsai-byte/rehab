@@ -12,18 +12,16 @@ import { RailButton } from '../components/RailButton'
 import { StateChip } from '../components/StateChip'
 import { awaitingDisplay, outcomeDisplay } from '../domain/display'
 import { currentTrialFor, type ResolvedTrial } from '../domain/records'
-import type { AssessmentSession, Block, Participant } from '../domain/types'
+import type { Block, Participant } from '../domain/types'
 import { strings } from '../i18n/strings'
 
 export function Roster({
   block,
-  session,
   resolved,
   onStart,
   onReview,
 }: {
   block: Block
-  session: AssessmentSession
   resolved: readonly ResolvedTrial[]
   onStart: (p: Participant) => void
   onReview: (p: Participant, trial: ResolvedTrial) => void
@@ -34,15 +32,12 @@ export function Roster({
   }))
 
   const doneCount = rows.filter((r) => r.trial !== null).length
-  const phaseWord = session.phase === 'pre' ? strings.phase.pre : strings.phase.post
 
   return (
     <div className="roster">
-      <header className="roster__head">
-        <h1 className="roster__title">{strings.roster.title}</h1>
-        <span className="roster__phase">{phaseWord}</span>
-      </header>
-
+      {/* The title and the phase chip moved to the app header, which is now the
+          single place that answers "where am I". Repeating them here would be a
+          second answer to the same question, and it cost the list a row. */}
       <div className="roster__meta">
         <span>{block.siteName}</span>
         <span>{block.blockName}</span>
@@ -71,11 +66,15 @@ export function Roster({
                 )}
                 <span className="row__action">
                   {trial ? (
-                    <RailButton variant="quiet" onClick={() => onReview(participant, trial)}>
+                    <RailButton
+                      variant="quiet"
+                      icon="record"
+                      onClick={() => onReview(participant, trial)}
+                    >
                       {strings.roster.review}
                     </RailButton>
                   ) : (
-                    <RailButton onClick={() => onStart(participant)}>
+                    <RailButton icon="start" onClick={() => onStart(participant)}>
                       {strings.roster.start}
                     </RailButton>
                   )}
