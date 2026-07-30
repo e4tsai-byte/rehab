@@ -89,7 +89,10 @@ export function Sheet({
       <div className="sheet-wrap">
         <article className="sheet">
           <header className="sheet__head">
-            <h1 className="sheet__title">{strings.sheet.title}</h1>
+            {/* <h2>, not <h1>: on screen the header trail owns the page
+                heading, and two <h1>s is a malformed outline. On paper the size
+                is unchanged, so it still reads as the document title. */}
+            <h2 className="sheet__title">{strings.sheet.title}</h2>
             <p className="sheet__subtitle">{strings.sheet.subtitle}</p>
             <div className="sheet__meta">
               <span className="sheet__meta-item">

@@ -29,10 +29,17 @@ Node 22+. Built and verified on Node 26 / npm 11.
 
 ## What you are looking at
 
-Three surfaces plus a print artifact, under a **hub-and-spoke header**: the roster is the hub, and
-trial / result / sheet are spokes you return from by one control in one position on every surface.
-The header answers where you are; the rail carries the forward action. Everything is reachable from
-the roster without the scenario switcher.
+Four surfaces plus a print artifact, under a header that renders **the path to where you are**:
+
+```
+場次設定 ──► 本期名單 ──┬──► 王阿姨・量測
+                       ├──► 王阿姨・紀錄
+                       └──► 報表
+```
+
+Every segment of that path is a 64px button. Home is always the first segment; back is always the
+one before the current, which is one level *up* rather than a visit history. The header answers
+where you are; the rail carries the forward action.
 
 The theme is **positive polarity — dark ink on a cream ground**. That is an acuity decision: a
 bright field constricts the pupil, which increases depth of field for a 75–90 year old reader. The
@@ -40,9 +47,10 @@ printed sheet stays strictly black on white.
 
 | Surface | What it is |
 |---|---|
+| **Setup** | 據點, 期, phase, today's attendance, camera framing check. Where a session is configured. |
 | **Roster** | A 期 in progress, marked 前測 or 後測. Status per participant. Deliberately carries **no times**. |
 | **Trial** | The 5×STS itself. Mirrored self-view on the left half, one number and five pips on the right. |
-| **Result** | One participant's time, immediately after. Where the number finally appears. |
+| **Detail** | One participant, both phases, per-rep splits, 差值, and the full append-only attempt history. |
 | **Sheet** | A4, one page, printable. **This is the product.** |
 
 ### Press `S` for the scenario switcher
@@ -139,13 +147,17 @@ which the first does not. Verified: all ten digits measure 113.27 px at the hero
 
 Measured in a headless browser, not eyeballed.
 
+- **All six screens audited**, not just the roster: 394 text nodes across setup, roster, detail,
+  trial cue, trial running and the sheet. Zero below 4.5:1, minimum 5.28:1. Zero controls under
+  64 px once `<input>`s are resolved to their wrapping `<label>`, which is the actual tap target.
+  One `<h1>` per surface, no duplicates.
 - **Roster fits the class.** All **12 of 12 rows fully visible at 1280×800 with no scrolling**
   (neither the field nor the page scrolls), and 12 of 12 at 1600×900. Two columns: twelve rows at
   the 64 px tap floor is 768 px of rows alone, which does not fit under an 800 px viewport at any
   type size, so the tap target rather than the typography is the binding constraint.
 - **Contrast.** Full-page audit resolves every colour through a canvas (`getComputedStyle` returns
-  `oklch()` verbatim, so string parsing silently reports 1.00:1). 85 text nodes, **zero below
-  4.5:1**, minimum 5.28:1. Every text node in the locked participant field measures **≥8.19:1**
+  `oklch()` verbatim, so string parsing silently reports 1.00:1). **Zero below 4.5:1**,
+  minimum 5.28:1. Every text node in the locked participant field measures **≥8.19:1**
   against a 7:1 floor. Token matrix is in `DESIGN.md`; all values there are measured, and three
   hand-computed sets have now been wrong — including the first draft of this cream palette, whose
   estimates would have shipped `--ink-muted` at 3.80:1.

@@ -99,6 +99,11 @@ Applies **before any aesthetic rule**, not after.
 - **Cataract and contrast-sensitivity consideration:** the hero readout is achromatic — near-black
   ink on the cream ground — rather than a saturated hue, because chroma costs luminance contrast at
   3 m for an eye that scatters light. That rule is independent of polarity and survived the flip.
+- **Administrative thresholds are reported as counts, never as warnings.** The ≥10 average
+  attendance floor decides whether a 期 is funded at all, so the number is shown — beside the
+  threshold, in ordinary ink, with no colour, icon, or instruction attached. The device reports;
+  the 據點 decides. This is distinct from the 14-second ICOPE threshold, which is *clinical* and is
+  therefore absent from the product entirely rather than merely unstyled.
 - **Icons are functional only.** Every icon answers "what is this place" or "what will this do".
   They exist for wayfinding and status scanning, which helps an older user base, and they add a
   channel alongside word and shape so colour is never carrying meaning alone. Nothing is added to

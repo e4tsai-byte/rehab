@@ -69,9 +69,63 @@ export interface Strings {
     readonly backToRoster: string
     readonly srRepAnnounce: (n: number, total: number) => string
   }
+  readonly setup: {
+    readonly title: string
+    readonly lede: string
+    readonly siteLabel: string
+    readonly blockLabel: string
+    readonly yearLabel: string
+    readonly cycleLabel: string
+    readonly cycleOf: (n: number) => string
+    readonly phaseChoice: string
+    readonly attendeesTitle: string
+    readonly attendeesHint: string
+    readonly selectAll: string
+    readonly selectNone: string
+    readonly enrolledCount: (n: number) => string
+    readonly addTitle: string
+    readonly addFieldLabel: string
+    readonly addFieldHint: string
+    readonly addAction: string
+    readonly addPlaceholder: string
+    readonly attendanceCount: (n: number) => string
+    readonly fundedFloor: (n: number) => string
+    readonly fundedNote: string
+    readonly framingTitle: string
+    readonly framingHint: string
+    readonly begin: string
+    readonly idAssigned: (id: string) => string
+  }
+  readonly detail: {
+    readonly noRecord: string
+    readonly noRecordBody: string
+    readonly splitsTitle: string
+    readonly splitsHint: string
+    readonly splitOf: (n: number) => string
+    readonly totalLabel: string
+    readonly dateLabel: string
+    readonly protocolLabel: string
+    readonly protocolValid: string
+    readonly protocolInvalid: string
+    readonly deltaTitle: string
+    readonly deltaFaster: string
+    readonly deltaSlower: string
+    readonly deltaSame: string
+    readonly historyTitle: string
+    readonly historyHint: string
+    readonly attemptN: (n: number) => string
+    readonly correctsPrior: string
+    readonly supersededBy: string
+    readonly recordedAt: (t: string) => string
+    readonly reasonLabel: string
+    readonly firstContactRep: (n: number) => string
+  }
   readonly nav: {
     readonly switchToPre: string
     readonly switchToPost: string
+    readonly home: string
+    readonly back: string
+    readonly placeSetup: string
     /** Landmark label for the back-to-hub control. */
     readonly whereLabel: string
     readonly backToRoster: string
@@ -278,9 +332,68 @@ const zhTW: Strings = {
     srRepAnnounce: (n, total) => `第 ${n} 次，共 ${total} 次`,
   },
 
+  setup: {
+    title: '場次設定',
+    lede: '設定本場的據點、期別與階段，並勾選今天到場的長輩。',
+    siteLabel: '據點',
+    blockLabel: '期別',
+    yearLabel: '年度',
+    cycleLabel: '期別',
+    cycleOf: (n) => `第 ${n} 期`,
+    phaseChoice: '本場階段',
+    attendeesTitle: '本場出席名單',
+    attendeesHint: '勾選今天到場的長輩。未到場者仍在收案名單內。',
+    selectAll: '全選',
+    selectNone: '全部取消',
+    enrolledCount: (n) => `收案 ${n} 人`,
+    addTitle: '新增長輩',
+    addFieldLabel: '稱謂',
+    // Invariant 2, said out loud at the one place someone might type a name.
+    addFieldHint: '僅供現場辨識之簡稱。請勿輸入姓名、生日或身分證字號。代號由系統自動指定。',
+    addAction: '新增至收案名單',
+    addPlaceholder: '例如：王阿姨',
+    attendanceCount: (n) => `本場出席 ${n} 人`,
+    fundedFloor: (n) => `給付門檻：每期平均 ${n} 人`,
+    // A count, not a warning. The device reports the number; the 據點 decides
+    // what to do about it. No colour, no icon, no instruction.
+    fundedNote: '本欄僅供現場參考，實際給付以主管機關核定為準。',
+    framingTitle: '鏡頭確認',
+    framingHint: '建議在長輩就座前先確認取景範圍。',
+    begin: '開始本場',
+    idAssigned: (id) => `已指定代號 ${id}`,
+  },
+
+  detail: {
+    noRecord: '本階段尚無紀錄',
+    noRecordBody: '此階段尚未進行量測，或紀錄已作廢。',
+    splitsTitle: '各次起立時間',
+    splitsHint: '本次量測內每一次起立所需時間。',
+    splitOf: (n) => `第 ${n} 次`,
+    totalLabel: '總時間',
+    dateLabel: '量測日期',
+    protocolLabel: '測驗規範',
+    protocolValid: '符合',
+    protocolInvalid: '不符合',
+    deltaTitle: '前後測差值',
+    deltaFaster: '較前測快',
+    deltaSlower: '較前測慢',
+    deltaSame: '與前測相同',
+    historyTitle: '完整嘗試紀錄',
+    historyHint: '所有嘗試皆保留於紀錄檔。更正為另存一筆，不會覆蓋原紀錄。',
+    attemptN: (n) => `第 ${n} 次嘗試`,
+    correctsPrior: '更正前一筆紀錄',
+    supersededBy: '已由更正紀錄取代',
+    recordedAt: (t) => `紀錄時間 ${t}`,
+    reasonLabel: '原因',
+    firstContactRep: (n) => `第 ${n} 次起偵測到手部支撐`,
+  },
+
   nav: {
     switchToPre: '切換至前測',
     switchToPost: '切換至後測',
+    home: '場次設定',
+    back: '上一層',
+    placeSetup: '場次設定',
     whereLabel: '目前位置',
     backToRoster: '回本期名單',
     placeRoster: '本期名單',

@@ -99,6 +99,13 @@ h3 {
   width: 0.42ch;
 }
 
+/* An arithmetic sign is a figure-width glyph and needs the room. At the
+   separator width it overlapped the digit beside it. */
+.digits__cell--sign {
+  width: 1ch;
+  padding-right: 0.08ch;
+}
+
 /* ─── Screen-reader only ─────────────────────────────────────────────────── */
 
 .sr-only {

@@ -23,6 +23,7 @@ export type RecordId = string
 export type SessionId = string
 export type BlockId = string
 export type TrialId = string
+export type SiteId = string
 
 /** Which of the two mandated assessment points within a 期. */
 export type Phase = 'pre' | 'post'
@@ -33,12 +34,34 @@ export interface Participant {
   readonly label: string
 }
 
+/** A 特約服務點. One per appliance in practice; a list so a multi-site store
+    does not require an interface change later. */
+export interface Site {
+  readonly siteId: SiteId
+  readonly name: string
+}
+
+/**
+ * Minimum AVERAGE attendance per 期. Below it the site loses the entire
+ * NT$36,000 for that 期 — not a proportion of it.
+ *
+ * This is an administrative funding threshold, not a clinical one, and the UI
+ * renders it as a COUNT rather than a warning. The device reports how many
+ * people are in today's session; it does not police the site, does not colour
+ * the number red, and does not tell a 據點 what to do about it. Compare the
+ * treatment of the 14-second ICOPE threshold, which this build refuses to apply
+ * at all: that one is clinical, so it is absent entirely.
+ */
+export const FUNDED_ATTENDANCE_MIN = 10
+
 /** A 期 — 12 weeks, 1 session/week, 2 hours, min average attendance 10. */
 export interface Block {
   readonly blockId: BlockId
+  readonly siteId: SiteId
   readonly siteName: string
   readonly blockName: string
   readonly startedIso: string
+  /** Everyone ENROLLED in the 期. A superset of any one session's attendees. */
   readonly participants: readonly Participant[]
 }
 
@@ -47,6 +70,21 @@ export interface AssessmentSession {
   readonly blockId: BlockId
   readonly phase: Phase
   readonly dateIso: string
+  /** Who is present TODAY. Attendance varies session to session, and the
+      funding floor is an average across the 期, so this is per-session data
+      rather than a property of the 期. */
+  readonly attendeeIds: readonly ParticipantId[]
+}
+
+/** What the setup screen collects before a session opens. */
+export interface SessionSetup {
+  readonly siteId: SiteId
+  /** 民國 year, e.g. 115. */
+  readonly year: number
+  /** 第 N 期. Max 3 per year per 特約服務點. */
+  readonly cycle: number
+  readonly phase: Phase
+  readonly attendeeIds: readonly ParticipantId[]
 }
 
 /* ── Outcomes ─────────────────────────────────────────────────────────────────

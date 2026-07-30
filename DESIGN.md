@@ -321,11 +321,15 @@ number legible at three metres" or for a government funding report.
 | `RailButton` | 64px min, three sizes, full state set: default / hover / focus-visible / active / disabled. |
 | `ParticipantRow` | Roster row. Status by shape and word. **Carries no time.** |
 | `TrialField` | The locked participant zone. Two equal halves, or one when there is no camera. |
+| `Digits` | Fixed-cell numerals. Signs get a full cell; separators get 0.42ch. |
 | `FacilitatorRail` | Persistent bottom panel. |
 | `Sheet` | The A4 print surface. Light theme, separate scale in pt/mm. |
 | `ScenarioSwitcher` | Overlay, keypress-reachable, absent from print. |
 | `DemoBanner` | Persistent honesty marker. Cannot be dismissed. One dense line. |
-| `AppHeader` | Where you are, how to get back, which phase. One `<h1>` per surface. |
+| `AppHeader` | The path to where you are. Home, back, one `<h1>` per surface. |
+| `Setup` | Session setup. 據點, 期, phase, attendance, framing check. |
+| `ParticipantDetail` | One person, both phases, splits, full attempt history. |
+| `RepSplits` | Within-trial rep durations. Sequential, one series, direct-labelled. |
 | `Logo` | Placeholder mark in a dashed slot. Obviously provisional. |
 | `Icon` | Wayfinding and action glyphs. SVG, never a font glyph. |
 | `CameraSelfView` | Mirrored participant self-view. Fills its half of the split. |
@@ -433,6 +437,23 @@ Every unavailable path — permission denied, no camera, insecure origin, no bro
 ordinary text at the same weight as the idle copy, because none of them is an error and none stops
 the fixture demo working.
 
+### Roster density
+
+Twelve rows is the whole class, so the roster earns a rule about visual noise:
+**one container per row, not two.** Every row used to be a card holding a button
+that was itself a card — twenty-four bordered boxes on one screen.
+
+- **Only outstanding rows carry a container.** A measured row needs nothing done
+  to it, so it sits plain on the field. The box is a signal, not a default.
+- **The row action carries no chrome until it is pointed at.** Full 64px hit
+  area, near-zero visual weight: the border, fill and type weight come off, the
+  tap target does not. Shrinking a target to reduce weight would trade the wrong
+  thing.
+- **Hierarchy is identity, then status, then action.** The participant's label is
+  the largest thing in the row; the status chip is a size down; the action is the
+  same size as the status but in recessive ink, taking the accent only on the
+  rows that still need work.
+
 ### Roster carries no times
 
 A screen listing ten older adults with their times, in a small shared room, is a leaderboard. The
@@ -468,32 +489,116 @@ Two components, and the split is the policy rather than an accident:
 Three disjoint shape families exist so a facilitator glancing sideways never confuses them:
 tracking is circles and a square, outcomes are bars and polygons, camera signal is a stepped meter.
 
-## Navigation — hub and spoke
+## Navigation — a path, not a nav bar
 
-This product is a workflow, not a website, and a row of top-level tabs would misdescribe it. There
-are four surfaces and only one is a place you dwell: **the roster is the hub**, and trial, result
-and sheet are spokes entered for one participant or one task and returned from. A tab bar would
-imply you can be "in" the trial surface without a participant, which is not a state that exists.
+This product is a workflow. Five surfaces, and they nest:
 
-The header carries exactly three things:
+```
+場次設定 ──► 本期名單 ──┬──► 王阿姨・量測
+                       ├──► 王阿姨・紀錄
+                       └──► 報表
+```
 
-1. **Where you are** — the current surface, named, with its icon. This is the page's `<h1>`, so
-   every surface now has exactly one and the heading order is well-formed. Before this the trial
-   screen had no heading at all.
-2. **How to get back** — one control, one destination, one label, one position, on every spoke. A
-   facilitator never has to learn a second way back or decide which back is the right one. This is
-   why `回名單` was removed from the trial rail and `關閉` from the sheet toolbar: two controls to
-   one destination is one too many.
-3. **Which phase** — pre or post, **read-only**. Wayfinding, not a control. Switching phase is a
-   facilitator action and lives in the rail, because a thing that changes what you are recording
-   must not sit one pixel from a thing that only says where you are.
+A row of top-level tabs would misdescribe that: it would imply you can be "in"
+the trial surface without a participant, which is not a state that exists. So the
+header renders **the actual path to where you are, and every segment of it is a
+button.** Two guarantees fall out, and a facilitator can rely on both without
+learning anything:
 
-Everything else stays put. The rail keeps the primary forward action on each surface, which is what
-a standing operator's thumb is already aimed at. **The header is for orientation; the rail is for
-doing.**
+- **Home is always the first segment**, and it always returns to 場次設定.
+- **Back is always the segment before the current one** — one level *up*, by
+  construction rather than by history. A browser-style back that retraced visits
+  would send someone who reached 紀錄 from a finished 量測 back into the trial
+  they just completed, which is not up.
 
-A judge opening the demo URL cold reaches every surface from the roster without the scenario
-switcher: `開始量測` on any outstanding row, `查看紀錄` on any measured row, `產生報表` in the rail.
+Back is *also* duplicated as an explicit ← control at the left of the trail. A
+breadcrumb segment reads as location to some people and as a control to others,
+and a standing part-time worker should not have to work out which. Every segment
+and the ← are full 64px targets; the segments carry a real border and fill, not
+underlined text, so "tappable" is not something you have to infer.
+
+**The current segment is the page's `<h1>`.** That gives exactly one heading per
+surface and a well-formed outline — the trial screen had no heading at all before
+this, and the setup screen and the sheet each briefly had two.
+
+**The phase chip is read-only.** Phase is chosen once, on setup. A control that
+changes which assessment point you are recording into must not sit beside a thing
+that only says where you are — that was the roster rail's 切換至前測, and it is
+gone.
+
+The rail keeps the primary forward action on each surface, which is what a
+standing operator's thumb is already aimed at. **The header is for orientation;
+the rail is for doing.**
+
+## Session setup
+
+The entry point, before the roster. Where 據點, 期 (year + cycle), phase and
+today's attendance are configured, plus a camera framing check before anyone sits
+down.
+
+**Invariant 2 is enforced by the interface's shape, not by discipline.** The
+add-participant form has exactly one text input and it collects a short display
+label — verified: one `<input type="text">` on the whole surface. The
+pseudonymous id is assigned by the store and shown back to staff after the fact
+(`已指定代號 P-0056`); it is never typed. `enrolParticipant(siteId, label)` takes
+no other parameter, so there is nowhere a real identifier could be passed even by
+mistake. The hint under the field says so in the interface, at the one place in
+the product where someone might be tempted.
+
+**Attendance is a count, not a warning.** Below an average of 10 per 期 the site
+loses the entire NT$36,000, so the number matters — but it is the 據點's number.
+It renders as plain text at ordinary weight beside the threshold it is measured
+against: no red, no icon, no "too few" copy, no blocked button, no instruction.
+The device reports; the site decides. Compare the 14-second ICOPE threshold,
+which this build refuses to apply at all: that one is clinical, so it is absent
+entirely rather than merely unstyled.
+
+Enrolment is **site-level and outlives any one 期**, so the picker defaults to the
+people already in this 期 rather than to the site's whole book.
+
+## Participant detail
+
+Reached from 查看紀錄. One person, this 期, both phases side by side, plus the
+full append-only attempt history.
+
+**Two boundaries, and neither may be crossed by anything added here.**
+
+1. **No longitudinal trend.** The design doc's "Explicitly NOT building" list
+   names trend charts. This surface shows two assessment points because the 期
+   has two, as two blocks — never as a series on a time axis, never with 期
+   history alongside. The per-rep splits *inside* each trial are plotted, and
+   that is a different object: within-trial detail at 30-second resolution, not a
+   trend across months.
+2. **No determination.** No 14-second threshold, no pass/fail, no risk band, no
+   percentile, no comparison against published norms, no referral suggestion. If
+   a `passed` or `band` field ever appears here the product has crossed the line
+   it exists to stay behind.
+
+**差值 is not weakened.** Computed only when both trials are protocol-valid *and*
+over the same rep count; otherwise 不可比較, with the same wording the sheet's
+footer uses. Direction is reported in words — 較前測快 — which is arithmetic.
+"Improved", "normal" or "at risk" would be determinations.
+
+**Corrections appear as corrections.** The original outcome stays on screen
+beside the corrected one; voids and aborts stay in the history. Nothing on this
+surface reads as an edit, because nothing in the log is one.
+
+### The rep-split chart
+
+Form chosen before colour, per the dataviz method: the job is *compare magnitude
+across five ordered items, one series*, which is a bar chart with a **sequential
+single hue** — not categorical, because the reps are one series rather than five
+identities needing to be told apart. One series needs no legend; the title names
+it. Values are direct-labelled, so the chart never depends on an axis a reader
+has to trace back, and a screen-reader table carries the same numbers.
+
+Marks follow the spec: 12px bars in a 20px slot so the leftover is air rather
+than fill, square at the baseline and 4px rounded at the data end, a 2px surface
+gap between neighbours, and text in text tokens rather than the series colour.
+
+Bar width is scaled against **the trial's own longest rep**. The comparison is
+strictly internal to that measurement; an external scale would be importing a
+norm.
 
 ## The logo slot
 

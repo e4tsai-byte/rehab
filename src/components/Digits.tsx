@@ -8,7 +8,14 @@
    changes width as its value changes is disqualifying.
    ───────────────────────────────────────────────────────────────────────────── */
 
-const SEPARATORS = new Set(['.', ':', ',', '−', '-', '+', '±', '/'])
+/* Narrow cells. These sit BETWEEN figures and would leave a visible gap in a
+   full 1ch cell, so they get a reduced one. */
+const SEPARATORS = new Set(['.', ':', ',', '/'])
+
+/* Full cells. An arithmetic sign is as wide as a digit, not a hairline: in the
+   0.42ch separator cell these collided with the figure after them, which was
+   visible on every signed 差值 on the sheet and on the participant detail. */
+const SIGNS = new Set(['−', '-', '+', '±'])
 
 export function Digits({
   value,
@@ -32,7 +39,13 @@ export function Digits({
         {[...text].map((ch, i) => (
           <span
             key={`${i}-${ch}`}
-            className={SEPARATORS.has(ch) ? 'digits__cell digits__cell--sep' : 'digits__cell'}
+            className={
+              SEPARATORS.has(ch)
+                ? 'digits__cell digits__cell--sep'
+                : SIGNS.has(ch)
+                  ? 'digits__cell digits__cell--sign'
+                  : 'digits__cell'
+            }
           >
             {ch}
           </span>

@@ -1,84 +1,114 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    The header — navigation, and the answer to "where am I".
 
-   STRUCTURE: HUB AND SPOKE, NOT A NAV BAR.
+   STRUCTURE: A PATH, NOT A NAV BAR.
 
-   This product is a workflow, not a website, and a row of top-level tabs would
-   misdescribe it. There are four surfaces and only one of them is a place you
-   dwell: the roster is the hub, and trial / result / sheet are spokes you enter
-   for one participant or one task and then come back from. A tab bar would
-   imply you can be "in" the trial surface without a participant, which is not a
-   state that exists.
+   This product is a workflow. There are five surfaces and they nest:
 
-   So the header carries exactly three things:
+       設定 ──► 本期名單 ──┬──► 王阿姨・量測
+                          ├──► 王阿姨・紀錄
+                          └──► 報表
 
-     1. WHERE YOU ARE — the current surface, named, with its icon. This is the
-        page's <h1>, so every surface now has exactly one and the heading order
-        is well-formed. Before this, the trial screen had no heading at all.
-     2. HOW TO GET BACK — a single, always-identical control returning to the
-        hub. One destination, one label, one position, on every spoke. A
-        facilitator never has to learn a second way back, and never has to
-        decide which back is the right one.
-     3. WHICH PHASE — pre or post, read-only. Wayfinding, not a control:
-        switching phase is a facilitator action and lives in the rail, because a
-        thing that changes what you are recording should not sit one pixel from
-        a thing that only tells you where you are.
+   So the header shows the actual path to where you are, and **every segment of
+   it is a button**. That gives two guarantees a facilitator can rely on without
+   learning anything:
 
-   Everything else stays where it was. The rail keeps the primary forward action
-   on each surface, which is what a standing operator's thumb is already aimed
-   at. The header is for orientation; the rail is for doing.
+     - **Home** is always the first segment. It always returns to 場次設定.
+     - **Back** is always the segment immediately before the current one, which
+       is one level up by construction rather than by history. A browser-style
+       back that retraced visits would send someone who arrived at 紀錄 from
+       量測 back into a finished trial, which is not "up".
+
+   Both are also duplicated as an explicit ← control at the left, because a
+   breadcrumb segment reads as location to some people and as a control to
+   others, and a standing part-time worker should not have to guess. The whole
+   trail is 64px tall so every segment clears the tap floor.
+
+   The phase chip is READ-ONLY. Phase is chosen once, on the setup screen. A
+   control that changes which assessment point you are recording into must not
+   sit beside a thing that only says where you are — that was the old roster
+   rail's 切換至前測, and it is gone.
    ───────────────────────────────────────────────────────────────────────────── */
 
 import { Icon, type IconKind } from './Icon'
 import { Logo } from './Logo'
 import { strings } from '../i18n/strings'
 
-export interface Place {
+export interface Crumb {
   readonly title: string
   readonly icon: IconKind
+  /** Absent on the current surface, which is what makes it the current one. */
+  readonly go?: (() => void) | undefined
 }
 
 export function AppHeader({
-  place,
+  trail,
   phaseWord,
-  onBack,
+  scenarioSlot,
 }: {
-  place: Place
-  /** Read-only. The control that changes it lives in the rail. */
-  phaseWord: string
-  /** Absent on the hub itself, which is what makes the hub identifiable. */
-  onBack?: (() => void) | undefined
+  /** Root first, current surface last. Always at least one entry. */
+  trail: readonly Crumb[]
+  phaseWord: string | null
+  /** The demo-only scenario control. Lives here so it stops floating over
+      roster content, which is what it did as a fixed-position button. */
+  scenarioSlot?: React.ReactNode
 }) {
+  const back = [...trail].reverse().find((c) => c.go)
+  const home = trail[0]
+
   return (
     <header className="hdr no-print">
       <Logo />
 
-      <div className="hdr__where">
-        {onBack && (
-          <>
-            <nav aria-label={strings.nav.whereLabel}>
-              <button type="button" className="hdr__back" onClick={onBack}>
-                <Icon kind="back" />
-                <Icon kind="roster" />
-                <span>{strings.nav.placeRoster}</span>
-              </button>
-            </nav>
-            <span className="hdr__sep" aria-hidden="true">
-              /
-            </span>
-          </>
+      <nav className="hdr__nav" aria-label={strings.nav.whereLabel}>
+        {/* Explicit back, in a fixed position, on every surface that has one. */}
+        {back && back !== home && (
+          <button type="button" className="hdr__up" onClick={back.go} title={strings.nav.back}>
+            <Icon kind="back" />
+            <span className="sr-only">{strings.nav.back}</span>
+          </button>
         )}
 
-        <h1 className="hdr__title">
-          <Icon kind={place.icon} />
-          <span>{place.title}</span>
-        </h1>
-      </div>
+        <ol className="trail">
+          {trail.map((c, i) => {
+            const last = i === trail.length - 1
+            return (
+              <li key={`${c.title}-${i}`} className="trail__item">
+                {i > 0 && (
+                  <span className="trail__sep" aria-hidden="true">
+                    /
+                  </span>
+                )}
+                {c.go ? (
+                  <button type="button" className="trail__link" onClick={c.go}>
+                    <Icon kind={c.icon} />
+                    <span>{c.title}</span>
+                  </button>
+                ) : (
+                  /* The current segment is the page's <h1>. It names the surface
+                     and it is already the one heading every surface has, so
+                     making it the heading avoids either a duplicate title or a
+                     visually-hidden one that can drift out of sync. */
+                  <h1 className="trail__now" aria-current={last ? 'page' : undefined}>
+                    <Icon kind={c.icon} />
+                    <span>{c.title}</span>
+                  </h1>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+      </nav>
 
-      <span className="hdr__phase">
-        <span className="hdr__phase-label">{strings.nav.phaseLabel}</span>
-        <span className="hdr__phase-value">{phaseWord}</span>
-      </span>
+      <div className="hdr__end">
+        {phaseWord && (
+          <span className="hdr__phase">
+            <span className="hdr__phase-label">{strings.nav.phaseLabel}</span>
+            <span className="hdr__phase-value">{phaseWord}</span>
+          </span>
+        )}
+        {scenarioSlot}
+      </div>
     </header>
   )
 }

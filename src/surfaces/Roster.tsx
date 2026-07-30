@@ -55,7 +55,9 @@ export function Roster({
           {rows.map(({ participant, trial }) => {
             const display = trial ? outcomeDisplay(trial.outcome) : awaitingDisplay
             return (
-              <li key={participant.id} className={trial ? 'row row--done' : 'row'}>
+              // Only outstanding rows carry a container: a measured row needs
+              // nothing done to it, so it is plain on the field.
+              <li key={participant.id} className={trial ? 'row' : 'row row--todo'}>
                 <span className="row__id">{participant.id}</span>
                 <span className="row__label">{participant.label}</span>
                 <span className="row__state">

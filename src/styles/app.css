@@ -11,86 +11,126 @@
 }
 
 /* ─── Header ─────────────────────────────────────────────────────────────────
-   Where am I, how do I get back, which phase. See AppHeader.tsx for why this is
-   a hub-and-spoke header rather than a nav bar.
+   A PATH, not a nav bar. Every segment is a control; the first is always home
+   and the one before the current is always up. See AppHeader.tsx.
    ──────────────────────────────────────────────────────────────────────────── */
 
 .hdr {
   display: flex;
   align-items: center;
-  gap: var(--s-6);
-  padding: var(--s-2) var(--s-6);
+  gap: var(--s-4);
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-6);
   background: var(--surface-raised);
   border-bottom: 1px solid var(--line);
   min-height: 80px;
 }
 
-.hdr__where {
+.hdr__nav {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* Full 64px facilitator tap target, same as every other control. An earlier
-   revision made this 44px on the argument that navigation is not a task control
-   and that 64px dominated the header. That argument does not survive the actual
-   constraint: the floor is about a hurried standing user's thumb, and a
-   facilitator reaching for "back" mid-class is exactly that user. The header
-   grew to fit it, and the roster still holds twelve rows. */
-.hdr__back {
+/* The explicit up control. Duplicates the previous trail segment on purpose: a
+   breadcrumb reads as location to some people and as a control to others, and a
+   standing part-time worker should not have to work out which. */
+.hdr__up {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.hdr__up:hover {
+  background: var(--blue-50);
+  border-color: var(--line-strong);
+}
+
+.trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.trail__item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.trail__sep {
+  color: var(--ink-muted);
+  padding: 0 var(--s-1);
+}
+
+/* Unmistakably tappable: a real border and fill, not underlined text. Full 64px
+   so every segment clears the facilitator tap floor. */
+.trail__link,
+.trail__now {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
   min-height: var(--tap);
-  padding: 0 var(--s-4);
-  border: 1px solid var(--line);
+  padding: 0 var(--s-3);
   border-radius: var(--r);
+  font-size: var(--t-fac);
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.trail__link {
+  border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink-secondary);
-  font-size: var(--t-fac-sm);
-  white-space: nowrap;
   transition:
     background var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out);
 }
 
-.hdr__back:hover {
+.trail__link:hover {
   background: var(--blue-50);
-  color: var(--ink);
   border-color: var(--line-strong);
+  color: var(--ink);
 }
 
-.hdr__sep {
-  color: var(--ink-muted);
-  font-size: var(--t-fac-sm);
-}
-
-.hdr__title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
+/* The current surface. No border and no fill, so the path reads as "these are
+   places you can go, and you are here" rather than as a row of equal buttons. */
+.trail__now {
+  border: 1px solid transparent;
+  color: var(--ink);
   font-size: var(--t-fac-lg);
   font-weight: 500;
-  color: var(--ink);
-  min-width: 0;
 }
 
-.hdr__title > span {
+.trail__now > span,
+.trail__link > span {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-/* Read-only. The control that changes phase lives in the rail, because a thing
-   that changes what you are recording must not sit beside a thing that only
-   says where you are. */
+.hdr__end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 0 0 auto;
+}
+
+/* Read-only. Phase is chosen once, on the setup screen. */
 .hdr__phase {
   display: inline-flex;
   align-items: baseline;
   gap: var(--s-2);
-  flex: 0 0 auto;
   padding: var(--s-1) var(--s-3);
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
@@ -623,6 +663,14 @@
   border-top: 1px solid var(--line);
 }
 
+/* Nested in a setup card, the controls are part of the card rather than a
+   separate panel, so they drop their own chrome. */
+.card .camctl {
+  background: transparent;
+  border-top: none;
+  padding: 0;
+}
+
 .camctl__text {
   display: flex;
   flex-direction: column;
@@ -727,25 +775,32 @@
   }
 }
 
+/* ONE container per row, not two. Every row used to be a card holding a button
+   that was itself a card, which at twelve rows is twenty-four bordered boxes on
+   one screen. The row keeps its box only when it needs action; a measured row
+   is plain on the field and the action inside it carries no chrome at all until
+   it is pointed at.
+
+   HIERARCHY: identity first, status second, action third. The participant's
+   label is the largest thing in the row, the status chip is a size down, and
+   the action is the same size as the status but in recessive ink. */
 .row {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  padding: 0 var(--s-3);
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
+  padding: 0 var(--s-2) 0 var(--s-3);
   min-height: var(--tap);
-  /* Multicol needs explicit spacing and an unbreakable row box; `gap` on the
-     list does not apply across columns. */
-  margin-bottom: var(--s-2);
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  margin-bottom: var(--s-1);
   break-inside: avoid;
 }
 
-/* Measured rows recede; outstanding rows sit up on the raised surface. The
-   contrast is the scan signal, alongside the status hue. */
-.row--done {
-  background: transparent;
+/* Only outstanding rows get a container. They are the ones that still need
+   something done to them, so they are the ones that earn the weight. */
+.row--todo {
+  background: var(--surface-raised);
+  border-color: var(--line);
 }
 
 .row__id {
@@ -755,17 +810,19 @@
   flex: 0 0 auto;
 }
 
+/* First in the hierarchy. */
 .row__label {
   font-size: var(--t-fac-lg);
   font-weight: 500;
+  color: var(--ink);
   flex: 1 1 auto;
   min-width: 5ch;
 }
 
 /* The roster carries NO TIMES. Twelve older adults listed with their times in a
    small shared room is a leaderboard, which the design doc names as the most
-   likely route to facilitator veto. Numbers live on the result surface (one
-   person at a time) and on the sheet (read alone by the site lead). */
+   likely route to facilitator veto. Numbers live on the participant detail
+   surface (one person at a time) and on the sheet (read alone by the lead). */
 .row__state {
   flex: 0 0 auto;
   width: 11ch;
@@ -782,57 +839,34 @@
   flex: 0 0 auto;
 }
 
-/* ─── Result ─────────────────────────────────────────────────────────────── */
-
-.result {
-  padding: var(--s-6) var(--s-6) var(--s-8);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-6);
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.result__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-4);
-  flex-wrap: wrap;
-}
-
-/* Facilitator band. Only the measured time below stays large, and that is a
-   hierarchy decision about the surface's primary content, not the participant
-   floor being applied here. */
-.result__title {
-  font-size: var(--t-fac-lg);
+/* THIRD in the hierarchy, and the whole point of the density pass: full 64px
+   hit area, near-zero visual weight. The tap target is unchanged; only the
+   border, fill and type weight come off. */
+.row__action .btn {
+  min-height: var(--tap);
+  min-width: 0;
+  padding: 0 var(--s-3);
+  border-color: transparent;
+  background: transparent;
+  font-size: var(--t-fac-sm);
   font-weight: 500;
+  color: var(--ink-muted);
 }
 
-.result__primary {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-4);
-  flex-wrap: wrap;
+/* The outstanding row's action is the one thing on this screen a facilitator is
+   looking for, so it carries the accent — as text, not as a filled button. */
+.row--todo .row__action .btn {
+  color: var(--accent);
 }
 
-.result__time {
-  font-size: var(--t-display);
-  font-weight: 700;
-  line-height: 1;
+.row__action .btn:hover:not(:disabled),
+.row__action .btn:focus-visible {
+  background: var(--blue-50);
+  border-color: var(--line);
   color: var(--ink);
 }
 
-.result__unit {
-  font-size: var(--t-fac-lg);
-  color: var(--ink-secondary);
-}
-
-.result__facts {
-  display: flex;
-  gap: var(--s-12);
-  flex-wrap: wrap;
-}
+/* ─── Facts ── shared by the participant detail surface ─────────────────── */
 
 .fact {
   display: flex;
@@ -851,38 +885,9 @@
   color: var(--ink);
 }
 
-.perrep {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
-
-.perrep__title {
-  font-size: var(--t-fac-sm);
-  color: var(--ink-muted);
-}
-
-.perrep__list {
-  display: flex;
-  gap: var(--s-6);
-  flex-wrap: wrap;
-}
-
-.perrep__item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  min-width: 7ch;
-}
-
-.perrep__n {
-  font-size: var(--t-fac-sm);
-  color: var(--ink-muted);
-}
-
-.perrep__t {
-  font-size: var(--t-fac-lg);
-  font-weight: 500;
+.fact__value--lead {
+  font-size: var(--t-fac-xl);
+  font-weight: 700;
 }
 
 /* ─── Dialog ─────────────────────────────────────────────────────────────── */
@@ -1032,9 +1037,11 @@
 /* TOP-right, below the header. The whole bottom edge belongs to the facilitator
    rail: bottom-right is the primary action and bottom-left is the block
    context. Earlier revisions put this demo affordance on top of each in turn. */
+/* Anchored under the header rather than floating over the field. As a
+   fixed-position button it sat on top of roster rows. */
 .scn {
   position: fixed;
-  inset: 132px var(--s-4) auto auto;
+  inset: 84px var(--s-4) auto auto;
   z-index: var(--z-scenario);
   background: var(--surface-raised);
   border: 1px solid var(--line-strong);
@@ -1102,11 +1109,9 @@
   font-weight: 700;
 }
 
+/* In the header's end slot now, in normal flow. */
 .scn__toggle {
-  position: fixed;
-  inset: 132px var(--s-4) auto auto;
-  z-index: var(--z-scenario);
-  min-height: 44px;
+  min-height: var(--tap);
   padding: 0 var(--s-4);
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
@@ -1117,6 +1122,548 @@
 
 .scn__toggle:hover {
   color: var(--ink);
+}
+
+/* ─── Session setup ──────────────────────────────────────────────────────────
+   Supervisor-facing, and the only surface where a session is configured.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.setup {
+  padding: var(--s-6);
+  max-width: 1320px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.setup__lede {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  max-width: 70ch;
+}
+
+.setup__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+.setup__view {
+  height: 200px;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.card--wide {
+  grid-column: 1 / -1;
+}
+
+.card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.card__title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.card__hint {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.45;
+  max-width: 70ch;
+}
+
+.card__actions {
+  display: flex;
+  gap: var(--s-3);
+}
+
+/* Text-weight, full tap height. These are convenience shortcuts for the list
+   beneath, so they carry no border or fill — but the 64px floor is about a
+   hurried standing thumb and applies to every control regardless of how light
+   it looks, so the hit area is full size and only the chrome is absent. */
+.linkbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  justify-content: center;
+  font-size: var(--t-fac-sm);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+}
+
+.linkbtn:hover {
+  background: var(--blue-50);
+}
+
+/* ── Fields ─────────────────────────────────────────────────────────────── */
+
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.fld--group {
+  border: none;
+}
+
+.fld__label {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.fld__hint {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+.fld__control {
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--t-fac);
+  width: 100%;
+}
+
+.fld-row {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.fld-row .fld {
+  flex: 1 1 8rem;
+}
+
+/* Segmented phase choice. Radios under the hood, so keyboard and screen-reader
+   behaviour is the platform's rather than reinvented. */
+.seg {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.seg__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  flex: 1 1 0;
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--ink-secondary);
+  font-size: var(--t-fac);
+  cursor: pointer;
+}
+
+.seg__opt input {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--accent);
+}
+
+.seg__opt--on {
+  border-color: var(--accent);
+  background: var(--blue-50);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ── Attendance picker ──────────────────────────────────────────────────── */
+
+.picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--s-2);
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.pick--on {
+  border-color: var(--accent);
+  background: var(--blue-50);
+}
+
+.pick input {
+  width: 1.35rem;
+  height: 1.35rem;
+  accent-color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.pick__label {
+  font-size: var(--t-fac);
+  font-weight: 500;
+  flex: 1 1 auto;
+}
+
+.pick__id {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.addp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line);
+}
+
+.addp__title {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.addp__done {
+  font-size: var(--t-fac-sm);
+  color: var(--accent);
+}
+
+.rail__note {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+/* ─── Participant detail ─────────────────────────────────────────────────────
+   Two phases side by side. NOT a trend: two assessment points is what the 期
+   has, and they are shown as two blocks rather than as a series on a time axis.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.pd {
+  padding: var(--s-4) var(--s-6) var(--s-6);
+  max-width: 1320px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.pd__phases {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+.pd__phase {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.pd__phase-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.pd__phase-name {
+  font-size: var(--t-fac-lg);
+  font-weight: 700;
+}
+
+.pd__facts {
+  display: flex;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.pd__flag {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+}
+
+.pd__empty {
+  padding: var(--s-4) 0;
+}
+
+.pd__empty-title {
+  font-size: var(--t-fac);
+  color: var(--ink-secondary);
+}
+
+.pd__empty-body {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+/* ── The 差值 block ─────────────────────────────────────────────────────────
+   Arithmetic with a comparability guard. Never a verdict: no threshold, no
+   band, no norm. See ParticipantDetail.tsx. */
+
+.pd__delta {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.pd__delta-title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+}
+
+.pd__delta-value {
+  font-size: var(--t-fac-xl);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Not an error, and not styled as one: a refusal to compare two different
+   things is a correct outcome. */
+.pd__delta-value--none {
+  font-size: var(--t-fac-lg);
+  color: var(--ink-secondary);
+  font-weight: 500;
+}
+
+.pd__delta-why {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.5;
+  max-width: 80ch;
+}
+
+/* ── Attempt history ───────────────────────────────────────────────────────
+   Every attempt stays visible, including voids and aborts. Corrections are
+   shown AS corrections against the original, never as edits. */
+
+.pd__history {
+  border-top: 1px solid var(--line);
+  padding-top: var(--s-3);
+}
+
+.pd__history-head::marker,
+.pd__history-head::-webkit-details-marker {
+  display: none;
+  content: '';
+}
+
+/* Explicit affordance: the native marker is suppressed by `display: flex` on
+   the summary, and a disclosure with no visible control is not a control. */
+.pd__history-head::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 6px solid currentColor;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transition: transform var(--dur-fast) var(--ease-out);
+  flex: 0 0 auto;
+}
+
+.pd__history[open] .pd__history-head::before {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd__history-head::before {
+    transition: none;
+  }
+}
+
+.pd__history-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  font-size: var(--t-fac-sm);
+  font-weight: 500;
+  color: var(--ink-secondary);
+  cursor: pointer;
+}
+
+.pd__history-count {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  padding: 0 0.45em;
+}
+
+.pd__history-hint {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  line-height: 1.45;
+  margin-bottom: var(--s-2);
+}
+
+.pd__attempts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.attempt {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.attempt__n {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  width: 8ch;
+  flex: 0 0 auto;
+}
+
+.attempt__state {
+  flex: 0 0 auto;
+}
+
+.attempt__meta {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.attempt__corrected {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  color: var(--ink-secondary);
+}
+
+/* ─── Rep splits ─────────────────────────────────────────────────────────────
+   Sequential single hue, one series, direct-labelled. Within-trial only — see
+   RepSplits.tsx for why this is not and must not become a trend chart.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.splits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.splits__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.splits__title {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.splits__hint {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.splits__plot {
+  display: flex;
+  flex-direction: column;
+  /* The 2px surface gap between touching marks. */
+  gap: 2px;
+}
+
+.split {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.split__n {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  width: 6ch;
+  flex: 0 0 auto;
+}
+
+.split__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Bars are capped in thickness rather than filling the slot; the leftover is
+     air, per the mark spec. */
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.split__bar {
+  height: 100%;
+  background: var(--accent);
+  /* Square at the baseline, 4px rounded at the data end. */
+  border-radius: 0 4px 4px 0;
+  min-width: 2px;
+}
+
+/* Direct-labelled, so the chart never depends on an axis a reader has to trace
+   back. Text wears text tokens, never the series colour. */
+.split__t {
+  font-size: var(--t-fac-sm);
+  font-weight: 500;
+  color: var(--ink);
+  width: 8ch;
+  flex: 0 0 auto;
+  text-align: right;
 }
 
 /* ─── Narrow viewports ───────────────────────────────────────────────────────
