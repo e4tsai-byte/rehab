@@ -1,0 +1,25 @@
+{
+  "name": "velocare",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "VeloCare Tier 1 — fixed-camera 5x sit-to-stand measurement instrument. Frontend only, fixtures behind SessionDataSource.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-tc": "^5.2.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.0.0"
+  }
+}
