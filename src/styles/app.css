@@ -1,0 +1,834 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Layout and components. The zone law is implemented here.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+/* ─── Demo banner ────────────────────────────────────────────────────────── */
+
+.demo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  padding: var(--s-3) var(--s-6);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+}
+
+.demo__badge {
+  font-weight: 700;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 0.1em 0.55em;
+  white-space: nowrap;
+}
+
+/* --ink-secondary (7.81:1 here) rather than --ink-muted (5.04:1). Both clear
+   4.5:1; this is a legibility preference for a persistent honesty notice a
+   stranger must actually read, not a contrast fix. */
+.demo__detail {
+  color: var(--ink-secondary);
+}
+
+/* ─── Shapes ─────────────────────────────────────────────────────────────── */
+
+.shape {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  /* Optically centred against CJK glyphs, which sit high in the em box. */
+  vertical-align: -0.115em;
+  color: inherit;
+}
+
+/* ─── The zone law ───────────────────────────────────────────────────────────
+   Participant Field on top, Facilitator Rail below, separated by MATERIAL
+   (different surface lightness) rather than by font size. That separation is
+   the whole resolution of one-monitor-two-audiences.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.zones {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.field {
+  background: var(--bg);
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* During an active trial the field is locked: one number, one pip row. Nothing
+   else may enter. `--ink-muted` fails 7:1 and is therefore banned here, which
+   makes the rule mechanical rather than a matter of vigilance. */
+.field--locked {
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-12);
+  padding: var(--s-8);
+  overflow: hidden;
+}
+
+.rail {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: var(--s-4) var(--s-6);
+  min-height: var(--rail-h-min);
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  z-index: var(--z-rail);
+}
+
+.rail__state {
+  flex: 0 0 auto;
+  min-width: 12ch;
+}
+
+.rail__spacer {
+  flex: 1 1 auto;
+}
+
+.rail__actions {
+  display: flex;
+  gap: var(--s-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rail__context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 0 0 auto;
+}
+
+.rail__context-id {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.rail__context-label {
+  font-size: var(--t-fac-lg);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 var(--s-6);
+  border-radius: var(--r);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--t-fac);
+  font-weight: 500;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: oklch(0.34 0 0);
+}
+
+.btn:active:not(:disabled) {
+  background: oklch(0.31 0 0);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  /* No full-saturation accent on an inactive state. */
+  border-color: var(--line);
+}
+
+.btn--primary {
+  min-height: 88px;
+  padding: 0 var(--s-12);
+  font-size: var(--t-fac-lg);
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: oklch(0.88 0 0);
+  border-color: oklch(0.88 0 0);
+}
+
+.btn--primary:active:not(:disabled) {
+  background: oklch(0.82 0 0);
+  border-color: oklch(0.82 0 0);
+}
+
+.btn--quiet {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--ink-secondary);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+/* ─── State chip ─────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55ch;
+  white-space: nowrap;
+}
+
+.chip .shape {
+  width: 0.85em;
+  height: 0.85em;
+  vertical-align: baseline;
+}
+
+.chip--rail {
+  font-size: var(--t-fac);
+}
+
+.chip--row {
+  font-size: var(--t-fac-sm);
+}
+
+.chip--lead {
+  font-size: var(--t-lead);
+  font-weight: 500;
+}
+
+.chip--neutral {
+  color: var(--ink-secondary);
+}
+
+.chip--accent {
+  color: var(--accent);
+}
+
+.chip--alert {
+  color: var(--alert);
+}
+
+/* ─── Trial readout ──────────────────────────────────────────────────────── */
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-6);
+}
+
+.readout__count {
+  font-size: var(--t-hero);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.readout__unit {
+  font-size: var(--t-part);
+  color: var(--ink-secondary);
+  letter-spacing: 0.08em;
+}
+
+/* Cue state: the participant is seated and waiting. Large, calm, no number. */
+.cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-6);
+  text-align: center;
+  /* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line. At 32ch it
+     broke 工作人員 mid-compound, which reads badly in Chinese. */
+  max-width: 44ch;
+}
+
+.cue__title {
+  font-size: var(--t-display);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.cue__hint {
+  font-size: var(--t-part);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+  /* Prevents breaks before closing punctuation and other prohibited positions. */
+  line-break: strict;
+}
+
+/* Terminal state. Reads 完成. Never 停止. */
+.done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-8);
+}
+
+.done__word {
+  font-size: var(--t-display);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+/* Void. One flash, not a loop: a looping alarm in a room of ten older adults is
+   a dignity problem. */
+.void-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+  text-align: center;
+  max-width: 34ch;
+}
+
+.void-note__title {
+  font-size: var(--t-display);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.void-note__body {
+  font-size: var(--t-part);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+}
+
+@keyframes rail-flash {
+  0% {
+    background: var(--surface);
+  }
+  35% {
+    background: oklch(0.32 0.06 30);
+  }
+  100% {
+    background: var(--surface);
+  }
+}
+
+.rail--flash {
+  animation: rail-flash var(--dur-slow) var(--ease-out) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail--flash {
+    animation: none;
+  }
+}
+
+/* ─── Pips ───────────────────────────────────────────────────────────────── */
+
+.pips {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.pip {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 3px solid var(--line-strong);
+  background: transparent;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.pip--on {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip {
+    transition: none;
+  }
+}
+
+/* ─── Roster ─────────────────────────────────────────────────────────────── */
+
+.roster {
+  padding: var(--s-8) var(--s-6) var(--s-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.roster__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.roster__title {
+  font-size: var(--t-lead);
+  font-weight: 500;
+}
+
+.roster__phase {
+  font-size: var(--t-fac-lg);
+  color: var(--ink-secondary);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 0.1em 0.6em;
+}
+
+.roster__meta {
+  display: flex;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  font-size: var(--t-fac);
+  color: var(--ink-muted);
+}
+
+.roster__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  min-height: var(--tap);
+}
+
+.row--done {
+  background: transparent;
+}
+
+.row__id {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  width: 8ch;
+  flex: 0 0 auto;
+}
+
+.row__label {
+  font-size: var(--t-fac-lg);
+  font-weight: 500;
+  flex: 1 1 auto;
+  min-width: 6ch;
+}
+
+/* The roster carries NO TIMES. Ten older adults listed with their times in a
+   small shared room is a leaderboard, which the design doc names as the most
+   likely route to facilitator veto. Numbers live on the result surface (one
+   person at a time) and on the sheet (read alone by the site lead). */
+.row__state {
+  flex: 0 0 auto;
+  width: 14ch;
+  text-align: right;
+}
+
+.row__corrected {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  flex: 0 0 auto;
+}
+
+.row__action {
+  flex: 0 0 auto;
+}
+
+/* ─── Result ─────────────────────────────────────────────────────────────── */
+
+.result {
+  padding: var(--s-8) var(--s-6) var(--s-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.result__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.result__title {
+  font-size: var(--t-lead);
+  font-weight: 500;
+}
+
+.result__primary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.result__time {
+  font-size: var(--t-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.result__unit {
+  font-size: var(--t-part);
+  color: var(--ink-secondary);
+}
+
+.result__facts {
+  display: flex;
+  gap: var(--s-12);
+  flex-wrap: wrap;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.fact__label {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.fact__value {
+  font-size: var(--t-fac-lg);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.perrep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.perrep__title {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.perrep__list {
+  display: flex;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+}
+
+.perrep__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 7ch;
+}
+
+.perrep__n {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.perrep__t {
+  font-size: var(--t-fac-lg);
+  font-weight: 500;
+}
+
+/* ─── Dialog ─────────────────────────────────────────────────────────────── */
+/* Native <dialog> so it escapes any stacking context and gets focus trapping
+   and Esc for free rather than reinventing them. */
+
+.dlg::backdrop {
+  background: oklch(0.1 0 0 / 0.72);
+}
+
+.dlg {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-8);
+  max-width: 44rem;
+  width: calc(100vw - var(--s-8) * 2);
+  font-size: var(--t-fac);
+
+  /* The global `* { margin: 0 }` reset kills the UA stylesheet's `margin: auto`,
+     which is what centres a native <dialog>. Without this it pins to top-left. */
+  margin: auto;
+
+  /* A 64px-target dialog with four radio rows is taller than a 800px laptop
+     viewport, and the trailing note was being clipped. */
+  max-height: calc(100vh - var(--s-8));
+  overflow-y: auto;
+}
+
+.dlg__title {
+  font-size: var(--t-fac-lg);
+  font-weight: 700;
+  margin-bottom: var(--s-3);
+}
+
+.dlg__body {
+  color: var(--ink-secondary);
+  line-height: 1.55;
+  margin-bottom: var(--s-6);
+  max-width: 60ch;
+}
+
+.dlg__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin-bottom: var(--s-6);
+}
+
+.dlg__legend {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  margin-bottom: var(--s-1);
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: var(--tap);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.opt:hover {
+  background: oklch(0.32 0 0);
+}
+
+.opt input {
+  width: 1.5rem;
+  height: 1.5rem;
+  accent-color: var(--ink);
+  flex: 0 0 auto;
+}
+
+.opt__text {
+  font-size: var(--t-fac);
+}
+
+.dlg__actions {
+  display: flex;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.dlg__note {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+  margin-top: var(--s-4);
+}
+
+/* ─── Stepper (correction: reps) ─────────────────────────────────────────── */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.stepper__value {
+  font-size: var(--t-lead);
+  font-weight: 700;
+  min-width: 3ch;
+  text-align: center;
+}
+
+/* ─── Sheet screen chrome ────────────────────────────────────────────────── */
+
+.sheet-screen {
+  background: oklch(0.24 0 0);
+  min-height: 100%;
+  padding: var(--s-8) var(--s-4) var(--s-16);
+  overflow: auto;
+}
+
+.sheet-screen__bar {
+  display: flex;
+  gap: var(--s-4);
+  justify-content: center;
+  margin-bottom: var(--s-8);
+  flex-wrap: wrap;
+}
+
+.sheet-wrap {
+  /* Wide content scrolls inside its own container; the page body never scrolls
+     horizontally. */
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.sheet {
+  box-shadow: 0 2px 24px oklch(0 0 0 / 0.5);
+}
+
+/* ─── Scenario switcher ──────────────────────────────────────────────────── */
+
+/* TOP-right. The whole bottom edge belongs to the facilitator rail: bottom-right
+   is the primary action and bottom-left is the block context. Earlier revisions
+   put this demo affordance on top of each of them in turn. */
+.scn {
+  position: fixed;
+  inset: var(--s-2) var(--s-4) auto auto;
+  z-index: var(--z-scenario);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  max-width: 27rem;
+  max-height: 78vh;
+  overflow: auto;
+  box-shadow: 0 8px 32px oklch(0 0 0 / 0.55);
+  font-size: var(--t-fac-sm);
+}
+
+.scn__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-4);
+  margin-bottom: var(--s-2);
+}
+
+.scn__title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+}
+
+/* --ink-secondary throughout this panel: it sits on --surface-raised. */
+.scn__hint {
+  color: var(--ink-secondary);
+  margin-bottom: var(--s-4);
+  line-height: 1.45;
+}
+
+.scn__group {
+  margin-bottom: var(--s-4);
+}
+
+.scn__group-title {
+  color: var(--ink-secondary);
+  margin-bottom: var(--s-2);
+}
+
+.scn__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.scn__btn {
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  font-size: var(--t-fac-sm);
+}
+
+.scn__btn:hover {
+  background: oklch(0.32 0 0);
+  color: var(--ink);
+}
+
+.scn__btn--on {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.scn__toggle {
+  position: fixed;
+  inset: var(--s-2) var(--s-4) auto auto;
+  z-index: var(--z-scenario);
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-raised);
+  color: var(--ink-secondary);
+  font-size: var(--t-fac-sm);
+}
+
+.scn__toggle:hover {
+  color: var(--ink);
+}
+
+/* ─── Narrow viewports ───────────────────────────────────────────────────────
+   The target device is a fixed monitor, so this is not a responsive product.
+   But the demo URL opens on a stranger's laptop, so the hero must not overflow.
+   Structural only; the participant floor of 2rem is never breached.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px), (max-height: 700px) {
+  :root {
+    --t-hero: 8rem;
+    --t-display: 4rem;
+    --t-lead: 2.5rem;
+  }
+}
+
+@media (max-width: 620px) {
+  :root {
+    --t-hero: 6rem;
+    --t-display: 3.25rem;
+    --t-lead: 2.25rem;
+    --t-part: 2rem; /* floor. does not go below. */
+  }
+
+  .rail {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .row__id {
+    display: none; /* the label is the human-readable handle on a narrow screen */
+  }
+
+  .row__state {
+    width: auto;
+  }
+}

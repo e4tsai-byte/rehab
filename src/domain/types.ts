@@ -1,0 +1,235 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Domain types.
+
+   INVARIANT 2 — no identity fields. There is no name, date of birth, or national
+   ID field anywhere in this file, and there must never be one. A participant is a
+   pseudonymous id plus a short staff-chosen display label. The mapping to a real
+   person lives in the site's paper records, off-device.
+
+   INVARIANT 3 (as amended) — no clinical output. Nothing here stores or derives a
+   determination. `PROTOCOL_THRESHOLD_S` is deliberately absent: the instrument
+   reports a measured time to a human, and the human applies the 14-second ICOPE
+   threshold. Adding a `passed: boolean` to this file would cross the regulatory
+   line the whole product is built to stay behind.
+
+   Storage is APPEND-ONLY. A record is never mutated. A miscount is fixed by
+   appending a CorrectionRecord that points at the original.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/** Pseudonymous participant id, e.g. `P-0042`. Never a real identifier. */
+export type ParticipantId = string
+
+export type RecordId = string
+export type SessionId = string
+export type BlockId = string
+export type TrialId = string
+
+/** Which of the two mandated assessment points within a 期. */
+export type Phase = 'pre' | 'post'
+
+export interface Participant {
+  readonly id: ParticipantId
+  /** Short staff-chosen display label. Not a legal name. */
+  readonly label: string
+}
+
+/** A 期 — 12 weeks, 1 session/week, 2 hours, min average attendance 10. */
+export interface Block {
+  readonly blockId: BlockId
+  readonly siteName: string
+  readonly blockName: string
+  readonly startedIso: string
+  readonly participants: readonly Participant[]
+}
+
+export interface AssessmentSession {
+  readonly sessionId: SessionId
+  readonly blockId: BlockId
+  readonly phase: Phase
+  readonly dateIso: string
+}
+
+/* ── Outcomes ─────────────────────────────────────────────────────────────────
+   Every one of these is a VALID RECORDED OUTCOME, not an error. PRODUCT.md:
+   "Failure states are not failures." The union is flat and total on purpose so
+   the UI cannot forget a case.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+export const PRESCRIBED_REPS = 5
+
+export type OutcomeKind =
+  /** All 5 reps, arms crossed throughout. Protocol-valid. */
+  | 'complete'
+  /** Fewer than 5 reps. The participant did what they could. Protocol-valid. */
+  | 'incomplete'
+  /** Hands used. Recorded in full, marked protocol-invalid for ICOPE. */
+  | 'hand_contact'
+  /** Cannot perform the protocol at all (walker, wheelchair). Still enrolled. */
+  | 'unable'
+  /** Facilitator discarded the trial. Carries a reason code. */
+  | 'aborted'
+  /** Tracking lost. Not an assessment result; feeds the void-rate field metric. */
+  | 'void'
+
+export type AbortReason =
+  | 'wrong_participant'
+  | 'interruption'
+  | 'participant_declined'
+  | 'equipment'
+  | 'other'
+
+export type VoidReason = 'roi_multiple_people' | 'tracking_lost' | 'out_of_frame'
+
+interface OutcomeBase {
+  readonly kind: OutcomeKind
+}
+
+export interface CompleteOutcome extends OutcomeBase {
+  readonly kind: 'complete'
+  readonly repsCompleted: 5
+  readonly repTimesMs: readonly number[]
+  readonly totalMs: number
+}
+
+export interface IncompleteOutcome extends OutcomeBase {
+  readonly kind: 'incomplete'
+  readonly repsCompleted: number
+  readonly repTimesMs: readonly number[]
+  readonly elapsedMs: number
+}
+
+export interface HandContactOutcome extends OutcomeBase {
+  readonly kind: 'hand_contact'
+  readonly repsCompleted: number
+  readonly repTimesMs: readonly number[]
+  readonly elapsedMs: number
+  /** 1-based rep on which contact was first detected. */
+  readonly firstContactRep: number
+  /** Always true. Present so the flag is explicit at every read site. */
+  readonly protocolInvalid: true
+}
+
+export interface UnableOutcome extends OutcomeBase {
+  readonly kind: 'unable'
+}
+
+export interface AbortedOutcome extends OutcomeBase {
+  readonly kind: 'aborted'
+  readonly reason: AbortReason
+  readonly repsCompleted: number
+  readonly elapsedMs: number
+}
+
+export interface VoidOutcome extends OutcomeBase {
+  readonly kind: 'void'
+  readonly reason: VoidReason
+  readonly repsCompleted: number
+}
+
+export type Outcome =
+  | CompleteOutcome
+  | IncompleteOutcome
+  | HandContactOutcome
+  | UnableOutcome
+  | AbortedOutcome
+  | VoidOutcome
+
+/** Outcomes that count as a completed assessment for roster progress. */
+export function isAssessed(o: Outcome): boolean {
+  return o.kind === 'complete' || o.kind === 'incomplete' || o.kind === 'hand_contact' || o.kind === 'unable'
+}
+
+/** Outcomes ICOPE can use as-is. `hand_contact` is recorded but not valid. */
+export function isProtocolValid(o: Outcome): boolean {
+  return o.kind === 'complete' || o.kind === 'incomplete'
+}
+
+/** Elapsed time where the outcome has one. `null` is not zero. */
+export function elapsedMsOf(o: Outcome): number | null {
+  switch (o.kind) {
+    case 'complete':
+      return o.totalMs
+    case 'incomplete':
+    case 'hand_contact':
+    case 'aborted':
+      return o.elapsedMs
+    case 'unable':
+    case 'void':
+      return null
+  }
+}
+
+export function repsOf(o: Outcome): number {
+  switch (o.kind) {
+    case 'complete':
+    case 'incomplete':
+    case 'hand_contact':
+    case 'aborted':
+    case 'void':
+      return o.repsCompleted
+    case 'unable':
+      return 0
+  }
+}
+
+/* ── Records — append-only ────────────────────────────────────────────────── */
+
+export interface TrialRecord {
+  readonly recordId: RecordId
+  readonly kind: 'trial'
+  readonly sessionId: SessionId
+  readonly participantId: ParticipantId
+  readonly outcome: Outcome
+  readonly startedIso: string
+  /** Seat height read from the ArUco tag, never staff-entered. cm. */
+  readonly seatHeightCm: number | null
+}
+
+/**
+ * A correction. Never an edit. PRODUCT.md principle 5: a facilitator who cannot
+ * fix the machine will either stop using it or start gaming it, so correcting
+ * must feel ordinary. The original record stays in the log forever.
+ */
+export interface CorrectionRecord {
+  readonly recordId: RecordId
+  readonly kind: 'correction'
+  readonly sessionId: SessionId
+  readonly participantId: ParticipantId
+  readonly correctsRecordId: RecordId
+  readonly outcome: Outcome
+  readonly note: CorrectionNote
+  readonly atIso: string
+}
+
+export type CorrectionNote = 'rep_miscount' | 'wrong_participant' | 'hand_contact_missed' | 'other'
+
+export type AnyRecord = TrialRecord | CorrectionRecord
+
+/* ── Live trial events ────────────────────────────────────────────────────────
+   In October these arrive from the Python pose pipeline over localhost. Today
+   the fixture source emits the identical shapes. No UI code may know which.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+export type TrackingState = 'idle' | 'live' | 'lost'
+
+export type TrialEvent =
+  | { readonly type: 'tracking'; readonly state: TrackingState }
+  /** 1-based rep index. `repMs` is that rep alone; `elapsedMs` is since cue. */
+  | { readonly type: 'rep'; readonly index: number; readonly repMs: number; readonly elapsedMs: number }
+  | { readonly type: 'hand_contact'; readonly repIndex: number }
+  | { readonly type: 'void'; readonly reason: VoidReason }
+  | { readonly type: 'settled'; readonly outcome: Outcome }
+
+/* ── Formatting ───────────────────────────────────────────────────────────── */
+
+/** Seconds to one decimal. Never rounds to a threshold, never renders a verdict. */
+export function formatSeconds(ms: number): string {
+  return (ms / 1000).toFixed(1)
+}
+
+/** Signed delta for the sheet. Negative means faster, which is an improvement. */
+export function formatDelta(preMs: number, postMs: number): string {
+  const d = (postMs - preMs) / 1000
+  const sign = d > 0 ? '+' : d < 0 ? '−' : '±'
+  return `${sign}${Math.abs(d).toFixed(1)}`
+}
