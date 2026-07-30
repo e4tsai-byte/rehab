@@ -11,15 +11,20 @@
 
 /* ─── Demo banner ────────────────────────────────────────────────────────── */
 
+/* Persistent, but it is a disclosure and not content: it must be unmissable to
+   a stranger and cost the facilitator as little vertical space as possible. The
+   roster is the surface that pays for this strip, so it is kept to one dense
+   line rather than the three-line block it had become. */
 .demo {
   display: flex;
   align-items: baseline;
-  gap: var(--s-4);
+  gap: var(--s-3);
   flex-wrap: wrap;
-  padding: var(--s-3) var(--s-6);
+  padding: var(--s-2) var(--s-6);
   background: var(--surface-raised);
   border-bottom: 1px solid var(--line);
   font-size: var(--t-fac-sm);
+  line-height: 1.35;
   color: var(--ink-secondary);
 }
 
@@ -80,12 +85,20 @@
   gap: var(--s-12);
   padding: var(--s-8);
   overflow: hidden;
+
+  /* The participant zone's BASE size is the participant floor, not the
+     facilitator body size. This is not cosmetic: `ch` and `em` inside this zone
+     resolve against it, so measure-widths tuned for participant text stay tuned.
+     Without this, lowering the facilitator scale silently narrowed `.cue` and
+     re-broke 工作人員 across a line — the exact compound the max-width below
+     exists to protect. Anything measured in `ch` in here depends on this rule. */
+  font-size: var(--t-part);
 }
 
 .rail {
   background: var(--surface);
   border-top: 1px solid var(--line);
-  padding: var(--s-4) var(--s-6);
+  padding: var(--s-3) var(--s-6);
   min-height: var(--rail-h-min);
   display: flex;
   align-items: center;
@@ -219,6 +232,10 @@
   font-weight: 500;
 }
 
+/* Tone is the THIRD channel, never the first. Every chip already carries a word
+   and an SVG shape; removing all colour below must leave the surface fully
+   readable, and it does. See --st-* in tokens.css for why none of these is red. */
+
 .chip--neutral {
   color: var(--ink-secondary);
 }
@@ -229,6 +246,26 @@
 
 .chip--alert {
   color: var(--alert);
+}
+
+.chip--measured {
+  color: var(--st-measured);
+}
+
+.chip--partial {
+  color: var(--st-partial);
+}
+
+.chip--protocol {
+  color: var(--st-protocol);
+}
+
+.chip--unable {
+  color: var(--st-unable);
+}
+
+.chip--discarded {
+  color: var(--st-discarded);
 }
 
 /* ─── Trial readout ──────────────────────────────────────────────────────── */
@@ -261,9 +298,11 @@
   align-items: center;
   gap: var(--s-6);
   text-align: center;
-  /* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line. At 32ch it
-     broke 工作人員 mid-compound, which reads badly in Chinese. */
-  max-width: 44ch;
+  /* Wide enough that 雙手抱胸，坐穩後由工作人員開始。 stays on one line — sixteen CJK
+     characters at --t-part. Breaking 工作人員 mid-compound reads badly in Chinese.
+     `ch` here resolves against --t-part via `.field--locked`; measured, not
+     assumed. */
+  max-width: 30ch;
 }
 
 .cue__title {
@@ -304,7 +343,8 @@
   align-items: center;
   gap: var(--s-4);
   text-align: center;
-  max-width: 34ch;
+  /* Also --t-part-relative, per the note on `.field--locked`. */
+  max-width: 23ch;
 }
 
 .void-note__title {
@@ -374,12 +414,29 @@
 
 /* ─── Roster ─────────────────────────────────────────────────────────────── */
 
+/* ── Roster ───────────────────────────────────────────────────────────────────
+   ACCEPTANCE TEST: all twelve rows visible at 1280x800 without scrolling.
+
+   This is a facilitator surface, not a participant one. It is read at arm's
+   length by someone standing at the machine running a class of twelve, and the
+   single question it answers is "who is left". A roster you have to scroll
+   cannot answer that question, so fitting the whole class on screen outranks
+   every other property of this surface.
+
+   Two columns rather than one. Twelve rows at the 64px tap floor is 768px of
+   rows alone, which does not fit under an 800px viewport at any type size —
+   the tap target, not the typography, is the binding constraint. Splitting the
+   list is the only move that respects both. Multi-column rather than grid so
+   the fill order stays top-to-bottom within a column (the order a facilitator
+   calls people in) and so it degrades to one column with no JS.
+   ──────────────────────────────────────────────────────────────────────────── */
+
 .roster {
-  padding: var(--s-8) var(--s-6) var(--s-16);
+  padding: var(--s-6) var(--s-6) var(--s-8);
   display: flex;
   flex-direction: column;
-  gap: var(--s-6);
-  max-width: 1100px;
+  gap: var(--s-4);
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
 }
@@ -392,13 +449,15 @@
   flex-wrap: wrap;
 }
 
+/* --t-fac-lg, not --t-lead. --t-lead is a PARTICIPANT-band token (3rem) and had
+   no business on a facilitator surface; that leak is what oversized this screen. */
 .roster__title {
-  font-size: var(--t-lead);
+  font-size: var(--t-fac-lg);
   font-weight: 500;
 }
 
 .roster__phase {
-  font-size: var(--t-fac-lg);
+  font-size: var(--t-fac);
   color: var(--ink-secondary);
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
@@ -409,25 +468,34 @@
   display: flex;
   gap: var(--s-6);
   flex-wrap: wrap;
-  font-size: var(--t-fac);
+  font-size: var(--t-fac-sm);
   color: var(--ink-muted);
 }
 
 .roster__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
+  columns: 2;
+  column-gap: var(--s-6);
+}
+
+@media (max-width: 1000px) {
+  .roster__list {
+    columns: 1;
+  }
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  padding: var(--s-3) var(--s-4);
+  gap: var(--s-3);
+  padding: 0 var(--s-3);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
   min-height: var(--tap);
+  /* Multicol needs explicit spacing and an unbreakable row box; `gap` on the
+     list does not apply across columns. */
+  margin-bottom: var(--s-2);
+  break-inside: avoid;
 }
 
 .row--done {
@@ -437,7 +505,7 @@
 .row__id {
   font-size: var(--t-fac-sm);
   color: var(--ink-muted);
-  width: 8ch;
+  width: 7ch;
   flex: 0 0 auto;
 }
 
@@ -445,7 +513,7 @@
   font-size: var(--t-fac-lg);
   font-weight: 500;
   flex: 1 1 auto;
-  min-width: 6ch;
+  min-width: 5ch;
 }
 
 /* The roster carries NO TIMES. Ten older adults listed with their times in a
@@ -454,7 +522,7 @@
    person at a time) and on the sheet (read alone by the site lead). */
 .row__state {
   flex: 0 0 auto;
-  width: 14ch;
+  width: 11ch;
   text-align: right;
 }
 
@@ -487,8 +555,11 @@
   flex-wrap: wrap;
 }
 
+/* Facilitator band. The result surface is operated by staff; only the measured
+   time below stays large, and that is a hierarchy decision about the surface's
+   primary content, not the participant floor being applied here. */
 .result__title {
-  font-size: var(--t-lead);
+  font-size: var(--t-fac-lg);
   font-weight: 500;
 }
 
@@ -507,7 +578,7 @@
 }
 
 .result__unit {
-  font-size: var(--t-part);
+  font-size: var(--t-fac-lg);
   color: var(--ink-secondary);
 }
 
@@ -670,7 +741,7 @@
 }
 
 .stepper__value {
-  font-size: var(--t-lead);
+  font-size: var(--t-fac-xl);
   font-weight: 700;
   min-width: 3ch;
   text-align: center;
@@ -703,6 +774,113 @@
 
 .sheet {
   box-shadow: 0 2px 24px oklch(0 0 0 / 0.5);
+}
+
+/* ─── Framing preview ─────────────────────────────────────────────────────────
+   FUNCTIONAL, NOT DECORATIVE. A Tier 1 trial cannot pause: tracking loss voids
+   it and forces a restart from the cue, with an older adult already out of the
+   chair. Confirming framing BEFORE the start press is the only cheap moment to
+   catch a bad camera position, so this earns its space.
+
+   INVARIANT 1 IS UNTOUCHED. This is a <video> element bound to a MediaStream and
+   nothing else. There is no canvas, no getImageData, no pose estimation, no
+   landmark extraction, no frame buffer, no upload. Liveness comes from
+   MediaStreamTrack events and requestVideoFrameCallback METADATA (presented
+   frame counts and timestamps), never from pixels. Nothing is retained: the
+   stream stops on collapse and on unmount, and there is no code path that can
+   read a frame out of this element.
+
+   It lives in the facilitator zone, below the participant field, and it is only
+   ever mounted at the cue stage. During a live trial it is gone entirely and
+   what remains is a one-line signal chip in the rail — the participant field
+   stays locked to the number and pips, and nothing here competes with them.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.cam {
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: var(--s-3) var(--s-6);
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+}
+
+.cam__stage {
+  position: relative;
+  width: calc(var(--cam-h) * 16 / 9);
+  height: var(--cam-h);
+  flex: 0 0 auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.cam__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Deliberately NOT mirrored. The operator is judging whether a seated
+     participant is fully in frame, not looking at themselves; a mirrored image
+     makes "move them left" mean the wrong thing. */
+}
+
+/* CSS-only framing guide. Borders over the video, not a canvas — drawing this
+   with a canvas would mean compositing the frame, which invariant 1 forbids. */
+.cam__guide {
+  position: absolute;
+  inset: 8% 18%;
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--r-sm);
+  pointer-events: none;
+}
+
+.cam__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.cam__title {
+  font-size: var(--t-fac);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* The privacy statement sits next to the preview, not in a settings page. A
+   stranger looking at a live camera feed should be able to read what it does
+   without leaving the screen. */
+.cam__note {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+  line-height: 1.45;
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+.cam__actions {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-top: var(--s-1);
+}
+
+/* Unavailable is a normal state, not an error: no camera, a denied permission
+   or an insecure origin all leave the fixture demo fully working. Styled as
+   plain text rather than as a warning for that reason. */
+.cam__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--s-4);
+  text-align: center;
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+  text-wrap: pretty;
 }
 
 /* ─── Scenario switcher ──────────────────────────────────────────────────── */
@@ -809,6 +987,7 @@
     --t-hero: 8rem;
     --t-display: 4rem;
     --t-lead: 2.5rem;
+    --cam-h: 148px;
   }
 }
 
@@ -830,5 +1009,17 @@
 
   .row__state {
     width: auto;
+  }
+
+  /* Stack the preview above its explanation rather than shrinking it to a
+     thumbnail: a framing check you cannot see is worse than no framing check. */
+  .cam {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .cam__stage {
+    width: 100%;
   }
 }

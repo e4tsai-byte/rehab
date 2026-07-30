@@ -72,6 +72,23 @@ export interface Strings {
     readonly switchToPre: string
     readonly switchToPost: string
   }
+  readonly camera: {
+    readonly title: string
+    readonly privacy: string
+    readonly enable: string
+    readonly disable: string
+    readonly starting: string
+    readonly idle: string
+    readonly denied: string
+    readonly notfound: string
+    readonly insecure: string
+    readonly unsupported: string
+    readonly error: string
+    readonly signalLabel: string
+    readonly signalLive: string
+    readonly signalStalled: string
+    readonly signalEnded: string
+  }
   readonly result: {
     readonly title: string
     readonly elapsed: string
@@ -185,8 +202,15 @@ const zhTW: Strings = {
 
   demo: {
     // Honest marker. This must never read as a working measurement system.
+    //
+    // Reworded when the framing preview landed. The previous copy said
+    // 未連接攝影機 ("no camera is connected"), which the opt-in preview makes
+    // false the moment a facilitator enables it. An honesty notice that is
+    // literally untrue is worse than none, so it now separates the two claims:
+    // the measurement DATA is simulated, and the camera is preview only.
     badge: '示範模式 · 模擬資料',
-    detail: '本頁為介面原型，資料為模擬產生，未連接攝影機，未進行任何實際量測。',
+    detail:
+      '本頁為介面原型，量測資料為模擬產生，未進行任何實際量測。鏡頭僅供取景預覽，不錄影、不儲存影像。',
   },
 
   phase: {
@@ -244,6 +268,32 @@ const zhTW: Strings = {
   nav: {
     switchToPre: '切換至前測',
     switchToPost: '切換至後測',
+  },
+
+  camera: {
+    title: '鏡頭取景',
+    // Stated next to the live image, not buried in a settings page. Must stay
+    // literally true of the code in useCameraPreview.ts: preview only, no
+    // capture, no analysis, no retention.
+    privacy: '畫面僅即時顯示於本機，不錄影、不擷取、不分析、不上傳、不儲存。關閉後立即結束。',
+    enable: '開啟鏡頭取景',
+    disable: '關閉鏡頭',
+    starting: '啟動中…',
+    idle: '尚未開啟鏡頭。開啟後可在開始前確認取景範圍。',
+    denied: '未取得鏡頭權限。可於瀏覽器網址列重新允許，或直接以模擬資料操作。',
+    notfound: '找不到可用的鏡頭。可直接以模擬資料操作。',
+    insecure: '目前連線非安全來源，瀏覽器不提供鏡頭。可直接以模擬資料操作。',
+    unsupported: '此瀏覽器不支援鏡頭取景。可直接以模擬資料操作。',
+    error: '無法開啟鏡頭。可直接以模擬資料操作。',
+    // 訊號, not 追蹤. This build performs no pose estimation, so it reports
+    // whether the camera is still delivering frames — never a tracking or
+    // confidence figure it has no way to compute.
+    // Worded so they cannot be mistaken for the tracking chip beside them in
+    // the rail (追蹤中 / 待機 / 追蹤中斷). That one is simulated; this one is real.
+    signalLabel: '鏡頭訊號',
+    signalLive: '鏡頭訊號正常',
+    signalStalled: '鏡頭訊號不穩',
+    signalEnded: '鏡頭已關閉',
   },
 
   result: {

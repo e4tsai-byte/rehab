@@ -129,18 +129,31 @@ which the first does not. Verified: all ten digits measure 113.27 px at the hero
 
 Measured in a headless browser, not eyeballed.
 
+- **Roster fits the class.** All **12 of 12 rows fully visible at 1280×800 with no scrolling**
+  (neither the field nor the page scrolls), and 12 of 12 at 1600×900. Two columns: twelve rows at
+  the 64 px tap floor is 768 px of rows alone, which does not fit under an 800 px viewport at any
+  type size, so the tap target rather than the typography is the binding constraint.
 - **Contrast.** Full-page audit resolves every colour through a canvas (`getComputedStyle` returns
-  `oklch()` verbatim, so string parsing silently reports 1.00:1). Zero failures. Every text node in
-  the locked participant field measures **≥10.29:1** against a 7:1 floor. Token matrix is in
-  `DESIGN.md`; all values there are measured, and two earlier hand-computed sets were wrong.
-- **Print.** The sheet is **923 px of content against 1017 px of A4 printable height** (297 mm less
-  28 mm of `@page` margin) — 24.9 mm of headroom, one page. Emitting a PDF returns a single page.
+  `oklch()` verbatim, so string parsing silently reports 1.00:1). 75 text nodes, **zero below
+  4.5:1**, minimum 5.91:1. Every text node in the locked participant field measures **≥10.29:1**
+  against a 7:1 floor. Token matrix is in `DESIGN.md`; all values there are measured, and two
+  earlier hand-computed sets were wrong.
+- **Print.** The sheet is **889 px of content against 1017 px of A4 printable height** (297 mm less
+  28 mm of `@page` margin) — 33.8 mm of headroom, one page. Emitting a PDF returns a single page.
   Note the app shell needs its `height:100%` / `overflow:hidden` flattened in `@media print`, or a
   sheet that fits paginates to two pages anyway.
-- **Tap targets.** Zero facilitator controls under 64 px.
+- **Tap targets.** Zero facilitator controls under 64 px; smallest measured row is 66 px. (The
+  scenario switcher toggle is 44 px: a demo-only affordance, absent from the product and from
+  print.)
+- **Digits.** All ten digits measure **113.27 px** at the hero size, unchanged.
+- **Camera.** The framing preview acquires a real 1280×720 stream, and **zero `<canvas>` elements
+  exist in the DOM** while it is live. Denying permission leaves the trial flow fully working on
+  fixtures.
 - **Reduced motion.** All four animations collapse to instant state swaps; content is never gated
   behind a transition.
 - **No horizontal overflow** at 1280×800 or 1600×900.
+- **CJK line breaking.** 雙手抱胸，坐穩後由工作人員開始。 holds one line at 1280×800, 1600×900,
+  900×700 and 620×700, so 工作人員 never splits across lines.
 
 ### Known limits
 
@@ -155,8 +168,12 @@ Measured in a headless browser, not eyeballed.
 ## Not built, on purpose
 
 Physiotherapist dashboard · longitudinal trend charts · live rep-by-rep form coaching · multi-person
-tracking · any camera or MediaPipe code · mobile app · cloud backend · accounts · a second exercise
-· TTS · automatic capacity test.
+tracking · **any pose estimation, landmark extraction or MediaPipe code** · mobile app · cloud
+backend · accounts · a second exercise · TTS · automatic capacity test.
+
+The one piece of camera code that does exist is the opt-in framing preview: it binds a
+`MediaStream` to a `<video>` and does nothing else. No canvas, no frame capture, no analysis, no
+retention. Rep counts and times are still entirely fixture-driven.
 
 **Tier 2** (working sets, load ladder, stop rule) is gated on the August experiment described in the
 design doc and is deliberately absent. There is no velocity or effort UI anywhere in this build.

@@ -18,13 +18,15 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef, useState } from 'react'
+import { CameraPreview } from '../components/CameraPreview'
 import { Digits } from '../components/Digits'
 import { RailButton } from '../components/RailButton'
 import { RepPips } from '../components/RepPips'
 import { StateChip } from '../components/StateChip'
 import { useDataSource } from '../data/context'
 import type { TrialId } from '../data/SessionDataSource'
-import { outcomeDisplay, trackingDisplay } from '../domain/display'
+import { cameraSignalDisplay, outcomeDisplay, trackingDisplay } from '../domain/display'
+import { useCameraPreview } from '../hooks/useCameraPreview'
 import {
   PRESCRIBED_REPS,
   type AbortReason,
@@ -54,6 +56,10 @@ export function Trial({
   const src = useDataSource()
   const tracking = useTracking()
   const { chime, armAudio } = useChime()
+  /* Held at this level rather than inside the panel so the stream survives the
+     panel unmounting when the trial starts, and the rail can keep reporting
+     signal. Opt-in: nothing here requests the camera until the button is used. */
+  const camera = useCameraPreview()
 
   const [stage, setStage] = useState<Stage>('cue')
   const [reps, setReps] = useState(0)
@@ -193,6 +199,23 @@ export function Trial({
         )}
       </div>
 
+      {/* ── Framing preview ──────────────────────────────────────────────────
+          Cue stage only. A Tier 1 trial cannot pause and tracking loss voids it,
+          so the moment before the start press is the only cheap chance to fix a
+          bad camera position.
+
+          It is unmounted for every other stage, which is what keeps the promise
+          that it never competes with the number: during a live trial the only
+          thing left is a one-line chip in the rail below. */}
+      {stage === 'cue' && (
+        <CameraPreview
+          status={camera.status}
+          attach={camera.attach}
+          onStart={() => void camera.start()}
+          onStop={camera.stop}
+        />
+      )}
+
       {/* ── Facilitator Rail ────────────────────────────────────────────── */}
       <div className={flash ? 'rail rail--flash' : 'rail'}>
         <div className="rail__context">
@@ -203,6 +226,15 @@ export function Trial({
         <div className="rail__state">
           <StateChip display={trackChip} />
         </div>
+
+        {/* The collapsed form of the preview. Only present once the facilitator
+            has actually enabled the camera, and only away from the cue stage
+            where the full panel is showing. */}
+        {camera.status === 'live' && stage !== 'cue' && (
+          <div className="rail__state">
+            <StateChip display={cameraSignalDisplay(camera.signal)} />
+          </div>
+        )}
 
         {/* Outcome detail is facilitator-facing, never participant-facing. */}
         {stage === 'settled' && outcome && outcome.kind !== 'complete' && (

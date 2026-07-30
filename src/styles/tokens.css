@@ -40,6 +40,31 @@
   --accent: oklch(0.8 0.13 110); /* tracking live · 10.46:1 on --bg      */
   --alert: oklch(0.7 0.17 30); /* tracking LOST · 6.67:1 · rail only   */
 
+  /* ── Status channel ── FACILITATOR SURFACES ONLY ─────────────────────────
+     Twelve rows whose states differ only by a small grey glyph are not
+     scannable, so outcome states carry a hue IN ADDITION TO their word and
+     shape. Three rules keep this from becoming a dashboard:
+
+     1. HUE IS CATEGORY, NOT QUALITY. All five sit in the same narrow
+        lightness band (0.79-0.82) so none pops as an alarm and the row set
+        reads as a patch panel rather than a traffic light. A participant who
+        needed their hands did not do worse than one who did not.
+     2. RED IS NOT AMONG THEM. `--alert` (hue 30) stays reserved for the
+        MACHINE failing — tracking lost, void. It never describes a person's
+        outcome. This is the one part of the old achromatic rule that was
+        load-bearing rather than incidental, and it is preserved exactly.
+     3. NEVER INSIDE `.field--locked`. The participant field during a live
+        trial stays achromatic. These tokens appear on the roster, the result
+        surface and the rail, and nowhere else.
+
+     Ratios are MEASURED through a canvas, against --surface (roster rows
+     awaiting) and --bg (roster rows done, which are transparent). */
+  --st-measured: oklch(0.8 0.1 110); /* recorded · seed olive     */
+  --st-partial: oklch(0.8 0.09 240); /* fewer than five · blue    */
+  --st-protocol: oklch(0.82 0.1 75); /* hand support · amber      */
+  --st-unable: oklch(0.79 0.08 310); /* not attempted · violet    */
+  --st-discarded: oklch(0.68 0 0); /* voided · grey, an absence */
+
   /* ── Type ─────────────────────────────────────────────────────────────── */
   --font: 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei',
     sans-serif;
@@ -52,11 +77,25 @@
   --t-lead: 3rem; /*  48px · state words, 完成     */
   --t-part: 2rem; /*  32px · participant floor    */
 
-  /* Facilitator rail · no 2rem floor, but a standing part-time worker reads
-     this, so the floor is 1.25rem rather than 1rem. */
-  --t-fac-lg: 1.75rem; /* 28px */
-  --t-fac: 1.375rem; /* 22px */
-  --t-fac-sm: 1.25rem; /* 20px · absolute minimum anywhere on screen */
+  /* Facilitator band · NOT the participant band. Read at roughly 0.6 m by a
+     standing operator who is looking at the machine, not from 3 m by someone
+     mid-effort. The 2rem floor does not apply here and applying it was a
+     mistake: at the old sizes only three of twelve roster rows were on screen,
+     which cost the facilitator the one thing the roster is for — seeing who is
+     left. These are ordinary working-UI sizes.
+
+     The floor that DOES still apply here is the 64px tap target: that
+     constraint is about a hurried standing user, not about visual acuity, and
+     is unaffected by type size.
+
+     Nothing in `.field--locked` uses these tokens — the locked field is built
+     from --t-hero / --t-display / --t-part only. That is what makes the
+     participant floor mechanical rather than a matter of vigilance, and it is
+     why this scale can be lowered without touching the participant guarantee. */
+  --t-fac-xl: 1.75rem; /* 28px · facilitator emphasis (edited value) */
+  --t-fac-lg: 1.25rem; /* 20px · row primary, dialog titles      */
+  --t-fac: 1.0625rem; /* 17px · controls, body, labels          */
+  --t-fac-sm: 0.9375rem; /* 15px · metadata floor                  */
 
   /* ── Spacing ── rail is dense, field is sparse. The density contrast is
      itself the signal that the zones belong to different readers. ───────── */
@@ -88,10 +127,16 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint. no bounce. */
 
   /* ── Layout ───────────────────────────────────────────────────────────── */
-  /* Tall enough for an 88px primary control plus padding, and no taller: at
-     190px the rail read as unfinished dead space rather than as a device panel. */
-  --rail-h-min: 156px;
+  /* Tall enough for an 88px primary control plus padding, and no taller. Was
+     156px, which was sized around the old oversized rail type; with the
+     facilitator band corrected the same controls fit in 112px, and the 44px
+     recovered goes to the roster where it buys most of a row. */
+  --rail-h-min: 112px;
   --tap: 64px; /* facilitator minimum tap target */
+
+  /* Framing preview. Large enough to actually judge whether a seated person is
+     fully in frame, which is the entire point of it. */
+  --cam-h: 208px;
 }
 
 @media (prefers-reduced-motion: reduce) {
