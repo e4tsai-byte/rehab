@@ -96,15 +96,42 @@ Applies **before any aesthetic rule**, not after.
   optically match for weight and x-height.
 - **Numbers are the primary content.** Tabular figures only. No proportional-width digits, no
   digit that changes width as it changes value.
-- **Cataract and contrast-sensitivity consideration:** the hero readout is near-white on near-black
-  rather than a saturated hue, because chroma costs luminance contrast at 3 m for an eye that
-  scatters light.
+- **Cataract and contrast-sensitivity consideration:** the hero readout is achromatic — near-black
+  ink on the cream ground — rather than a saturated hue, because chroma costs luminance contrast at
+  3 m for an eye that scatters light. That rule is independent of polarity and survived the flip.
+- **Administrative thresholds are reported as counts, never as warnings.** The ≥10 average
+  attendance floor decides whether a 期 is funded at all, so the number is shown — beside the
+  threshold, in ordinary ink, with no colour, icon, or instruction attached. The device reports;
+  the 據點 decides. This is distinct from the 14-second ICOPE threshold, which is *clinical* and is
+  therefore absent from the product entirely rather than merely unstyled.
+- **Icons are functional only.** Every icon answers "what is this place" or "what will this do".
+  They exist for wayfinding and status scanning, which helps an older user base, and they add a
+  channel alongside word and shape so colour is never carrying meaning alone. Nothing is added to
+  make a screen feel friendlier — that is the consumer-fitness failure the anti-references rule out.
+  SVG, never font glyphs: Noto Sans TC has no coverage for arrows or device marks and an uncovered
+  codepoint renders as tofu, which is worse than no icon.
 
 ## Theming
 
-**Single theme, dark.** A room with overhead fluorescent lighting, a monitor at 2.5–3 m, an
-80-year-old squinting at it. No light/dark toggle in this build — one theme, done properly. The
-printed sheet is separately light.
+**Single theme, positive polarity: dark ink on a cream ground.** No toggle in this build — one
+theme, done properly.
+
+This reverses an earlier decision, and the reason is acuity rather than taste. A bright field
+constricts the pupil; a smaller pupil increases depth of field and reduces the visual cost of
+optical aberration and lens opacity. For a 75–90 year old reading at 2.5–3 m, that generally helps
+more than a dark field does. The scene is unchanged — overhead fluorescent light, a fixed monitor,
+an 80-year-old mid-effort — but the conclusion drawn from it is.
+
+Two consequences follow and are not negotiable:
+
+- **The ground is cream, not white.** Low chroma, high lightness, never pure white. A white field
+  under overhead fluorescent light produces veiling glare that gives back everything the pupil
+  constriction won.
+- **The 7:1 participant contrast floor is unchanged.** Polarity does not relax it, and every value
+  is re-measured through a canvas rather than reasoned about.
+
+The printed sheet remains separately, strictly **black on white**. Paper is paper: the cream is a
+screen decision and must never reach the printer.
 
 ## Design-system mapping
 

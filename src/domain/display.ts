@@ -14,11 +14,30 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 import type { ShapeKind } from '../components/Shape'
+import type { CameraSignal } from '../hooks/useCameraPreview'
 import { strings } from '../i18n/strings'
 import type { Outcome, TrackingState } from './types'
 
-/** `neutral` means no colour at all, which is the default and the common case. */
-export type Tone = 'neutral' | 'accent' | 'alert'
+/**
+ * `neutral` means no colour at all.
+ *
+ * `accent` and `alert` describe THE MACHINE — tracking live, tracking lost. The
+ * five `st-` tones describe A PERSON'S RECORDED OUTCOME, and exist because
+ * twelve roster rows separated only by a small grey glyph cannot be scanned.
+ *
+ * The separation is deliberate and load-bearing: no outcome tone is red.
+ * `alert` stays reserved for the machine failing, so a red row never says a
+ * participant did badly. PRODUCT.md: "failure states are not failures."
+ */
+export type Tone =
+  | 'neutral'
+  | 'accent'
+  | 'alert'
+  | 'measured'
+  | 'partial'
+  | 'protocol'
+  | 'unable'
+  | 'discarded'
 
 export interface Display {
   readonly word: string
@@ -40,23 +59,28 @@ export function trackingDisplay(s: TrackingState): Display {
 /**
  * Outcome display.
  *
- * `hand_contact` is `neutral`, not `alert`, and that is load-bearing.
- * PRODUCT.md: "Failure states are not failures." A participant who used their
- * hands did not malfunction, and a red row would tell them they did. Only the
- * machine failing (`void`) earns an alarm hue.
+ * `hand_contact` is NOT `alert`, and that is still load-bearing. PRODUCT.md:
+ * "Failure states are not failures." A participant who used their hands did not
+ * malfunction, and a red row would tell them they did. Only the machine failing
+ * (`void`) earns the alarm hue.
+ *
+ * These tones distinguish CATEGORY, not quality. They sit in one narrow
+ * lightness band so no row shouts, and they are rendered only on facilitator
+ * surfaces — the roster, the result surface, the rail. `.field--locked` renders
+ * no chip at all, so the participant field during a live trial is unaffected.
  */
 export function outcomeDisplay(o: Outcome): Display {
   switch (o.kind) {
     case 'complete':
-      return { word: strings.status.complete, shape: 'bar-filled', tone: 'neutral' }
+      return { word: strings.status.complete, shape: 'bar-filled', tone: 'measured' }
     case 'incomplete':
-      return { word: strings.status.incomplete, shape: 'bar-hollow', tone: 'neutral' }
+      return { word: strings.status.incomplete, shape: 'bar-hollow', tone: 'partial' }
     case 'hand_contact':
-      return { word: strings.status.handContact, shape: 'triangle', tone: 'neutral' }
+      return { word: strings.status.handContact, shape: 'triangle', tone: 'protocol' }
     case 'unable':
-      return { word: strings.status.unable, shape: 'diamond', tone: 'neutral' }
+      return { word: strings.status.unable, shape: 'diamond', tone: 'unable' }
     case 'aborted':
-      return { word: strings.status.aborted, shape: 'slash-circle', tone: 'neutral' }
+      return { word: strings.status.aborted, shape: 'slash-circle', tone: 'discarded' }
     case 'void':
       return { word: strings.status.voided, shape: 'square-filled', tone: 'alert' }
   }
@@ -66,4 +90,23 @@ export const awaitingDisplay: Display = {
   word: strings.status.awaiting,
   shape: 'circle-hollow',
   tone: 'neutral',
+}
+
+/**
+ * Camera SIGNAL — whether frames are still arriving. Not tracking confidence:
+ * this build runs no pose estimation, so a confidence figure would be invented.
+ *
+ * `stalled` takes `alert` because a camera that has stopped delivering frames is
+ * the machine failing, which is exactly what that hue is reserved for. `ended`
+ * is neutral: a camera the facilitator switched off is not a fault.
+ */
+export function cameraSignalDisplay(s: CameraSignal): Display {
+  switch (s) {
+    case 'live':
+      return { word: strings.camera.signalLive, shape: 'signal-full', tone: 'accent' }
+    case 'stalled':
+      return { word: strings.camera.signalStalled, shape: 'signal-weak', tone: 'alert' }
+    case 'ended':
+      return { word: strings.camera.signalEnded, shape: 'signal-none', tone: 'neutral' }
+  }
 }

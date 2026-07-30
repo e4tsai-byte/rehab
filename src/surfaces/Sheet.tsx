@@ -35,12 +35,10 @@ export function Sheet({
   block,
   sessions,
   allResolved,
-  onClose,
 }: {
   block: Block
   sessions: readonly AssessmentSession[]
   allResolved: ReadonlyMap<SessionId, readonly ResolvedTrial[]>
-  onClose: () => void
 }) {
   const src = useDataSource()
   const pre = sessions.find((s) => s.phase === 'pre') ?? null
@@ -79,11 +77,11 @@ export function Sheet({
 
   return (
     <div className="sheet-screen">
+      {/* Print only. Getting back is the header's job, on every surface, by one
+          control — a second 關閉 here would be a second answer to a question
+          that should have exactly one. */}
       <div className="sheet-screen__bar no-print">
-        <RailButton variant="quiet" onClick={onClose}>
-          {strings.sheet.close}
-        </RailButton>
-        <RailButton variant="primary" onClick={() => window.print()}>
+        <RailButton variant="primary" icon="print" onClick={() => window.print()}>
           {strings.sheet.print}
         </RailButton>
       </div>
@@ -91,7 +89,10 @@ export function Sheet({
       <div className="sheet-wrap">
         <article className="sheet">
           <header className="sheet__head">
-            <h1 className="sheet__title">{strings.sheet.title}</h1>
+            {/* <h2>, not <h1>: on screen the header trail owns the page
+                heading, and two <h1>s is a malformed outline. On paper the size
+                is unchanged, so it still reads as the document title. */}
+            <h2 className="sheet__title">{strings.sheet.title}</h2>
             <p className="sheet__subtitle">{strings.sheet.subtitle}</p>
             <div className="sheet__meta">
               <span className="sheet__meta-item">

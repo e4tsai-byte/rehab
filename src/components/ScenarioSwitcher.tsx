@@ -42,6 +42,8 @@ export function ScenarioSwitcher({
 }) {
   if (!open) {
     return (
+      /* Rendered into the header's end slot rather than fixed-positioned over
+         the field, which is what made it overlap roster rows. */
       <button className="scn__toggle no-print" onClick={onOpen} aria-expanded={false}>
         {strings.scenario.title}（S）
       </button>

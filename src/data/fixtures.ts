@@ -21,6 +21,9 @@ import {
   type ParticipantId,
   type RecordId,
   type SessionId,
+  type SessionSetup,
+  type Site,
+  type SiteId,
   type TrackingState,
   type TrialEvent,
   PRESCRIBED_REPS,
@@ -44,19 +47,38 @@ const PARTICIPANTS: readonly Participant[] = [
   { id: 'P-0052', label: '何媽' },
 ]
 
+/* Enrolment is deliberately LARGER than the 期's attendee list, so the setup
+   screen has something real to select from and the ">= 10" count can be moved
+   above and below the funding floor by picking people. */
+const ENROLLED: readonly Participant[] = [
+  ...PARTICIPANTS,
+  { id: 'P-0053', label: '周伯' },
+  { id: 'P-0054', label: '劉阿姨' },
+  { id: 'P-0055', label: '邱媽' },
+]
+
+const SITES: readonly Site[] = [
+  { siteId: 'SITE-01', name: '示範社區照顧關懷據點' },
+  { siteId: 'SITE-02', name: '示範第二關懷據點' },
+]
+
 const BLOCK: Block = {
   blockId: 'B-2026-03',
+  siteId: 'SITE-01',
   siteName: '示範社區照顧關懷據點',
   blockName: '115 年度第 3 期',
   startedIso: '2026-05-04',
   participants: PARTICIPANTS,
 }
 
+const ALL_IDS = PARTICIPANTS.map((p) => p.id)
+
 const SESSION_PRE: AssessmentSession = {
   sessionId: 'S-pre',
   blockId: BLOCK.blockId,
   phase: 'pre',
   dateIso: '2026-05-04',
+  attendeeIds: ALL_IDS,
 }
 
 const SESSION_POST: AssessmentSession = {
@@ -64,6 +86,7 @@ const SESSION_POST: AssessmentSession = {
   blockId: BLOCK.blockId,
   phase: 'post',
   dateIso: '2026-07-27',
+  attendeeIds: ALL_IDS,
 }
 
 const SEAT_CM = 45
@@ -251,16 +274,76 @@ export class FixtureDataSource implements SessionDataSource {
   private recordHandlers = new Set<() => void>()
   private live: LiveTrial | null = null
   private trialSeq = 0
+  private enrolled: Participant[] = [...ENROLLED]
+  private enrolSeq = 55
+  private sessions: AssessmentSession[] = [SESSION_PRE, SESSION_POST]
+  private block: Block = BLOCK
 
   /** Selected by the scenario switcher. Drives the next live trial. */
   nextScript: TrialScript = 'complete_typical'
 
   async getBlock(): Promise<Block> {
-    return BLOCK
+    return this.block
   }
 
   async getSessions(): Promise<readonly AssessmentSession[]> {
-    return [SESSION_PRE, SESSION_POST]
+    return this.sessions
+  }
+
+  async getSites(): Promise<readonly Site[]> {
+    return SITES
+  }
+
+  async getEnrolment(_siteId: SiteId): Promise<readonly Participant[]> {
+    return this.enrolled
+  }
+
+  /**
+   * The STORE assigns the pseudonymous id. Staff supply a display label and
+   * nothing else — there is no name parameter, by invariant 2.
+   */
+  async enrolParticipant(_siteId: SiteId, label: string): Promise<Participant> {
+    const p: Participant = {
+      id: `P-${(++this.enrolSeq).toString().padStart(4, '0')}`,
+      label: label.trim(),
+    }
+    this.enrolled = [...this.enrolled, p]
+    this.announceRecords()
+    return p
+  }
+
+  /**
+   * Open the configured session.
+   *
+   * Re-opening an existing phase KEEPS its records: the log is append-only, and
+   * a setup screen that silently discarded a morning's measurements because
+   * someone revisited it would be the worst possible bug in this product. Only
+   * the attendee list and the 期 labelling are replaced.
+   */
+  async openSession(setup: SessionSetup): Promise<AssessmentSession> {
+    const site = SITES.find((s) => s.siteId === setup.siteId) ?? SITES[0]!
+    const blockName = `${setup.year} 年度第 ${setup.cycle} 期`
+    const attendees = this.enrolled.filter((p) => setup.attendeeIds.includes(p.id))
+
+    this.block = {
+      ...this.block,
+      siteId: site.siteId,
+      siteName: site.name,
+      blockName,
+      participants: attendees,
+    }
+
+    const existing = this.sessions.find((s) => s.phase === setup.phase)
+    const updated: AssessmentSession = {
+      sessionId: existing?.sessionId ?? `S-${setup.phase}`,
+      blockId: this.block.blockId,
+      phase: setup.phase,
+      dateIso: existing?.dateIso ?? new Date().toISOString().slice(0, 10),
+      attendeeIds: setup.attendeeIds,
+    }
+    this.sessions = this.sessions.map((s) => (s.phase === setup.phase ? updated : s))
+    this.announceRecords()
+    return updated
   }
 
   async getRecords(sessionId: SessionId): Promise<readonly AnyRecord[]> {

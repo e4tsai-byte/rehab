@@ -19,6 +19,13 @@ export type ShapeKind =
   | 'triangle' /* hand contact (protocol invalid)  */
   | 'diamond' /* unable to perform               */
   | 'slash-circle' /* aborted                         */
+  /* Camera signal — a THIRD disjoint family. Tracking is circles and a square,
+     outcomes are bars and polygons, camera signal is a stepped meter. A
+     facilitator glancing at the rail must never confuse "the camera dropped out"
+     with "the person finished". */
+  | 'signal-full' /* camera delivering frames        */
+  | 'signal-weak' /* camera stalled                  */
+  | 'signal-none' /* camera off or ended             */
 
 export function Shape({ kind, className }: { kind: ShapeKind; className?: string }) {
   return (
@@ -59,6 +66,32 @@ export function Shape({ kind, className }: { kind: ShapeKind; className?: string
         <>
           <circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
           <line x1="4.2" y1="11.8" x2="11.8" y2="4.2" stroke="currentColor" strokeWidth="2" />
+        </>
+      )}
+
+      {/* Stepped meter. How many steps are filled is the signal, so it reads at a
+          glance and survives being printed in one colour. */}
+      {kind === 'signal-full' && (
+        <>
+          <rect x="1.5" y="10" width="3.5" height="4.5" fill="currentColor" />
+          <rect x="6.25" y="6.5" width="3.5" height="8" fill="currentColor" />
+          <rect x="11" y="3" width="3.5" height="11.5" fill="currentColor" />
+        </>
+      )}
+
+      {kind === 'signal-weak' && (
+        <>
+          <rect x="1.5" y="10" width="3.5" height="4.5" fill="currentColor" />
+          <rect x="6.25" y="6.5" width="3.5" height="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="11" y="3" width="3.5" height="11.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </>
+      )}
+
+      {kind === 'signal-none' && (
+        <>
+          <rect x="1.5" y="10" width="3.5" height="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="6.25" y="6.5" width="3.5" height="8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="11" y="3" width="3.5" height="11.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </>
       )}
     </svg>

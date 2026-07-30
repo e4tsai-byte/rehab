@@ -22,9 +22,13 @@ import type {
   Block,
   CorrectionNote,
   Outcome,
+  Participant,
   ParticipantId,
   RecordId,
   SessionId,
+  SessionSetup,
+  Site,
+  SiteId,
   TrackingState,
   TrialEvent,
 } from '../domain/types'
@@ -38,6 +42,29 @@ export interface SessionDataSource {
   getBlock(): Promise<Block>
   getSessions(): Promise<readonly AssessmentSession[]>
   getRecords(sessionId: SessionId): Promise<readonly AnyRecord[]>
+
+  /* ── Enrolment and session setup ───────────────────────────────────────────
+     The setup screen runs entirely against these four. A real participant store
+     — a local SQLite table on the appliance, most likely — implements them
+     without any UI change: the screen never learns where the list came from.
+
+     INVARIANT 2 is enforced by the SIGNATURE, not by discipline. `enrol` takes a
+     display label and nothing else. There is no name parameter to pass, no
+     optional field to fill in later, and the pseudonymous id is assigned by the
+     store rather than supplied by the caller — so a UI that wanted to record a
+     real identifier would have nowhere to put it.
+     ─────────────────────────────────────────────────────────────────────────── */
+
+  getSites(): Promise<readonly Site[]>
+
+  /** Everyone enrolled at the site, across 期. The setup screen picks from this. */
+  getEnrolment(siteId: SiteId): Promise<readonly Participant[]>
+
+  /** Enrol someone new. The STORE assigns the id; staff supply only a label. */
+  enrolParticipant(siteId: SiteId, label: string): Promise<Participant>
+
+  /** Open (or re-open) the session the setup screen configured. */
+  openSession(setup: SessionSetup): Promise<AssessmentSession>
 
   /** Current tracking state, for the rail indicator between trials. */
   getTrackingState(): TrackingState

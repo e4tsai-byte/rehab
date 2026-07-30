@@ -16,6 +16,7 @@ export interface Strings {
   readonly app: {
     readonly name: string
     readonly assessmentName: string
+    readonly logoProvisional: string
   }
   readonly demo: {
     readonly badge: string
@@ -38,6 +39,9 @@ export interface Strings {
     readonly attendanceNote: (n: number) => string
     readonly start: string
     readonly review: string
+    /** Accessible names. The visible label stays short; these add who it acts on. */
+    readonly startFor: (label: string) => string
+    readonly reviewFor: (label: string) => string
     readonly openSheet: string
     readonly emptyTitle: string
     readonly emptyBody: string
@@ -68,9 +72,118 @@ export interface Strings {
     readonly backToRoster: string
     readonly srRepAnnounce: (n: number, total: number) => string
   }
+  readonly setup: {
+    readonly title: string
+    readonly lede: string
+    readonly siteLabel: string
+    readonly blockLabel: string
+    readonly yearLabel: string
+    readonly cycleLabel: string
+    readonly cycleOf: (n: number) => string
+    readonly phaseChoice: string
+    readonly attendeesTitle: string
+    readonly attendeesHint: string
+    readonly selectAll: string
+    readonly selectNone: string
+    readonly enrolledCount: (n: number) => string
+    readonly addTitle: string
+    readonly addFieldLabel: string
+    readonly addFieldHint: string
+    readonly addAction: string
+    readonly addPlaceholder: string
+    readonly attendanceCount: (n: number) => string
+    readonly fundedFloor: (n: number) => string
+    readonly fundedNote: string
+    readonly framingTitle: string
+    readonly framingHint: string
+    readonly begin: string
+    readonly idAssigned: (id: string) => string
+  }
+  readonly detail: {
+    readonly noRecord: string
+    readonly noRecordBody: string
+    readonly splitsTitle: string
+    readonly splitsHint: string
+    readonly splitOf: (n: number) => string
+    readonly totalLabel: string
+    readonly dateLabel: string
+    readonly protocolLabel: string
+    readonly protocolValid: string
+    readonly protocolInvalid: string
+    readonly deltaTitle: string
+    readonly deltaFaster: string
+    readonly deltaSlower: string
+    readonly deltaSame: string
+    readonly historyTitle: string
+    readonly historyHint: string
+    readonly attemptN: (n: number) => string
+    readonly correctsPrior: string
+    readonly supersededBy: string
+    readonly recordedAt: (t: string) => string
+    readonly reasonLabel: string
+    readonly firstContactRep: (n: number) => string
+    readonly statsTitle: string
+    readonly statsHint: string
+    readonly slowdownLabel: string
+    readonly slowdownSlower: (s: string) => string
+    readonly slowdownFaster: (s: string) => string
+    readonly slowdownSame: string
+    readonly meanLabel: string
+    readonly fastestLabel: string
+    readonly slowestLabel: string
+    readonly spreadLabel: string
+    readonly repNo: (n: number) => string
+    readonly overlayTitle: string
+    readonly overlayHint: string
+    readonly overlayNeedsBoth: string
+  }
+  readonly tier2: {
+    readonly title: string
+    readonly status: string
+    readonly body: string
+    readonly plannedTitle: string
+    readonly planned: readonly string[]
+    readonly gateTitle: string
+    readonly gate: string
+    readonly survives: string
+    readonly fails: string
+    readonly indeterminate: string
+    readonly fallback: string
+  }
   readonly nav: {
     readonly switchToPre: string
     readonly switchToPost: string
+    readonly home: string
+    readonly back: string
+    readonly placeSetup: string
+    /** Landmark label for the back-to-hub control. */
+    readonly whereLabel: string
+    readonly backToRoster: string
+    readonly placeRoster: string
+    readonly placeTrial: (label: string) => string
+    readonly placeResult: (label: string) => string
+    readonly placeTrialResult: (label: string) => string
+    readonly placeSheet: string
+    readonly phaseLabel: string
+  }
+  readonly camera: {
+    readonly title: string
+    readonly selfView: string
+    readonly selfViewHint: string
+    readonly privacy: string
+    readonly enable: string
+    readonly disable: string
+    readonly starting: string
+    readonly idle: string
+    readonly denied: string
+    readonly notfound: string
+    readonly insecure: string
+    readonly unsupported: string
+    readonly error: string
+    readonly signalLabel: string
+    readonly signalLive: string
+    readonly signalStalled: string
+    readonly signalEnded: string
   }
   readonly result: {
     readonly title: string
@@ -85,6 +198,13 @@ export interface Strings {
     readonly correct: string
     readonly seatHeight: string
     readonly cm: string
+    readonly next: (label: string) => string
+    readonly noneLeft: string
+    readonly fullRecord: string
+    readonly flagIncomplete: (n: number) => string
+    readonly flagHandContact: (n: number) => string
+    readonly flagUnable: string
+    readonly flagProtocolInvalid: string
   }
   readonly correction: {
     readonly title: string
@@ -181,12 +301,21 @@ const zhTW: Strings = {
   app: {
     name: 'VeloCare',
     assessmentName: '五次起立坐下量測',
+    // Marks the logo slot as artwork-pending. Removed when a real identity lands.
+    logoProvisional: '標誌暫定',
   },
 
   demo: {
     // Honest marker. This must never read as a working measurement system.
+    //
+    // Reworded when the framing preview landed. The previous copy said
+    // 未連接攝影機 ("no camera is connected"), which the opt-in preview makes
+    // false the moment a facilitator enables it. An honesty notice that is
+    // literally untrue is worse than none, so it now separates the two claims:
+    // the measurement DATA is simulated, and the camera is preview only.
     badge: '示範模式 · 模擬資料',
-    detail: '本頁為介面原型，資料為模擬產生，未連接攝影機，未進行任何實際量測。',
+    detail:
+      '本頁為介面原型，量測資料為模擬產生，未進行任何實際量測。鏡頭僅供取景預覽，不錄影、不儲存影像。',
   },
 
   phase: {
@@ -208,6 +337,8 @@ const zhTW: Strings = {
     attendanceNote: (n) => `本期出席 ${n} 人`,
     start: '開始量測',
     review: '查看紀錄',
+    startFor: (label) => `開始量測：${label}`,
+    reviewFor: (label) => `查看紀錄：${label}`,
     openSheet: '產生報表',
     emptyTitle: '本期尚無名單',
     emptyBody: '請先於現場紙本名冊建立代號，再於此處對應。',
@@ -241,9 +372,139 @@ const zhTW: Strings = {
     srRepAnnounce: (n, total) => `第 ${n} 次，共 ${total} 次`,
   },
 
+  setup: {
+    title: '場次設定',
+    lede: '設定本場的據點、期別與階段，並勾選今天到場的長輩。',
+    siteLabel: '據點',
+    blockLabel: '期別',
+    yearLabel: '年度',
+    cycleLabel: '期別',
+    cycleOf: (n) => `第 ${n} 期`,
+    phaseChoice: '本場階段',
+    attendeesTitle: '本場出席名單',
+    attendeesHint: '勾選今天到場的長輩。未到場者仍在收案名單內。',
+    selectAll: '全選',
+    selectNone: '全部取消',
+    enrolledCount: (n) => `收案 ${n} 人`,
+    addTitle: '新增長輩',
+    addFieldLabel: '稱謂',
+    // Invariant 2, said out loud at the one place someone might type a name.
+    addFieldHint: '僅供現場辨識之簡稱。請勿輸入姓名、生日或身分證字號。代號由系統自動指定。',
+    addAction: '新增至收案名單',
+    addPlaceholder: '例如：王阿姨',
+    attendanceCount: (n) => `本場出席 ${n} 人`,
+    fundedFloor: (n) => `給付門檻：每期平均 ${n} 人`,
+    // A count, not a warning. The device reports the number; the 據點 decides
+    // what to do about it. No colour, no icon, no instruction.
+    fundedNote: '本欄僅供現場參考，實際給付以主管機關核定為準。',
+    framingTitle: '鏡頭確認',
+    framingHint: '建議在長輩就座前先確認取景範圍。',
+    begin: '開始本場',
+    idAssigned: (id) => `已指定代號 ${id}`,
+  },
+
+  detail: {
+    noRecord: '本階段尚無紀錄',
+    noRecordBody: '此階段尚未進行量測，或紀錄已作廢。',
+    splitsTitle: '各次起立時間',
+    splitsHint: '本次量測內每一次起立所需時間。',
+    splitOf: (n) => `第 ${n} 次`,
+    totalLabel: '總時間',
+    dateLabel: '量測日期',
+    protocolLabel: '測驗規範',
+    protocolValid: '符合',
+    protocolInvalid: '不符合',
+    deltaTitle: '前後測差值',
+    deltaFaster: '較前測快',
+    deltaSlower: '較前測慢',
+    deltaSame: '與前測相同',
+    historyTitle: '完整嘗試紀錄',
+    historyHint: '所有嘗試皆保留於紀錄檔。更正為另存一筆，不會覆蓋原紀錄。',
+    attemptN: (n) => `第 ${n} 次嘗試`,
+    correctsPrior: '更正前一筆紀錄',
+    supersededBy: '已由更正紀錄取代',
+    recordedAt: (t) => `紀錄時間 ${t}`,
+    reasonLabel: '原因',
+    firstContactRep: (n) => `第 ${n} 次起偵測到手部支撐`,
+
+    statsTitle: '本次量測統計',
+    // Arithmetic on the recorded times. No threshold, no grading, no norm.
+    statsHint: '以下數值由本次各次起立時間計算，僅為算術結果，不含任何判讀或分級。',
+    slowdownLabel: '第 5 次與第 1 次差',
+    slowdownSlower: (sec) => `較第 1 次慢 ${sec} 秒`,
+    slowdownFaster: (sec) => `較第 1 次快 ${sec} 秒`,
+    slowdownSame: '與第 1 次相同',
+    meanLabel: '平均每次',
+    fastestLabel: '最快一次',
+    slowestLabel: '最慢一次',
+    spreadLabel: '最快與最慢差',
+    repNo: (n) => `第 ${n} 次`,
+    overlayTitle: '前後測各次時間對照',
+    overlayHint: '同一位長輩的兩次量測並列比較，共用同一刻度。兩個量測點不構成趨勢圖。',
+    overlayNeedsBoth: '需前測與後測皆有各次時間，方可並列比較。',
+  },
+
+  // ── Tier 2 roadmap. A statement of intent, never a preview of data. ────────
+  tier2: {
+    title: '第二階段（規劃中）',
+    status: '尚未開發',
+    body: '以下項目為規劃方向，本版本並未實作，畫面上不會出現任何相關數值。是否開發取決於一項已預先登錄的實驗結果。',
+    plannedTitle: '規劃中的輸出',
+    planned: [
+      '尖峰速度（peak velocity）',
+      '平均速度（mean velocity）',
+      '組內速度衰減（velocity loss）',
+    ],
+    gateTitle: '開發條件',
+    gate: '八月進行之預先登錄實驗，n=6–8，側面 120 fps 並置入平面尺標；判定標準於實驗前公開，事後不得更動。',
+    survives: '通過：低座高時最後一次較第一次單調衰減超過 20%，且各次變異係數小於 7%，並無代償動作；標準座高時則否。',
+    fails: '不通過：組內尖峰速度變異係數大於或等於總衰減幅度；或次間停頓增加超過 40% 而向心速度下降不足 10%；或三分之一以上受試者在第 8 次前出現非單調速度或手部支撐。',
+    indeterminate: '未達判定：視同不通過。預先登錄若留有模糊地帶，即非預先登錄。',
+    fallback: '若不通過，改以代償偵測為停止條件（次間停頓、軀幹前傾代償、關節活動度衰減、手部支撐），完全不含速度項目。第一階段不受影響。',
+  },
+
   nav: {
     switchToPre: '切換至前測',
     switchToPost: '切換至後測',
+    home: '場次設定',
+    back: '上一層',
+    placeSetup: '場次設定',
+    whereLabel: '目前位置',
+    backToRoster: '回本期名單',
+    placeRoster: '本期名單',
+    placeTrial: (label) => `${label}．量測`,
+    placeResult: (label) => `${label}．紀錄`,
+    placeTrialResult: (label) => `${label}．本次量測`,
+    placeSheet: '報表',
+    phaseLabel: '本期階段',
+  },
+
+  camera: {
+    title: '鏡頭取景',
+    selfView: '自己的畫面',
+    selfViewHint: '請確認整個人都在框內。',
+    // Stated next to the live image, not buried in a settings page. Must stay
+    // literally true of the code in useCameraPreview.ts: preview only, no
+    // capture, no analysis, no retention.
+    privacy: '畫面僅即時顯示於本機，不錄影、不擷取、不分析、不上傳、不儲存。關閉後立即結束。',
+    enable: '開啟鏡頭取景',
+    disable: '關閉鏡頭',
+    starting: '啟動中…',
+    idle: '尚未開啟鏡頭。開啟後可在開始前確認取景範圍。',
+    denied: '未取得鏡頭權限。可於瀏覽器網址列重新允許，或直接以模擬資料操作。',
+    notfound: '找不到可用的鏡頭。可直接以模擬資料操作。',
+    insecure: '目前連線非安全來源，瀏覽器不提供鏡頭。可直接以模擬資料操作。',
+    unsupported: '此瀏覽器不支援鏡頭取景。可直接以模擬資料操作。',
+    error: '無法開啟鏡頭。可直接以模擬資料操作。',
+    // 訊號, not 追蹤. This build performs no pose estimation, so it reports
+    // whether the camera is still delivering frames — never a tracking or
+    // confidence figure it has no way to compute.
+    // Worded so they cannot be mistaken for the tracking chip beside them in
+    // the rail (追蹤中 / 待機 / 追蹤中斷). That one is simulated; this one is real.
+    signalLabel: '鏡頭訊號',
+    signalLive: '鏡頭訊號正常',
+    signalStalled: '鏡頭訊號不穩',
+    signalEnded: '鏡頭已關閉',
   },
 
   result: {
@@ -259,6 +520,15 @@ const zhTW: Strings = {
     correct: '更正紀錄',
     seatHeight: '座高',
     cm: '公分',
+    next: (label) => `下一位：${label}`,
+    noneLeft: '回名單',
+    fullRecord: '查看完整紀錄',
+    // Descriptive, never evaluative. These are read out loud in a room, so they
+    // say what was measured and stop there.
+    flagIncomplete: (n) => `本次完成 ${n} 次，未達五次。這是有效的紀錄結果。`,
+    flagHandContact: (n) => `第 ${n} 次起偵測到手部支撐。時間仍完整記錄。`,
+    flagUnable: '記錄為無法進行。這是有效的紀錄結果。',
+    flagProtocolInvalid: '本次不符合雙手抱胸之測驗規範，時間僅供現場參考。',
   },
 
   correction: {

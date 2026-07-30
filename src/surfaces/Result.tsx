@@ -1,98 +1,126 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    Result — one participant, immediately after their trial.
 
-   This is where the number finally appears. Showing someone their own time is
-   fine and arguably owed to them; the dignity constraint is about COMPARISON,
-   which is why the roster carries no times and there is no leaderboard anywhere.
+   ITS ONLY JOB IS: THIS PERSON'S TIME, AND MOVE ON.
 
-   INVARIANT 3 (amended): this surface reports a measured time. It does not apply
-   the 14-second threshold, does not grade, and renders no verdict. If a
-   `passed`/`failed` badge ever appears here, the product has crossed the line it
-   exists to stay behind.
+   ── THE DIGNITY CONSTRAINT ──────────────────────────────────────────────────
+
+   THIS SURFACE MUST NEVER SHOW ATTEMPT HISTORY, VOIDS, ABORTS, OR CORRECTIONS.
+   Not collapsed behind a disclosure, not in a "details" drawer, not in small
+   type at the bottom. NOT AT ALL.
+
+   The reason is the room, not the layout. When this screen is up, the
+   participant is still seated in front of it and nine other people are in the
+   room looking at the same monitor. "Third attempt", "voided", "aborted:
+   participant declined", "corrected from 5 reps to 4" are all true, all
+   necessary to keep, and all nobody else's business. Putting a person's
+   correction history on a large display in front of their class is a harm this
+   product exists to avoid, and it is the same harm that keeps times off the
+   roster.
+
+   That record is not being hidden — it is one tap away on ParticipantDetail,
+   which the facilitator reads at arm's length, one person at a time. Different
+   surface, different reader, different room position.
+
+   IF YOU ARE HERE TO "SIMPLIFY BY CONSOLIDATING" THIS INTO ParticipantDetail:
+   that was tried, and reverted, for this reason.
+
+   ── What it does show ───────────────────────────────────────────────────────
+
+   The measured time, prominently, and any flag stated plainly. Flags are
+   descriptive and never evaluative: 未完成五次 and 手部支撐 say what was
+   measured. They are set in the facilitator band rather than at display size,
+   because a valid outcome announced at 48px to a seated participant reads as a
+   verdict even when the words are neutral.
+
+   INVARIANT 3 (amended): this surface reports a measured time. It does not
+   apply the 14-second threshold, does not grade, and renders no verdict. If a
+   `passed`/`failed` badge ever appears here, the product has crossed the line
+   it exists to stay behind.
    ───────────────────────────────────────────────────────────────────────────── */
 
 import { Digits } from '../components/Digits'
 import { RailButton } from '../components/RailButton'
 import { StateChip } from '../components/StateChip'
 import { outcomeDisplay } from '../domain/display'
-import { elapsedMsOf, formatSeconds, repsOf, type Outcome, type Participant } from '../domain/types'
+import {
+  elapsedMsOf,
+  formatSeconds,
+  isProtocolValid,
+  repsOf,
+  type Outcome,
+  type Participant,
+} from '../domain/types'
 import { strings } from '../i18n/strings'
+
+/** Plain-language note for outcomes that carry one. `null` is the common case. */
+function flagOf(outcome: Outcome): string | null {
+  switch (outcome.kind) {
+    case 'incomplete':
+      return strings.result.flagIncomplete(outcome.repsCompleted)
+    case 'hand_contact':
+      return strings.result.flagHandContact(outcome.firstContactRep)
+    case 'unable':
+      return strings.result.flagUnable
+    default:
+      return null
+  }
+}
 
 export function Result({
   participant,
   outcome,
   seatHeightCm,
-  onAccept,
-  onRedo,
-  onCorrect,
+  nextParticipant,
+  onNext,
+  onFullRecord,
 }: {
   participant: Participant
   outcome: Outcome
   seatHeightCm: number | null
-  onAccept: () => void
-  onRedo: () => void
-  onCorrect: () => void
+  /** The next outstanding participant, if the rotation has one left. */
+  nextParticipant: Participant | null
+  onNext: () => void
+  onFullRecord: () => void
 }) {
   const ms = elapsedMsOf(outcome)
-  const reps = repsOf(outcome)
-  const perRep =
-    outcome.kind === 'complete' || outcome.kind === 'incomplete' || outcome.kind === 'hand_contact'
-      ? outcome.repTimesMs
-      : []
+  const flag = flagOf(outcome)
 
   return (
     <div className="zones">
       <div className="field">
-        <div className="result">
-          <header className="result__head">
-            <h1 className="result__title">{strings.result.title}</h1>
-            <StateChip display={outcomeDisplay(outcome)} size="row" />
-          </header>
-
-          <div className="result__primary">
+        <div className="res">
+          {/* The time, and essentially nothing else. */}
+          <div className="res__primary">
             {ms === null ? (
-              <span className="result__time">{strings.result.noTime}</span>
+              <span className="res__time res__time--none">{strings.result.noTime}</span>
             ) : (
               <>
-                <span className="result__time">
+                <span className="res__time">
                   <Digits value={formatSeconds(ms)} />
                 </span>
-                <span className="result__unit">{strings.result.seconds}</span>
+                <span className="res__unit">{strings.result.seconds}</span>
               </>
             )}
           </div>
 
-          <div className="result__facts">
-            <div className="fact">
-              <span className="fact__label">{strings.result.reps}</span>
-              <span className="fact__value">
-                <Digits value={reps} /> {strings.trial.repsLabel}
-              </span>
-            </div>
+          <div className="res__meta">
+            <StateChip display={outcomeDisplay(outcome)} size="row" />
+            <span className="res__fact">
+              {strings.result.reps} <Digits value={repsOf(outcome)} /> {strings.trial.repsLabel}
+            </span>
             {seatHeightCm !== null && (
-              <div className="fact">
-                <span className="fact__label">{strings.result.seatHeight}</span>
-                <span className="fact__value">
-                  <Digits value={seatHeightCm} /> {strings.result.cm}
-                </span>
-              </div>
+              <span className="res__fact">
+                {strings.result.seatHeight} <Digits value={seatHeightCm} /> {strings.result.cm}
+              </span>
             )}
           </div>
 
-          {perRep.length > 0 && (
-            <div className="perrep">
-              <span className="perrep__title">{strings.result.perRep}</span>
-              <div className="perrep__list">
-                {perRep.map((t, i) => (
-                  <div key={i} className="perrep__item">
-                    <span className="perrep__n">{strings.result.repN(i + 1)}</span>
-                    <span className="perrep__t">
-                      <Digits value={formatSeconds(t)} /> {strings.result.seconds}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Stated plainly, at facilitator size. Not an error, and not styled
+              as one: every one of these is a valid recorded outcome. */}
+          {flag && <p className="res__flag">{flag}</p>}
+          {!isProtocolValid(outcome) && outcome.kind !== 'unable' && (
+            <p className="res__flag">{strings.result.flagProtocolInvalid}</p>
           )}
         </div>
       </div>
@@ -104,12 +132,15 @@ export function Result({
         </div>
         <div className="rail__spacer" />
         <div className="rail__actions">
-          <RailButton variant="quiet" onClick={onCorrect}>
-            {strings.result.correct}
+          {/* Secondary, and the only route off this surface that is not "move
+              on". The full record — history, voids, corrections — lives there. */}
+          <RailButton variant="quiet" icon="record" onClick={onFullRecord}>
+            {strings.result.fullRecord}
           </RailButton>
-          <RailButton onClick={onRedo}>{strings.result.redo}</RailButton>
-          <RailButton variant="primary" onClick={onAccept}>
-            {strings.result.accept}
+          {/* Primary: keep the rotation moving. A class of twelve is run by one
+              person, and the next name is the thing they need next. */}
+          <RailButton variant="primary" icon={nextParticipant ? 'start' : 'roster'} onClick={onNext}>
+            {nextParticipant ? strings.result.next(nextParticipant.label) : strings.result.noneLeft}
           </RailButton>
         </div>
       </div>

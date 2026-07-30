@@ -18,13 +18,16 @@
    ───────────────────────────────────────────────────────────────────────────── */
 
 import { useEffect, useRef, useState } from 'react'
+import { CameraControls } from '../components/CameraControls'
+import { CameraSelfView } from '../components/CameraSelfView'
 import { Digits } from '../components/Digits'
 import { RailButton } from '../components/RailButton'
 import { RepPips } from '../components/RepPips'
 import { StateChip } from '../components/StateChip'
 import { useDataSource } from '../data/context'
 import type { TrialId } from '../data/SessionDataSource'
-import { outcomeDisplay, trackingDisplay } from '../domain/display'
+import { cameraSignalDisplay, outcomeDisplay, trackingDisplay } from '../domain/display'
+import { useCameraPreview } from '../hooks/useCameraPreview'
 import {
   PRESCRIBED_REPS,
   type AbortReason,
@@ -54,6 +57,10 @@ export function Trial({
   const src = useDataSource()
   const tracking = useTracking()
   const { chime, armAudio } = useChime()
+  /* Held at this level rather than inside the panel so the stream survives the
+     panel unmounting when the trial starts, and the rail can keep reporting
+     signal. Opt-in: nothing here requests the camera until the button is used. */
+  const camera = useCameraPreview()
 
   const [stage, setStage] = useState<Stage>('cue')
   const [reps, setReps] = useState(0)
@@ -146,52 +153,89 @@ export function Trial({
   }
 
   const trackChip = trackingDisplay(stage === 'void' ? 'lost' : tracking)
+  const cameraLive = camera.status === 'live'
 
   return (
     <div className="zones">
-      {/* ── Participant Field ───────────────────────────────────────────── */}
-      <div className="field field--locked">
-        {stage === 'cue' && (
-          <div className="cue">
-            <p className="cue__title">{strings.trial.cue}</p>
-            <p className="cue__hint">{strings.trial.cueHint}</p>
+      {/* ── Participant Field ─────────────────────────────────────────────
+          FIFTY-FIFTY SPLIT when the camera is live: self-view on the left, the
+          readout and everything else on the right. With no camera — or a denied
+          permission — there is no left half and the readout gets the whole
+          field, so the fallback is the layout this screen has always had.
+
+          The split runs at EVERY stage rather than only once the trial starts.
+          The brief permits the video to take the full field before the cue, but
+          the cue text has to live somewhere, and a video that fills the screen
+          and then jumps to half of it relayouts the participant's whole world at
+          the exact moment they are being asked to concentrate. Half of a 1280px
+          field is a 640px-wide, full-height pane — far larger than the 360px box
+          it replaces, so framing loses nothing by holding still. */}
+      <div className={cameraLive ? 'field field--locked field--split' : 'field field--locked'}>
+        {cameraLive && (
+          <div className="field__view">
+            {/* Framing rectangle only while positioning. Once the trial runs it
+                is noise: nobody is adjusting their chair mid-effort. */}
+            <CameraSelfView attach={camera.attach} guide={stage === 'cue'} />
           </div>
         )}
 
-        {stage === 'running' && (
-          <div className="readout">
-            <div className="readout__count">
-              <Digits value={strings.trial.repsOf(reps, PRESCRIBED_REPS)} />
+        <div className="field__stage">
+          {stage === 'cue' && (
+            <div className="cue">
+              <p className="cue__title">{strings.trial.cue}</p>
+              <p className="cue__hint">{strings.trial.cueHint}</p>
+              {cameraLive && <p className="cue__framing">{strings.camera.selfViewHint}</p>}
             </div>
-            <div className="readout__unit">{strings.trial.repsLabel}</div>
-            <RepPips done={reps} />
-            {/* Announced politely so a screen reader follows without the visual
-                field gaining a single extra character. */}
-            <p className="sr-only" aria-live="polite">
-              {strings.trial.srRepAnnounce(reps, PRESCRIBED_REPS)}
-            </p>
-          </div>
-        )}
+          )}
 
-        {stage === 'settled' && outcome && (
-          /* The participant sees 完成 and their pips. Nothing else.
-             The outcome nuance (未完成五次 / 手部支撐) lives in the rail, for the
-             facilitator. Putting "you did not complete five" in front of the
-             participant at 48px is exactly the harm the tone rule forbids:
-             a valid recorded outcome must not read as a failure. */
-          <div className="done">
-            <p className="done__word">{strings.trial.complete}</p>
-            <RepPips done={reps} />
-          </div>
-        )}
+          {stage === 'running' && (
+            <div className="readout">
+              <div className="readout__count">
+                <Digits value={strings.trial.repsOf(reps, PRESCRIBED_REPS)} />
+              </div>
+              <div className="readout__unit">{strings.trial.repsLabel}</div>
+              <RepPips done={reps} />
+              {/* Announced politely so a screen reader follows without the visual
+                  field gaining a single extra character. */}
+              <p className="sr-only" aria-live="polite">
+                {strings.trial.srRepAnnounce(reps, PRESCRIBED_REPS)}
+              </p>
+            </div>
+          )}
 
-        {stage === 'void' && (
-          <div className="void-note">
-            <p className="void-note__title">{strings.trial.voidTitle}</p>
-            <p className="void-note__body">{strings.trial.voidBody}</p>
-          </div>
-        )}
+          {stage === 'settled' && outcome && (
+            /* The participant sees 完成 and their pips. Nothing else.
+               The outcome nuance (未完成五次 / 手部支撐) lives in the rail, for the
+               facilitator. Putting "you did not complete five" in front of the
+               participant at 48px is exactly the harm the tone rule forbids:
+               a valid recorded outcome must not read as a failure. */
+            <div className="done">
+              <p className="done__word">{strings.trial.complete}</p>
+              <RepPips done={reps} />
+            </div>
+          )}
+
+          {stage === 'void' && (
+            <div className="void-note">
+              <p className="void-note__title">{strings.trial.voidTitle}</p>
+              <p className="void-note__body">{strings.trial.voidBody}</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* ── Camera controls ─────────────────────────────────────────────────
+          Cue stage only, and controls only — the image itself is up in the
+          participant field. A Tier 1 trial cannot pause and tracking loss voids
+          it, so the moment before the start press is the only cheap chance to
+          fix a bad camera position, and the only moment these controls matter. */}
+      {stage === 'cue' && (
+        <CameraControls
+          status={camera.status}
+          onStart={() => void camera.start()}
+          onStop={camera.stop}
+        />
+      )}
 
       {/* ── Facilitator Rail ────────────────────────────────────────────── */}
       <div className={flash ? 'rail rail--flash' : 'rail'}>
@@ -204,26 +248,12 @@ export function Trial({
           <StateChip display={trackChip} />
         </div>
 
-        {/*
-          Live camera preview -- facilitator-rail only, never in the locked
-          participant field (THE ZONE LAW above still holds: one number, one
-          pip row, nothing else competing for the participant's attention).
-          Deliberate deviation from README.md's "not built, on purpose: any
-          camera or MediaPipe code" -- added on explicit request so people can
-          see their own movement. Only rendered against a real backend
-          (`!src.isSimulated`); the fixture/demo source has no camera to show.
-          URL is the same fixed localhost:8765 the README already documents
-          for LocalhostDataSource -- not read from `src` because
-          SessionDataSource doesn't expose a base URL, so if that ever
-          changes this needs updating too.
-        */}
-        {!src.isSimulated && (
-          <div className="rail__state rail__preview">
-            <img
-              src="http://127.0.0.1:8765/video"
-              alt=""
-              className="rail__preview-img"
-            />
+        {/* The collapsed form of the preview. Only present once the facilitator
+            has actually enabled the camera, and only away from the cue stage
+            where the full panel is showing. */}
+        {camera.status === 'live' && stage !== 'cue' && (
+          <div className="rail__state">
+            <StateChip display={cameraSignalDisplay(camera.signal)} />
           </div>
         )}
 
@@ -243,15 +273,14 @@ export function Trial({
         <div className="rail__spacer" />
 
         <div className="rail__actions">
+          {/* No 回名單 here: the header carries back on every surface, and two
+              controls to one destination is one too many. */}
           {stage === 'cue' && (
             <>
-              <RailButton variant="quiet" onClick={onBack}>
-                {strings.trial.backToRoster}
-              </RailButton>
               <RailButton variant="quiet" onClick={() => setAskUnable(true)}>
                 {strings.unable.action}
               </RailButton>
-              <RailButton variant="primary" onClick={() => void begin()}>
+              <RailButton variant="primary" icon="start" onClick={() => void begin()}>
                 {strings.trial.begin}
               </RailButton>
             </>
@@ -267,20 +296,15 @@ export function Trial({
           )}
 
           {stage === 'settled' && outcome && (
-            <RailButton variant="primary" onClick={() => onSettled(outcome)}>
+            <RailButton variant="primary" icon="record" onClick={() => onSettled(outcome)}>
               {strings.trial.viewResult}
             </RailButton>
           )}
 
           {stage === 'void' && (
-            <>
-              <RailButton variant="quiet" onClick={onBack}>
-                {strings.trial.backToRoster}
-              </RailButton>
-              <RailButton variant="primary" onClick={restart}>
-                {strings.trial.restart}
-              </RailButton>
-            </>
+            <RailButton variant="primary" onClick={restart}>
+              {strings.trial.restart}
+            </RailButton>
           )}
         </div>
       </div>

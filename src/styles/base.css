@@ -18,7 +18,7 @@ body,
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -97,6 +97,13 @@ h3 {
    centred instead of drifting right. */
 .digits__cell--sep {
   width: 0.42ch;
+}
+
+/* An arithmetic sign is a figure-width glyph and needs the room. At the
+   separator width it overlapped the digit beside it. */
+.digits__cell--sign {
+  width: 1ch;
+  padding-right: 0.08ch;
 }
 
 /* ─── Screen-reader only ─────────────────────────────────────────────────── */

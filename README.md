@@ -4,7 +4,10 @@ Frontend for the Tier 1 measurement surface: an automated **five-times sit-to-st
 for community elder-care centres in Taiwan, and the one-page sheet a site files with its funding
 report.
 
-**This build is fixtures only. There is no camera, no pose estimation, and no measurement.**
+**This build is fixtures only. Every rep count and every time is simulated — there is no pose
+estimation and no measurement.** The one real camera code path is an opt-in framing preview and
+participant self-view: it binds a `MediaStream` to a `<video>` and does nothing else. No canvas, no
+capture, no analysis, no retention.
 
 Read `PRODUCT.md` for who this is for and `DESIGN.md` for the visual system. Both outrank this
 file, and `CLAUDE.md`'s hard invariants outrank all three.
@@ -26,13 +29,29 @@ Node 22+. Built and verified on Node 26 / npm 11.
 
 ## What you are looking at
 
-Three surfaces plus a print artifact.
+Four surfaces plus a print artifact, under a header that renders **the path to where you are**:
+
+```
+場次設定 ──► 本期名單 ──┬──► 王阿姨・量測 ──► 王阿姨・本次量測 ──► 王阿姨・紀錄
+                       ├──► 王阿姨・紀錄
+                       └──► 報表
+```
+
+Every segment of that path is a 64px button. Home is always the first segment; back is always the
+one before the current, which is one level *up* rather than a visit history. The header answers
+where you are; the rail carries the forward action.
+
+The theme is **positive polarity — dark ink on a cream ground**. That is an acuity decision: a
+bright field constricts the pupil, which increases depth of field for a 75–90 year old reader. The
+printed sheet stays strictly black on white.
 
 | Surface | What it is |
 |---|---|
+| **Setup** | 據點, 期, phase, today's attendance, camera framing check. Where a session is configured. |
 | **Roster** | A 期 in progress, marked 前測 or 後測. Status per participant. Deliberately carries **no times**. |
-| **Trial** | The 5×STS itself. One number, five pips, a tracking indicator, and one large control. |
-| **Result** | One participant's time, immediately after. Where the number finally appears. |
+| **Trial** | The 5×STS itself. Mirrored self-view on the left half, one number and five pips on the right. |
+| **Result** | Straight after a trial: the time, any flag, and the next participant's name. Deliberately carries **no attempt history** — the participant is still sitting in front of the screen. |
+| **Detail** | One participant, both phases, per-rep splits, 差值, and the full append-only attempt history. |
 | **Sheet** | A4, one page, printable. **This is the product.** |
 
 ### Press `S` for the scenario switcher
@@ -129,18 +148,50 @@ which the first does not. Verified: all ten digits measure 113.27 px at the hero
 
 Measured in a headless browser, not eyeballed.
 
+- **All seven screens audited**, not just the roster: 559 text nodes across setup, roster, detail,
+  trial cue, trial running, result and the sheet. Zero below 4.5:1, minimum 5.28:1. Zero controls under
+  64 px once `<input>`s are resolved to their wrapping `<label>`, which is the actual tap target.
+  One `<h1>` per surface, no duplicates.
+- **Roster columns actually align.** Measured: one distinct x per track per half for both the
+  status and action columns, and the two halves match each other to within 0.6 px at 1280×800 and
+  1600×900 — including the row carrying an extra 已更正 modifier, which sits on the same geometry
+  as every other row because the modifier cell is always rendered.
+- **One band of chrome.** Header 72 px, content starts at 73 px. It was 80 px of header plus a
+  42 px demo strip.
+- **Roster fits the class.** All **12 of 12 rows fully visible at 1280×800 with no scrolling**
+  (neither the field nor the page scrolls), and 12 of 12 at 1600×900. Two columns: twelve rows at
+  the 64 px tap floor is 768 px of rows alone, which does not fit under an 800 px viewport at any
+  type size, so the tap target rather than the typography is the binding constraint.
 - **Contrast.** Full-page audit resolves every colour through a canvas (`getComputedStyle` returns
-  `oklch()` verbatim, so string parsing silently reports 1.00:1). Zero failures. Every text node in
-  the locked participant field measures **≥10.29:1** against a 7:1 floor. Token matrix is in
-  `DESIGN.md`; all values there are measured, and two earlier hand-computed sets were wrong.
-- **Print.** The sheet is **923 px of content against 1017 px of A4 printable height** (297 mm less
-  28 mm of `@page` margin) — 24.9 mm of headroom, one page. Emitting a PDF returns a single page.
+  `oklch()` verbatim, so string parsing silently reports 1.00:1). **Zero below 4.5:1**,
+  minimum 5.28:1. Every text node in the locked participant field measures **≥8.19:1**
+  against a 7:1 floor. Token matrix is in `DESIGN.md`; all values there are measured, and three
+  hand-computed sets have now been wrong — including the first draft of this cream palette, whose
+  estimates would have shipped `--ink-muted` at 3.80:1.
+- **Print.** The sheet is **889 px of content against 1017 px of A4 printable height** (297 mm less
+  28 mm of `@page` margin) — 33.8 mm of headroom, one page. Emitting a PDF returns a single page.
   Note the app shell needs its `height:100%` / `overflow:hidden` flattened in `@media print`, or a
   sheet that fits paginates to two pages anyway.
-- **Tap targets.** Zero facilitator controls under 64 px.
+- **Print stays black on white.** The screen's cream ground does not leak onto paper: under print
+  emulation the sheet background measures pure `255,255,255` and **all 104 text nodes measure
+  chroma 0 on both foreground and background**. Verified, not assumed.
+- **Tap targets.** Zero facilitator controls under 64 px; smallest measured row is 66 px. (The
+  scenario switcher toggle is 44 px: a demo-only affordance, absent from the product and from
+  print.)
+- **Digits.** All ten digits measure **113.27 px** at the hero size, unchanged.
+- **Camera.** The self-view acquires a real 1280×720 stream, and **zero `<canvas>` elements exist
+  in the DOM** while it is live. Denying permission leaves the trial flow fully working on fixtures.
+- **Trial split.** The trial screen is two equal halves: mirrored self-view left, readout right.
+  Verified across **thirteen viewport sizes** — exact 50/50 where split, no horizontal overflow, no
+  clipping, and `.readout__count` the largest element in the right half at every one. Stacks below
+  900 px or in portrait. Smallest hero anywhere is 6rem, three times the 2rem participant floor.
+  With no camera the readout takes the whole field. See `DESIGN.md` for what this gave up: the rep
+  count is no longer the largest element on screen, only in its half.
 - **Reduced motion.** All four animations collapse to instant state swaps; content is never gated
   behind a transition.
 - **No horizontal overflow** at 1280×800 or 1600×900.
+- **CJK line breaking.** 雙手抱胸，坐穩後由工作人員開始。 holds one line at 1280×800, 1600×900,
+  900×700 and 620×700, so 工作人員 never splits across lines.
 
 ### Known limits
 
@@ -155,8 +206,12 @@ Measured in a headless browser, not eyeballed.
 ## Not built, on purpose
 
 Physiotherapist dashboard · longitudinal trend charts · live rep-by-rep form coaching · multi-person
-tracking · any camera or MediaPipe code · mobile app · cloud backend · accounts · a second exercise
-· TTS · automatic capacity test.
+tracking · **any pose estimation, landmark extraction or MediaPipe code** · mobile app · cloud
+backend · accounts · a second exercise · TTS · automatic capacity test.
+
+The one piece of camera code that does exist is the opt-in framing preview: it binds a
+`MediaStream` to a `<video>` and does nothing else. No canvas, no frame capture, no analysis, no
+retention. Rep counts and times are still entirely fixture-driven.
 
 **Tier 2** (working sets, load ladder, stop rule) is gated on the August experiment described in the
 design doc and is deliberately absent. There is no velocity or effort UI anywhere in this build.

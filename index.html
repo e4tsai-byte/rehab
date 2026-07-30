@@ -3,11 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light" />
     <meta
       name="description"
       content="VeloCare Tier 1 UI prototype — automated 5x sit-to-stand assessment for Taiwanese community elder-care centres. Simulated data."
     />
+    <!-- Inline data URI, not a file: the appliance has no network and the
+         build must stay self-contained. Also stops the deployed demo 404ing
+         /favicon.ico on every load. Mark matches Logo.tsx. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22%23f4efe2%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%231b2430%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2017h8%22%2F%3E%3Cpath%20d%3D%22M9%2017V9l6-4%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E" />
     <title>VeloCare — 五次起立坐下量測</title>
   </head>
   <body>
