@@ -30,11 +30,8 @@ import datetime
 import threading
 from typing import Callable, Dict, List, Optional, Set
 
-import cv2
-
 from ..autoregulation.rep_counter import RepCounter
 from ..capture import CameraUnavailableError, ModelLoadError, PoseCapture
-from ..overlay import draw_skeleton, draw_state_label
 from ..pipeline import PoseTrackingPipeline
 from ..types import FrameOutput, State
 
@@ -353,17 +350,6 @@ class CaptureRunner:
         self._stop = threading.Event()
         self.startup_error: Optional[str] = None
         self.latest_frame_timestamp: float = 0.0
-        # Live-preview only: the most recent frame, JPEG-encoded in memory.
-        # Never written to disk, never kept beyond the single latest frame --
-        # this is a display feed for /video, not storage. Overwritten every
-        # loop iteration; a lock guards the read in the streaming endpoint
-        # against a torn write from the capture thread.
-        self._latest_jpeg: Optional[bytes] = None
-        self._latest_jpeg_lock = threading.Lock()
-
-    def get_latest_jpeg(self) -> Optional[bytes]:
-        with self._latest_jpeg_lock:
-            return self._latest_jpeg
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._run, name="pose-capture-loop", daemon=True)
@@ -396,19 +382,5 @@ class CaptureRunner:
                 output = pipeline.process_frame(observations, timestamp)
                 self._tracking_hub.on_frame_state(output.state)
                 self._trial_manager.process_frame(output)
-
-                # Live-preview encode. Draws on a fresh copy so the pose
-                # math above never touches display-only pixels. JPEG bytes
-                # replace the previous ones in memory only -- nothing here
-                # touches disk, matching the "never persisted" invariant;
-                # this is a live view, not a recording.
-                preview = frame_bgr.copy()
-                if observations:
-                    draw_skeleton(preview, observations[0].landmarks_2d)
-                draw_state_label(preview, output.state.value)
-                ok, buf = cv2.imencode(".jpg", preview, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                if ok:
-                    with self._latest_jpeg_lock:
-                        self._latest_jpeg = buf.tobytes()
         finally:
             capture.close()

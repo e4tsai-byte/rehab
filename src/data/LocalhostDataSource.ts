@@ -10,6 +10,10 @@
      GET  {base}/block
      GET  {base}/sessions
      GET  {base}/sessions/:sessionId/records
+     GET  {base}/sites
+     GET  {base}/sites/:siteId/enrolment
+     POST {base}/sites/:siteId/enrolment  { label } -> Participant
+     POST {base}/sessions/open            SessionSetup -> AssessmentSession
      POST {base}/trials/start            { sessionId, participantId } -> { trialId } | trialId
      POST {base}/trials/:trialId/end     -> Outcome
      POST {base}/trials/:trialId/abort   { reason } -> Outcome
@@ -30,9 +34,13 @@ import type {
   Block,
   CorrectionNote,
   Outcome,
+  Participant,
   ParticipantId,
   RecordId,
   SessionId,
+  SessionSetup,
+  Site,
+  SiteId,
   TrackingState,
   TrialEvent,
 } from '../domain/types'
@@ -123,6 +131,30 @@ export class LocalhostDataSource implements SessionDataSource {
 
   async getRecords(sessionId: SessionId): Promise<readonly AnyRecord[]> {
     return this.request<readonly AnyRecord[]>(`/sessions/${encodeURIComponent(sessionId)}/records`)
+  }
+
+  async getSites(): Promise<readonly Site[]> {
+    return this.request<readonly Site[]>('/sites')
+  }
+
+  async getEnrolment(siteId: SiteId): Promise<readonly Participant[]> {
+    return this.request<readonly Participant[]>(`/sites/${encodeURIComponent(siteId)}/enrolment`)
+  }
+
+  async enrolParticipant(siteId: SiteId, label: string): Promise<Participant> {
+    return this.request<Participant>(`/sites/${encodeURIComponent(siteId)}/enrolment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label }),
+    })
+  }
+
+  async openSession(setup: SessionSetup): Promise<AssessmentSession> {
+    return this.request<AssessmentSession>('/sessions/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(setup),
+    })
   }
 
   async startTrial(sessionId: SessionId, participantId: ParticipantId): Promise<TrialId> {

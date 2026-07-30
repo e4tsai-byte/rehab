@@ -18,25 +18,47 @@ rather than local style.
 
 from typing import Dict, List
 
+SITES: List[Dict] = [
+    {"siteId": "SITE-01", "name": "示範社區照顧關懷據點"},
+    {"siteId": "SITE-02", "name": "示範第二關懷據點"},
+]
+
+PARTICIPANTS: List[Dict] = [
+    {"id": "P-0041", "label": "王阿姨"},
+    {"id": "P-0042", "label": "陳媽"},
+    {"id": "P-0043", "label": "林伯"},
+    {"id": "P-0044", "label": "張姐"},
+    {"id": "P-0045", "label": "李伯"},
+    {"id": "P-0046", "label": "黃阿姨"},
+    {"id": "P-0047", "label": "吳媽"},
+    {"id": "P-0048", "label": "蔡伯"},
+    {"id": "P-0049", "label": "鄭姐"},
+    {"id": "P-0050", "label": "許阿姨"},
+    {"id": "P-0051", "label": "曾伯"},
+    {"id": "P-0052", "label": "何媽"},
+]
+
+# Enrolment is deliberately LARGER than the 期's attendee list -- mirrors
+# fixtures.ts's ENROLLED, so the setup screen has extra people to pick from.
+ENROLMENT_BY_SITE: Dict[str, List[Dict]] = {
+    "SITE-01": [
+        *PARTICIPANTS,
+        {"id": "P-0053", "label": "周伯"},
+        {"id": "P-0054", "label": "劉阿姨"},
+        {"id": "P-0055", "label": "邱媽"},
+    ],
+    "SITE-02": [],
+}
+
+ALL_IDS: List[str] = [p["id"] for p in PARTICIPANTS]
+
 BLOCK: Dict = {
     "blockId": "B-2026-03",
+    "siteId": "SITE-01",
     "siteName": "示範社區照顧關懷據點",
     "blockName": "115 年度第 3 期",
     "startedIso": "2026-05-04",
-    "participants": [
-        {"id": "P-0041", "label": "王阿姨"},
-        {"id": "P-0042", "label": "陳媽"},
-        {"id": "P-0043", "label": "林伯"},
-        {"id": "P-0044", "label": "張姐"},
-        {"id": "P-0045", "label": "李伯"},
-        {"id": "P-0046", "label": "黃阿姨"},
-        {"id": "P-0047", "label": "吳媽"},
-        {"id": "P-0048", "label": "蔡伯"},
-        {"id": "P-0049", "label": "鄭姐"},
-        {"id": "P-0050", "label": "許阿姨"},
-        {"id": "P-0051", "label": "曾伯"},
-        {"id": "P-0052", "label": "何媽"},
-    ],
+    "participants": PARTICIPANTS,
 }
 
 SESSION_PRE: Dict = {
@@ -44,6 +66,7 @@ SESSION_PRE: Dict = {
     "blockId": BLOCK["blockId"],
     "phase": "pre",
     "dateIso": "2026-05-04",
+    "attendeeIds": ALL_IDS,
 }
 
 SESSION_POST: Dict = {
@@ -51,6 +74,7 @@ SESSION_POST: Dict = {
     "blockId": BLOCK["blockId"],
     "phase": "post",
     "dateIso": "2026-07-27",
+    "attendeeIds": ALL_IDS,
 }
 
 SESSIONS: List[Dict] = [SESSION_PRE, SESSION_POST]

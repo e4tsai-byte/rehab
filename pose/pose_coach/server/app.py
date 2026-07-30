@@ -15,14 +15,16 @@ from typing import Annotated, Dict, List, Literal, Union
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import seed_data
+from .enrolment import EnrolmentStore
 from .store import RecordStore
 from .tracking import CaptureRunner, TrackingHub, TrialManager
 
-DATA_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "records.json"
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
+DATA_PATH = DATA_DIR / "records.json"
+ENROLMENT_PATH = DATA_DIR / "enrolment.json"
 
 app = FastAPI(title="pose-coach localhost server")
 
@@ -36,6 +38,7 @@ app.add_middleware(
 trial_manager = TrialManager()
 tracking_hub = TrackingHub(on_change=trial_manager.on_tracking_state)
 store = RecordStore(DATA_PATH, seed_data.build_seed_records())
+enrolment_store = EnrolmentStore(ENROLMENT_PATH)
 capture_runner = CaptureRunner(tracking_hub, trial_manager)
 
 
@@ -58,17 +61,55 @@ async def _shutdown() -> None:
 
 @app.get("/block")
 async def get_block() -> Dict:
-    return seed_data.BLOCK
+    return enrolment_store.get_current_block()
 
 
 @app.get("/sessions")
 async def get_sessions() -> List[Dict]:
-    return seed_data.SESSIONS
+    return enrolment_store.get_sessions()
 
 
 @app.get("/sessions/{session_id}/records")
 async def get_records(session_id: str) -> List[Dict]:
     return store.for_session(session_id)
+
+
+# ── REST: enrolment and session setup ───────────────────────────────────────
+
+
+@app.get("/sites")
+async def get_sites() -> List[Dict]:
+    return enrolment_store.get_sites()
+
+
+@app.get("/sites/{site_id}/enrolment")
+async def get_enrolment(site_id: str) -> List[Dict]:
+    return enrolment_store.get_enrolment(site_id)
+
+
+class EnrolParticipantBody(BaseModel):
+    label: str
+
+
+@app.post("/sites/{site_id}/enrolment")
+async def enrol_participant(site_id: str, body: EnrolParticipantBody) -> Dict:
+    return enrolment_store.enrol_participant(site_id, body.label)
+
+
+Phase = Literal["pre", "post"]
+
+
+class SessionSetupBody(BaseModel):
+    siteId: str
+    year: int
+    cycle: int
+    phase: Phase
+    attendeeIds: List[str]
+
+
+@app.post("/sessions/open")
+async def open_session(body: SessionSetupBody) -> Dict:
+    return enrolment_store.open_session(body.model_dump())
 
 
 # ── REST: trial lifecycle ───────────────────────────────────────────────────
@@ -233,43 +274,6 @@ async def add_correction(body: CorrectionBody) -> None:
         }
     )
     return None
-
-
-# ── Live video preview ──────────────────────────────────────────────────────
-# Deliberate deviation from this build's original scope: the frontend's own
-# README/PRODUCT.md list "any camera or MediaPipe code" under "not built, on
-# purpose" and the SessionDataSource seam was designed so the UI never touches
-# video. Added on explicit request to let participants/facilitators see the
-# live camera view. Still honors the hard privacy invariant: nothing here
-# writes a frame to disk. Each frame is JPEG-encoded in memory by the capture
-# loop (tracking.py), immediately overwriting the previous one -- this
-# endpoint only ever serves "whatever the latest one currently is," never a
-# stored sequence. MJPEG over plain HTTP (multipart/x-mixed-replace) renders
-# natively in a browser <img> tag with zero client-side decoding code, which
-# matters given the deadline -- the standard low-effort way to preview a
-# local camera in a browser.
-_VIDEO_FRAME_INTERVAL_S = 1 / 15  # cap the preview at ~15fps; the pose loop
-# itself may run faster or slower depending on hardware, this just paces how
-# often the same latest-frame buffer is polled and re-sent.
-
-
-@app.get("/video")
-async def video_feed() -> StreamingResponse:
-    async def _mjpeg():
-        boundary = b"frame"
-        while True:
-            jpeg = capture_runner.get_latest_jpeg()
-            if jpeg is not None:
-                yield (
-                    b"--" + boundary + b"\r\n"
-                    b"Content-Type: image/jpeg\r\n"
-                    b"Content-Length: " + str(len(jpeg)).encode() + b"\r\n\r\n" + jpeg + b"\r\n"
-                )
-            await asyncio.sleep(_VIDEO_FRAME_INTERVAL_S)
-
-    return StreamingResponse(
-        _mjpeg(), media_type="multipart/x-mixed-replace; boundary=frame"
-    )
 
 
 # ── WebSockets ───────────────────────────────────────────────────────────────
