@@ -280,7 +280,6 @@
   flex-wrap: wrap;
   padding: var(--s-3) var(--s-4);
   border: 1px solid var(--line);
-  border-left: 1px solid var(--line);
   border-radius: var(--r);
   background: var(--blue-50);
   font-size: var(--t-fac-sm);
@@ -955,6 +954,10 @@
   color: var(--ink);
 }
 
+/* One breakpoint for both multi-column surfaces rather than two. Below this the
+   participant detail's phase blocks were still side by side all the way down to
+   620px, where the rep-split track collapsed to 102px — too narrow to read as a
+   magnitude comparison, which is the only thing the bars are for. */
 @media (max-width: 1000px) {
   .roster__cols {
     grid-template-columns: minmax(0, 1fr);
@@ -1572,6 +1575,19 @@
   align-items: start;
 }
 
+/* Same 1000px breakpoint as the roster. Side by side all the way down, the
+   rep-split track fell to 102px at 620px — too narrow to read as the magnitude
+   comparison the bars exist for.
+
+   This override MUST live after the rule above: both are single-class
+   selectors, so specificity ties and source order decides. Declared up in the
+   roster's media block it silently did nothing. */
+@media (max-width: 1000px) {
+  .pd__phases {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .pd__phase {
   background: var(--surface-raised);
   border: 1px solid var(--line);
@@ -2085,7 +2101,9 @@
 .t2__body {
   font-size: var(--t-fac-sm);
   line-height: 1.55;
-  max-width: 90ch;
+  /* ~44 CJK characters. `ch` is sized on the "0" advance, so CJK fits about
+     1.8 characters per ch and 90ch measured 50 — over the comfortable band. */
+  max-width: 78ch;
   text-wrap: pretty;
 }
 
@@ -2123,7 +2141,8 @@
   gap: var(--s-1);
   font-size: var(--t-fac-sm);
   line-height: 1.55;
-  max-width: 90ch;
+  /* Same CJK measure as .t2__body. */
+  max-width: 78ch;
 }
 
 .t2__criteria li {

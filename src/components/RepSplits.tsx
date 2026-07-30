@@ -29,7 +29,15 @@ import { Digits } from './Digits'
 import { formatSeconds } from '../domain/types'
 import { strings } from '../i18n/strings'
 
-export function RepSplits({ repTimesMs }: { repTimesMs: readonly number[] }) {
+export function RepSplits({
+  repTimesMs,
+  phaseWord,
+}: {
+  repTimesMs: readonly number[]
+  /** Qualifies the caption. Both phase blocks render this component, and an
+      unqualified caption gave a screen reader two identical tables. */
+  phaseWord: string
+}) {
   if (repTimesMs.length === 0) return null
 
   const max = Math.max(...repTimesMs)
@@ -37,7 +45,10 @@ export function RepSplits({ repTimesMs }: { repTimesMs: readonly number[] }) {
   return (
     <figure className="splits">
       <figcaption className="splits__head">
-        <span className="splits__title">{strings.detail.splitsTitle}</span>
+        <span className="splits__title">
+          {strings.detail.splitsTitle}
+          <span className="sr-only">（{phaseWord}）</span>
+        </span>
         <span className="splits__hint">{strings.detail.splitsHint}</span>
       </figcaption>
 
@@ -49,7 +60,11 @@ export function RepSplits({ repTimesMs }: { repTimesMs: readonly number[] }) {
               {/* Width against the trial's own longest rep, so the comparison is
                   strictly internal to this measurement. There is no external
                   scale, and adding one would import a norm. */}
-              <div className="split__bar" style={{ width: `${(ms / max) * 100}%` }} />
+              <div
+                className="split__bar"
+                style={{ width: `${(ms / max) * 100}%` }}
+                aria-hidden="true"
+              />
             </div>
             <span className="split__t">
               <Digits value={formatSeconds(ms)} /> {strings.result.seconds}
@@ -61,7 +76,9 @@ export function RepSplits({ repTimesMs }: { repTimesMs: readonly number[] }) {
       {/* The same numbers as text, for a screen reader and for anyone who wants
           the values rather than the shape. */}
       <table className="sr-only">
-        <caption>{strings.detail.splitsTitle}</caption>
+        <caption>
+          {strings.detail.splitsTitle}（{phaseWord}）
+        </caption>
         <tbody>
           {repTimesMs.map((ms, i) => (
             <tr key={i}>

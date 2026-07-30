@@ -131,10 +131,10 @@ function PhaseBlock({ view }: { view: PhaseView }) {
 
           {reasonWord(t.outcome) && <p className="pd__flag">{reasonWord(t.outcome)}</p>}
 
-          <RepSplits repTimesMs={splits} />
+          <RepSplits repTimesMs={splits} phaseWord={phaseWord} />
           {/* Arithmetic on the times above. See domain/stats.ts for what is
               deliberately absent — no velocity, no trace, no threshold. */}
-          <RepStatsBlock repTimesMs={splits} />
+          <RepStatsBlock repTimesMs={splits} phaseWord={phaseWord} />
         </>
       )}
 

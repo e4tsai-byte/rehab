@@ -81,12 +81,17 @@ export function Roster({
                         <RailButton
                           variant="quiet"
                           icon="record"
+                          ariaLabel={strings.roster.reviewFor(participant.label)}
                           onClick={() => onReview(participant, trial)}
                         >
                           {strings.roster.review}
                         </RailButton>
                       ) : (
-                        <RailButton icon="start" onClick={() => onStart(participant)}>
+                        <RailButton
+                          icon="start"
+                          ariaLabel={strings.roster.startFor(participant.label)}
+                          onClick={() => onStart(participant)}
+                        >
                           {strings.roster.start}
                         </RailButton>
                       )}

@@ -39,6 +39,9 @@ export interface Strings {
     readonly attendanceNote: (n: number) => string
     readonly start: string
     readonly review: string
+    /** Accessible names. The visible label stays short; these add who it acts on. */
+    readonly startFor: (label: string) => string
+    readonly reviewFor: (label: string) => string
     readonly openSheet: string
     readonly emptyTitle: string
     readonly emptyBody: string
@@ -334,6 +337,8 @@ const zhTW: Strings = {
     attendanceNote: (n) => `本期出席 ${n} 人`,
     start: '開始量測',
     review: '查看紀錄',
+    startFor: (label) => `開始量測：${label}`,
+    reviewFor: (label) => `查看紀錄：${label}`,
     openSheet: '產生報表',
     emptyTitle: '本期尚無名單',
     emptyBody: '請先於現場紙本名冊建立代號，再於此處對應。',

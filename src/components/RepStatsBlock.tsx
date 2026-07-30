@@ -30,7 +30,15 @@ function secs(ms: number): string {
   return formatSeconds(Math.abs(ms))
 }
 
-export function RepStatsBlock({ repTimesMs }: { repTimesMs: readonly number[] }) {
+export function RepStatsBlock({
+  repTimesMs,
+  phaseWord,
+}: {
+  repTimesMs: readonly number[]
+  /** Qualifies the heading. Both phase blocks render this component, so an
+      unqualified one put two identical entries in the heading outline. */
+  phaseWord: string
+}) {
   const st = repStats(repTimesMs)
   if (!st) return null
 
@@ -43,7 +51,10 @@ export function RepStatsBlock({ repTimesMs }: { repTimesMs: readonly number[] })
 
   return (
     <section className="stats">
-      <h3 className="stats__title">{strings.detail.statsTitle}</h3>
+      <h3 className="stats__title">
+        {strings.detail.statsTitle}
+        <span className="sr-only">（{phaseWord}）</span>
+      </h3>
       <p className="stats__hint">{strings.detail.statsHint}</p>
 
       <dl className="stats__grid">
@@ -134,6 +145,7 @@ export function SplitOverlay({
                           <div
                             className={`ovlbar__fill ovlbar__fill--${kind}`}
                             style={{ width: `${(ms / scale) * 100}%` }}
+                            aria-hidden="true"
                           />
                         )}
                       </div>
