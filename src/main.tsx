@@ -16,10 +16,17 @@ import './styles/print.css'
 import { App } from './App'
 import { DataSourceProvider } from './data/context'
 import { FixtureDataSource } from './data/fixtures'
+import { LocalhostDataSource } from './data/LocalhostDataSource'
+import type { SessionDataSource } from './data/SessionDataSource'
 
-// The ONLY place a concrete data source is named. In October this line becomes
-// `new LocalhostDataSource('http://127.0.0.1:8765')` and nothing else changes.
-const source = new FixtureDataSource()
+// The ONLY place a concrete data source is named. Defaults to the fixture
+// source (unchanged demo behaviour, incl. the `S` scenario switcher) so the
+// deployed demo URL keeps working without a camera. Append `?live=1` to talk
+// to a real Python backend on http://127.0.0.1:8765 instead.
+const live = new URLSearchParams(window.location.search).get('live') === '1'
+const source: SessionDataSource = live
+  ? new LocalhostDataSource('http://127.0.0.1:8765')
+  : new FixtureDataSource()
 
 const el = document.getElementById('root')
 if (!el) throw new Error('#root missing')

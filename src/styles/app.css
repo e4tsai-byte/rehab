@@ -99,6 +99,22 @@
   min-width: 12ch;
 }
 
+/* Live camera preview, facilitator-rail only. Kept small and contained --
+   this is a debug/reassurance view, not a hero surface; it must never
+   compete visually with the rail's actual state chips and controls. */
+.rail__preview {
+  min-width: 0;
+}
+
+.rail__preview-img {
+  display: block;
+  height: calc(var(--rail-h-min) - var(--s-4));
+  width: auto;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
 .rail__spacer {
   flex: 1 1 auto;
 }

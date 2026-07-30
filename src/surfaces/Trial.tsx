@@ -204,6 +204,29 @@ export function Trial({
           <StateChip display={trackChip} />
         </div>
 
+        {/*
+          Live camera preview -- facilitator-rail only, never in the locked
+          participant field (THE ZONE LAW above still holds: one number, one
+          pip row, nothing else competing for the participant's attention).
+          Deliberate deviation from README.md's "not built, on purpose: any
+          camera or MediaPipe code" -- added on explicit request so people can
+          see their own movement. Only rendered against a real backend
+          (`!src.isSimulated`); the fixture/demo source has no camera to show.
+          URL is the same fixed localhost:8765 the README already documents
+          for LocalhostDataSource -- not read from `src` because
+          SessionDataSource doesn't expose a base URL, so if that ever
+          changes this needs updating too.
+        */}
+        {!src.isSimulated && (
+          <div className="rail__state rail__preview">
+            <img
+              src="http://127.0.0.1:8765/video"
+              alt=""
+              className="rail__preview-img"
+            />
+          </div>
+        )}
+
         {/* Outcome detail is facilitator-facing, never participant-facing. */}
         {stage === 'settled' && outcome && outcome.kind !== 'complete' && (
           <div className="rail__state">

@@ -11,3 +11,7 @@ dist/
 # Pre-downloaded model asset (see models/README.md) -- kept locally,
 # not committed, to avoid a large binary in git history.
 models/*.task
+
+# Server's record-log persistence (placeholder JSON durability) -- runtime
+# state, not source.
+data/
