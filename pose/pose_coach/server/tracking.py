@@ -28,10 +28,13 @@ thread hops over via `loop.call_soon_threadsafe`.
 import asyncio
 import datetime
 import threading
+
+import cv2
 from typing import Callable, Dict, List, Optional, Set
 
 from ..autoregulation.rep_counter import RepCounter
 from ..capture import CameraUnavailableError, ModelLoadError, PoseCapture
+from ..overlay import draw_skeleton, draw_state_label
 from ..pipeline import PoseTrackingPipeline
 from ..types import FrameOutput, State
 
@@ -350,6 +353,17 @@ class CaptureRunner:
         self._stop = threading.Event()
         self.startup_error: Optional[str] = None
         self.latest_frame_timestamp: float = 0.0
+        # Live-preview only: the most recent frame, JPEG-encoded (with the
+        # skeleton overlay already drawn) in memory. Never written to disk,
+        # never kept beyond the single latest frame -- overwritten every
+        # loop iteration; the lock guards the read in /video's streaming
+        # endpoint against a torn write from this background thread.
+        self._latest_jpeg: Optional[bytes] = None
+        self._latest_jpeg_lock = threading.Lock()
+
+    def get_latest_jpeg(self) -> Optional[bytes]:
+        with self._latest_jpeg_lock:
+            return self._latest_jpeg
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._run, name="pose-capture-loop", daemon=True)
@@ -373,6 +387,11 @@ class CaptureRunner:
             return
 
         pipeline = PoseTrackingPipeline()
+        # Temporary diagnostic: log every raw state-machine transition
+        # (SEATED/STANDING/TRANSITIONING/UNKNOWN), not just the coarser
+        # idle/live/lost mapping -- lets a live server session be debugged
+        # from the log instead of guessing from what the UI shows.
+        last_logged_state = None
         try:
             while not self._stop.is_set():
                 frame_bgr, observations, timestamp = capture.read()
@@ -380,7 +399,24 @@ class CaptureRunner:
                     break
                 self.latest_frame_timestamp = timestamp
                 output = pipeline.process_frame(observations, timestamp)
+                if output.state.value != last_logged_state:
+                    print(
+                        f"[state] t={timestamp:7.2f}s state={output.state.value:<13} "
+                        f"side={output.side_used} knee={output.knee_angle_smoothed} "
+                        f"hip_height={output.hip_height_norm}",
+                        flush=True,
+                    )
+                    last_logged_state = output.state.value
                 self._tracking_hub.on_frame_state(output.state)
                 self._trial_manager.process_frame(output)
+
+                preview = frame_bgr.copy()
+                if observations:
+                    draw_skeleton(preview, observations[0].landmarks_2d)
+                draw_state_label(preview, output.state.value)
+                ok, buf = cv2.imencode(".jpg", preview, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                if ok:
+                    with self._latest_jpeg_lock:
+                        self._latest_jpeg = buf.tobytes()
         finally:
             capture.close()

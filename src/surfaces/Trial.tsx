@@ -153,7 +153,13 @@ export function Trial({
   }
 
   const trackChip = trackingDisplay(stage === 'void' ? 'lost' : tracking)
-  const cameraLive = camera.status === 'live'
+  // Against the real backend, the split view shows the backend's own
+  // annotated stream (see field__view below), which needs no browser
+  // getUserMedia permission at all -- gating it on `camera.status` would
+  // mean a denied/unavailable browser camera hides the one view that
+  // doesn't depend on it. Fixture/demo mode keeps the original gating,
+  // since the plain self-view IS getUserMedia-backed there.
+  const cameraLive = src.isSimulated ? camera.status === 'live' : true
 
   return (
     <div className="zones">
@@ -175,7 +181,23 @@ export function Trial({
           <div className="field__view">
             {/* Framing rectangle only while positioning. Once the trial runs it
                 is noise: nobody is adjusting their chair mid-effort. */}
-            <CameraSelfView attach={camera.attach} guide={stage === 'cue'} />
+            {!src.isSimulated ? (
+              /* Reinstated on explicit request: shows the backend's actual
+                 annotated tracking view (skeleton + state label) instead of
+                 the plain browser self-view, so tracking is visually
+                 verifiable, not just trusted from a text status chip. A
+                 deliberate, acknowledged deviation from this UI's own "not
+                 built, on purpose: any camera or MediaPipe code" -- only
+                 rendered against the real backend (`!src.isSimulated`);
+                 fixture/demo mode still gets the plain self-view below,
+                 since there's no backend stream to show there. Same fixed
+                 localhost:8765 URL LocalhostDataSource itself uses -- not
+                 read from `src` because SessionDataSource doesn't expose a
+                 base URL, so if that ever changes this needs updating too. */
+              <img src="http://127.0.0.1:8765/video" alt="" className="selfview__video" />
+            ) : (
+              <CameraSelfView attach={camera.attach} guide={stage === 'cue'} />
+            )}
           </div>
         )}
 

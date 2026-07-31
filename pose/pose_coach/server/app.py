@@ -15,6 +15,7 @@ from typing import Annotated, Dict, List, Literal, Union
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import seed_data
@@ -274,6 +275,35 @@ async def add_correction(body: CorrectionBody) -> None:
         }
     )
     return None
+
+
+# ── Live video preview (annotated) ──────────────────────────────────────────
+# Reinstated on explicit request: the participant/facilitator want to SEE
+# tracking working, not just trust a text status chip. This deliberately
+# reverses the new frontend's own "not built, on purpose: any camera or
+# MediaPipe code" -- a real, acknowledged deviation from the documented
+# design, not an oversight. Still honors the hard privacy invariant: nothing
+# here writes a frame to disk. Each frame is JPEG-encoded in memory by the
+# capture loop (tracking.py) with the skeleton overlay already drawn,
+# immediately overwriting the previous one -- never a stored sequence.
+_VIDEO_FRAME_INTERVAL_S = 1 / 15
+
+
+@app.get("/video")
+async def video_feed() -> StreamingResponse:
+    async def _mjpeg():
+        boundary = b"frame"
+        while True:
+            jpeg = capture_runner.get_latest_jpeg()
+            if jpeg is not None:
+                yield (
+                    b"--" + boundary + b"\r\n"
+                    b"Content-Type: image/jpeg\r\n"
+                    b"Content-Length: " + str(len(jpeg)).encode() + b"\r\n\r\n" + jpeg + b"\r\n"
+                )
+            await asyncio.sleep(_VIDEO_FRAME_INTERVAL_S)
+
+    return StreamingResponse(_mjpeg(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 # ── WebSockets ───────────────────────────────────────────────────────────────
