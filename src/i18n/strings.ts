@@ -284,16 +284,19 @@ export interface Strings {
     readonly colPre: string
     readonly colPost: string
     readonly colChange: string
+    readonly colTier2: string
     readonly colNote: string
     readonly unitSeconds: string
     readonly notRecorded: string
     readonly notComparable: string
+    readonly tier2Pending: string
     readonly summaryAssessed: string
     readonly summaryProtocolValid: string
     readonly summaryAttendance: string
     readonly footerScope: string
     readonly footerComparable: string
     readonly footerHandContact: string
+    readonly footerTier2: string
     readonly footerPrivacy: string
     readonly signFacilitator: string
     readonly signLead: string
@@ -643,10 +646,12 @@ const zhTW: Strings = {
     colPre: '前測（秒）',
     colPost: '後測（秒）',
     colChange: '差值（秒）',
+    colTier2: '速度衰減率（Tier 2）',
     colNote: '備註',
     unitSeconds: '秒',
     notRecorded: '未記錄',
     notComparable: '不可比較',
+    tier2Pending: '尚未提供',
     summaryAssessed: '完成量測人數',
     summaryProtocolValid: '符合測驗規範人數',
     summaryAttendance: '本期出席人數',
@@ -663,6 +668,8 @@ const zhTW: Strings = {
       '差值僅在前後測皆符合測驗規範且完成次數相同時計算；完成次數不同者標示「不可比較」，因不同次數之時間無法直接相減。',
     footerHandContact:
       '標示「手部支撐」者，表示過程中偵測到手部支撐，未符合雙手抱胸之測驗規範，該次時間僅供現場參考。標示「無法進行」者為有效紀錄結果。',
+    footerTier2:
+      '速度衰減率欄位為第二階段（Tier 2）規劃項目，需搭載姿態估計後始能提供，本版本尚無相關數據，欄位保留供未來版本使用。',
     footerPrivacy:
       '本器材不錄影、不儲存影像。攝影機僅即時計算人體關節位置，影像不留存、不傳輸。紀錄僅含代號，不含姓名或身分資料。',
 

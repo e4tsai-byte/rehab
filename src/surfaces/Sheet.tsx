@@ -130,6 +130,7 @@ export function Sheet({
                 <th className="num">{strings.sheet.colPre}</th>
                 <th className="num">{strings.sheet.colPost}</th>
                 <th className="num">{strings.sheet.colChange}</th>
+                <th className="num">{strings.sheet.colTier2}</th>
                 <th>{strings.sheet.colNote}</th>
               </tr>
             </thead>
@@ -162,6 +163,17 @@ export function Sheet({
                             ? '—'
                             : strings.sheet.notComparable
                           : `${delta > 0 ? '+' : delta < 0 ? '−' : '±'}${Math.abs(delta).toFixed(1)}`}
+                      </span>
+                    </td>
+                    {/* Schema-ready, not fabricated: post.original.tier2 is
+                        undefined for every trial this build can produce (see
+                        domain/types.ts's Tier 2 section). Always shows the
+                        pending state today; the moment a real value exists
+                        this cell renders it instead, same as Tier2Metrics.tsx
+                        on the Detail screen. */}
+                    <td className="num">
+                      <span className="sheet__num sheet__num--absent">
+                        {b?.original.tier2 ? `${b.original.tier2.velocityLossPct.toFixed(1)}%` : strings.sheet.tier2Pending}
                       </span>
                     </td>
                     <td className="sheet__state">
@@ -198,6 +210,7 @@ export function Sheet({
             <p>{strings.sheet.footerScope}</p>
             <p>{strings.sheet.footerComparable}</p>
             <p>{strings.sheet.footerHandContact}</p>
+            <p>{strings.sheet.footerTier2}</p>
             <p>{strings.sheet.footerPrivacy}</p>
             {src.isSimulated && (
               <p>
