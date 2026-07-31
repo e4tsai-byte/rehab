@@ -30,6 +30,7 @@ import { RailButton } from '../components/RailButton'
 import { RepSplits } from '../components/RepSplits'
 import { RepStatsBlock, SplitOverlay } from '../components/RepStatsBlock'
 import { StateChip } from '../components/StateChip'
+import { Tier2Metrics } from '../components/Tier2Metrics'
 import { Tier2Panel } from '../components/Tier2Panel'
 import { rocDate } from '../domain/dates'
 import { outcomeDisplay } from '../domain/display'
@@ -135,6 +136,9 @@ function PhaseBlock({ view }: { view: PhaseView }) {
           {/* Arithmetic on the times above. See domain/stats.ts for what is
               deliberately absent — no velocity, no trace, no threshold. */}
           <RepStatsBlock repTimesMs={splits} phaseWord={phaseWord} />
+          {/* Schema-ready display for data no producer in this build emits.
+              See Tier2Metrics.tsx and domain/types.ts's Tier 2 section. */}
+          <Tier2Metrics tier2={t.original.tier2} phaseWord={phaseWord} />
         </>
       )}
 

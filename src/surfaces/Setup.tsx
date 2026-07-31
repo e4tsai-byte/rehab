@@ -168,6 +168,7 @@ export function Setup({ onBegin }: { onBegin: (setup: SessionSetup) => void }) {
                   Radio rather than a toggle: a toggle invites a stray tap. */}
               <fieldset className="fld fld--group">
                 <legend className="fld__label">{strings.setup.phaseChoice}</legend>
+                <p className="fld__hint">{strings.setup.phaseChoiceHint}</p>
                 <div className="seg">
                   {(['pre', 'post'] as const).map((p) => (
                     <label key={p} className={phase === p ? 'seg__opt seg__opt--on' : 'seg__opt'}>

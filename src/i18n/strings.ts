@@ -81,6 +81,7 @@ export interface Strings {
     readonly cycleLabel: string
     readonly cycleOf: (n: number) => string
     readonly phaseChoice: string
+    readonly phaseChoiceHint: string
     readonly attendeesTitle: string
     readonly attendeesHint: string
     readonly selectAll: string
@@ -149,6 +150,37 @@ export interface Strings {
     readonly fails: string
     readonly indeterminate: string
     readonly fallback: string
+  }
+  /** Per-trial Tier 2 metrics table -- schema-ready display, not the roadmap
+      panel above. See Tier2Metrics.tsx. */
+  readonly tier2Metrics: {
+    readonly title: string
+    readonly hint: string
+    readonly notAvailable: string
+    readonly notAvailableBody: string
+    readonly summaryTitle: string
+    readonly exerciseLabel: string
+    readonly difficultyStepLabel: string
+    readonly repCountLabel: string
+    readonly meanVelocityFirstLabel: string
+    readonly meanVelocityLastLabel: string
+    readonly velocityLossLabel: string
+    readonly meanRomLabel: string
+    readonly flagCountLabel: string
+    readonly trackingConfidenceLabel: string
+    readonly perRepTitle: string
+    readonly repIndexLabel: string
+    readonly concentricTimeLabel: string
+    readonly peakVelocityLabel: string
+    readonly meanVelocityLabel: string
+    readonly romLabel: string
+    readonly minAngleLabel: string
+    readonly maxAngleLabel: string
+    readonly flagsLabel: string
+    readonly trunkLeanFlag: string
+    readonly partialRomFlag: string
+    readonly asymmetryFlag: string
+    readonly timestampLabel: string
   }
   readonly nav: {
     readonly switchToPre: string
@@ -381,6 +413,7 @@ const zhTW: Strings = {
     cycleLabel: '期別',
     cycleOf: (n) => `第 ${n} 期`,
     phaseChoice: '本場階段',
+    phaseChoiceHint: '前測：本期開始時的第一次量測（基準值）。後測：本期結束時的量測，用於和前測比較、呈現進步幅度。',
     attendeesTitle: '本場出席名單',
     attendeesHint: '勾選今天到場的長輩。未到場者仍在收案名單內。',
     selectAll: '全選',
@@ -461,6 +494,36 @@ const zhTW: Strings = {
     fails: '不通過：組內尖峰速度變異係數大於或等於總衰減幅度；或次間停頓增加超過 40% 而向心速度下降不足 10%；或三分之一以上受試者在第 8 次前出現非單調速度或手部支撐。',
     indeterminate: '未達判定：視同不通過。預先登錄若留有模糊地帶，即非預先登錄。',
     fallback: '若不通過，改以代償偵測為停止條件（次間停頓、軀幹前傾代償、關節活動度衰減、手部支撐），完全不含速度項目。第一階段不受影響。',
+  },
+
+  tier2Metrics: {
+    title: '第二階段動作品質數據',
+    hint: '尖峰速度、平均速度、活動度等欄位，待第二階段開發完成後於此顯示。',
+    notAvailable: '尚未提供',
+    notAvailableBody: '第二階段動作品質數據尚未開發，本次量測無相關數值。欄位結構已預先設計，開發完成後將顯示於此，不另行改版畫面。',
+    summaryTitle: '本次量測摘要',
+    exerciseLabel: '動作項目',
+    difficultyStepLabel: '難度階級',
+    repCountLabel: '完成次數',
+    meanVelocityFirstLabel: '前段平均速度',
+    meanVelocityLastLabel: '後段平均速度',
+    velocityLossLabel: '速度衰減率',
+    meanRomLabel: '平均關節活動度',
+    flagCountLabel: '標記次數',
+    trackingConfidenceLabel: '追蹤穩定度',
+    perRepTitle: '各次動作明細',
+    repIndexLabel: '次數',
+    concentricTimeLabel: '起立時間',
+    peakVelocityLabel: '尖峰速度',
+    meanVelocityLabel: '平均速度',
+    romLabel: '關節活動度',
+    minAngleLabel: '最小角度',
+    maxAngleLabel: '最大角度',
+    flagsLabel: '動作標記',
+    trunkLeanFlag: '軀幹前傾過大',
+    partialRomFlag: '活動度不足',
+    asymmetryFlag: '左右不對稱',
+    timestampLabel: '時間',
   },
 
   nav: {

@@ -210,6 +210,56 @@ export function repsOf(o: Outcome): number {
   }
 }
 
+/* ── Tier 2 movement-quality metrics ──────────────────────────────────────────
+   SCHEMA ONLY. No producer in this build ever populates these -- there is no
+   pose estimation here (domain/stats.ts explains why any velocity figure
+   right now would be fabricated). `TrialRecord.tier2` is `undefined` for
+   every trial this build can ever create, fixture or live.
+
+   This exists so the shape is settled and the display components (see
+   Tier2Metrics.tsx) are already correct once the August Tier 2 pipeline
+   starts actually populating it -- at that point a real object appears here
+   and the same component renders the real table instead of its current
+   "not yet available" state. Adding the field is not the same as shipping
+   the feature: until a producer exists, this is dead weight in the type
+   system, not a claim about what the product currently measures.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+export interface Tier2RepMetrics {
+  readonly repIndex: number
+  readonly concentricTimeS: number
+  /** Normalized units/s -- calibration-free, not a physical velocity claim
+      (see the pose-tracking design doc's velocity-loss decision notes). */
+  readonly peakVelocity: number
+  readonly meanVelocity: number
+  readonly romDeg: number
+  readonly minAngleDeg: number
+  readonly maxAngleDeg: number
+  readonly flags: {
+    readonly trunkLeanExceeded: boolean
+    readonly partialRom: boolean
+    readonly asymmetry: boolean
+  }
+  readonly timestampIso: string
+}
+
+export interface Tier2TrialMetrics {
+  readonly exerciseId: string
+  /** Abstract ordered rung, e.g. "band-2" -- never a hardcoded band colour,
+      per the open load-progression-mechanism decision in CLAUDE.md. */
+  readonly difficultyStepLabel: string
+  readonly repCount: number
+  readonly meanVelocityFirst: number
+  readonly meanVelocityLast: number
+  readonly velocityLossPct: number
+  readonly meanRomDeg: number
+  readonly flagCount: number
+  /** Qualitative, e.g. "stable" / "intermittent" -- not a numeric score, so
+      it can't be mistaken for a precision this build doesn't have. */
+  readonly trackingConfidenceSummary: string
+  readonly perRep: readonly Tier2RepMetrics[]
+}
+
 /* ── Records — append-only ────────────────────────────────────────────────── */
 
 export interface TrialRecord {
@@ -221,6 +271,8 @@ export interface TrialRecord {
   readonly startedIso: string
   /** Seat height read from the ArUco tag, never staff-entered. cm. */
   readonly seatHeightCm: number | null
+  /** Always undefined in this build. See the Tier 2 section above. */
+  readonly tier2?: Tier2TrialMetrics
 }
 
 /**

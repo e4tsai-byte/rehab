@@ -2155,6 +2155,136 @@
   color: var(--ink-muted);
 }
 
+/* ─── Per-trial Tier 2 metrics (Tier2Metrics.tsx) ────────────────────────────
+   Pending state reuses .t2's dashed, subordinate language directly -- same
+   "not built" visual grammar, different scope (one trial, not the product).
+   Live state (once a producer exists) switches to a solid card, a real
+   summary grid, and a real table -- deliberately NOT dashed, so a genuine
+   future measurement never reads as a roadmap placeholder. */
+
+.t2m--pending {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  color: var(--ink-secondary);
+}
+
+.t2m--live {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.t2m__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.t2m__title {
+  font-size: var(--t-fac);
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+.t2m--live .t2m__title {
+  color: var(--ink);
+}
+
+.t2m__status {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink-muted);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-xs);
+  padding: 0.1em 0.5em;
+}
+
+.t2m__hint,
+.t2m__body {
+  font-size: var(--t-fac-sm);
+  line-height: 1.55;
+  max-width: 78ch;
+  text-wrap: pretty;
+  color: var(--ink-secondary);
+}
+
+.t2m__sub {
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+  color: var(--ink-secondary);
+}
+
+.t2m__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--s-3) var(--s-4);
+}
+
+.t2m-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.t2m-stat--lead {
+  grid-column: 1 / -1;
+}
+
+.t2m-stat__label {
+  font-size: var(--t-fac-sm);
+  color: var(--ink-muted);
+}
+
+.t2m-stat__value {
+  font-size: var(--t-fac);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.t2m-stat--lead .t2m-stat__value {
+  font-size: var(--t-fac-lg);
+  font-weight: 700;
+}
+
+.t2m__table-wrap {
+  overflow-x: auto;
+}
+
+.t2m__table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--t-fac-sm);
+}
+
+.t2m__table th,
+.t2m__table td {
+  padding: var(--s-1) var(--s-2);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.t2m__table thead th {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.t2m__table tbody th {
+  font-weight: 500;
+  color: var(--ink);
+}
+
 /* ─── Narrow viewports ───────────────────────────────────────────────────────
    The target device is a fixed monitor, so this is not a responsive product.
    But the demo URL opens on a stranger's laptop, so the hero must not overflow.
