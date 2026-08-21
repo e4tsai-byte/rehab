@@ -40,25 +40,64 @@ with no enforcer is negotiable by default, which defeats the point.
   explicitly. A silently wrong number is the worst failure this product has,
   because the user will train into it.
 
-### 3. Deterministic Rep State Machine — *enforced by measurement-engineer*
+### 3. Deterministic Rep/Hold State Machines — *enforced by measurement-engineer*
 
-* One state machine: `RESTING → ASCENDING → HOLDING → DESCENDING → RESTING`.
-* Must enforce a post-rep rest interval (`CONFIG.REST_BETWEEN_REPS_S`) and a
-  descent-settle trigger.
-* **Every state must be provably unstickable.** For each state, name both the
-  condition that exits it and the timeout that exits it anyway.
+* Rehabibi has **exactly two** session models, each a deterministic,
+  explicitly-named state machine. An exercise selects one via its
+  `trackingModel` catalog field. **No third model without amending this
+  invariant in writing.** (This invariant was widened from a single machine on
+  2026-08-21 to admit the isometric-hold model — see §9.)
+
+  1. **Paced elevation** — `trackingModel: 'pacedElevation'` (forward flexion,
+     lateral abduction, scaption). One machine:
+     `RESTING → ASCENDING → HOLDING → DESCENDING → RESTING`, with cadence-graded
+     concentric and eccentric phases. Enforces a post-rep rest interval
+     (`CONFIG.REST_BETWEEN_REPS_S`) and a descent-settle trigger. Implemented by
+     `ClientShoulderFlexionTracker`. Higher elevation up to a max is *good*.
+
+  2. **Isometric hold** — `trackingModel: 'isometricHold'` (low-load timed
+     holds, e.g. side-lying supraspinatus). One machine: `READY → HOLDING →
+     READY`. There is no cadence phase: the movement is not raise-hold-lower, it
+     is settle-into-band-and-hold. One completed hold is one *set*. Enforces a
+     post-hold rest interval from `CONFIG` and a band-settle trigger that must be
+     satisfied before the hold timer accumulates. The target elevation is a
+     **ceiling**: rising above the band is a form fault (`OVER_ELEVATION`), the
+     inverse of model 1.
+
+* **Every state in BOTH machines must be provably unstickable.** For each state,
+  name both the condition that exits it and the timeout that exits it anyway.
 * Thresholds live in `CONFIG` and nowhere else. Do not restate a threshold's
   value in prose — this document pins *structure*, `CONFIG` pins *values*.
+* Both machines emit `RehabRepRecord`, so no storage-schema change is required.
+  The isometric model writes `concentricDuration = eccentricDuration = 0` and
+  reuses `peakElevation` to carry the peak abduction reached during the hold —
+  which, for a ceilinged hold, is a **fault** signal, not an achievement. Any
+  surface that reads `peakElevation` or `avgElevationDeg` as "higher is better"
+  (the dashboard recovery/stats grid does today) is wrong for this model. That
+  is a **known, recorded downstream gap** (§9), not a silently-accepted one.
 
 ### 4. Dual-View Support — *enforced by kinematicist + physiatrist*
 
-* Every exercise ships a `posture: 'standing' | 'seated'` catalog entry for each
-  view it supports, and declares unsupported views explicitly.
-* Every kinematic function that consumes hip landmarks takes `isSeated` and has
-  a defined degenerate-hip fallback. A geometry function that ignores `isSeated`
-  is a defect.
-* Any threshold that differs between views is a named STANDING/SEATED pair in
-  `CONFIG`, never a single shared constant.
+* `posture` is `'standing' | 'seated' | 'sideLying'`. Every exercise ships a
+  catalog entry for each view it supports and declares unsupported views
+  explicitly. (`sideLying` was added 2026-08-21 for the supraspinatus hold — §9.)
+* **The `isSeated: boolean` convention is retired.** A boolean cannot express
+  three orientations, and coercing `sideLying` onto the seated branch would
+  silently select an upright-subject gravity fallback for a *horizontal* body —
+  precisely the "silently wrong number the user trains into" that invariant 2
+  forbids. Every kinematic function that consumes hip landmarks takes the
+  `posture` value (or a reference-frame descriptor derived from it) and has a
+  defined degenerate-hip fallback **per view**. A geometry function that ignores
+  `posture` is a defect.
+* Any threshold that differs between views is a named per-view set in `CONFIG`
+  (`_STANDING` / `_SEATED` / `_SIDE_LYING` as applicable), never a single shared
+  constant. A view an exercise does not support needs no constant for that view.
+* **Behavior-preservation clause.** Widening `posture` and retiring `isSeated`
+  must leave the `standing` and `seated` numeric outputs **byte-identical** —
+  there is still no kinematic test corpus (§3, KNOWN GAP), so the standing/seated
+  branches are re-labeled, not re-derived. `sideLying` is added as new branches
+  only; a manual before/after run on the existing two views is the acceptance
+  gate until the corpus exists.
 
 ### 5. One Product — *enforced by architect*
 
@@ -116,7 +155,7 @@ rehab/
 │   │   ├── exerciseCatalog.ts     # Exercise library, bilingual copy + localizeExercise (see §4)
 │   │   └── routineCatalog.ts      # Multi-exercise menus, bilingual copy + localizeRoutine
 │   ├── pose/
-│   │   └── shoulderKinematics.ts  # 3D vector geometry, CONFIG, rep state machine
+│   │   └── shoulderKinematics.ts  # 3D vector geometry, CONFIG, BOTH rep/hold state machines (§3)
 │   ├── data/
 │   │   └── rehabStore.ts          # localStorage only. Rep records + settings.
 │   ├── hooks/
@@ -311,3 +350,103 @@ result sheet, and a Python pose pipeline — was deleted.
 invocation** unless `gstack` is present at `~/.claude/skills/gstack`. Subagents
 are unaffected. If this is not intentional, remove the hook — a repo-wide tool
 block should not survive on inertia.
+
+---
+
+## 9. Decision Record — Side-lying supraspinatus isometric hold (2026-08-21)
+
+Architect decision for the first exercise that does not fit the paced-elevation
+model. This section **renegotiates invariants 3 and 4 in writing** (the only way
+they may change) and is the spec the downstream chain builds against. The
+exercise: user lies on the LEFT side, lifts the RIGHT (top) arm to a **10–15°
+abduction band**, palm to thigh (neutral rotation), and **holds isometrically
+20–30 s**. Rising above the band is a fault. 5 holds = one session; daily goal
+2+ sessions. Right arm only (consistent with the whole pipeline).
+
+**D1 — Posture is a three-value union; `isSeated` is retired.** `posture`
+becomes `'standing' | 'seated' | 'sideLying'`. Side-lying is a distinct body
+orientation, not a seated variant: the trunk is horizontal, so the gravity /
+nose-based vertical fallbacks that `isSeated` selects are geometrically wrong for
+it. A boolean cannot carry three states, so kinematic functions take `posture`
+(or a reference-frame descriptor derived from it). See invariant 4, including its
+**behavior-preservation clause**: standing/seated outputs stay byte-identical
+(no test corpus yet), side-lying is additive branches. *Abduction from the
+torso long axis (shoulder→hip vector) is the same primary computation
+`computeShoulderFlexion3D` already uses when hips are visible — side-lying needs
+that branch and must be barred from the upright fallback. Final geometry is
+kinematicist's.*
+
+**D2 — A second, explicitly named state machine (invariant 3 amended).** The
+paced machine cannot be degenerately reconfigured for this: its ASCENDING ramps
+5 s to ~78°, HOLDING accumulates only above ~68°, aborts below ~52°, and its
+target is a floor. This exercise has no cadence and its target is a **ceiling**.
+Reusing it would smear the meaning of every `CONFIG` constant and invert the
+hold logic. So invariant 3 now admits two models, selected by a new catalog
+field `trackingModel: 'pacedElevation' | 'isometricHold'`. The isometric machine
+is `READY → HOLDING → READY`, both states provably unstickable (band-settle +
+accumulated-hold exit; wall-clock timeout in HOLDING; post-hold rest interval in
+READY). It lives as a **new tracker class in the existing
+`shoulderKinematics.ts`** — CONFIG and the geometry helpers are already there, so
+no new file (D5). measurement-engineer owns the states, thresholds, and
+unstickability proof; the exact rest-interval constant (reuse
+`REST_BETWEEN_REPS_S` or add `REST_BETWEEN_HOLDS_S`) is theirs.
+
+**D3 — One new `FormFlag`: `OVER_ELEVATION`.** The headline fault here — arm
+lifted above the prescribed low ceiling (deltoid/trap takeover) — is a genuinely
+new observable no existing flag expresses. `SHOULDER_HIKE` and `INCOMPLETE_HOLD`
+are reused as-is (you can over-elevate without hiking and vice-versa, so both
+stay independently flaggable); `RUSHED_*` and `PACING_*` simply never fire in
+the isometric machine. Adding to the `FormFlag` union makes
+`commonErrorsZh/En: Record<FormFlag, string>` require an `OVER_ELEVATION` line on
+**every** catalog entry (a compile error otherwise) — that completeness is a
+feature, not a burden; zh-tw-copywriter supplies the line for all entries and a
+`flag.overElevation` pair in `uiStrings.ts`. The paced exercises carry the line
+dead-but-typed. physiatrist owns the clinical observable and its landmark
+signature; measurement-engineer owns the ceiling value and debounce.
+
+**D4 — Dosage: reuse one field, add one optional field, compute the rest.**
+- *"5 holds = 1 session"* → `exercise.targetReps = 5`. No new field.
+  **Latent bug to fix first:** `RehabTraining` counts to `settings.targetReps`
+  (a global user setting), **not** `exercise.targetReps` — the per-exercise field
+  is ignored today (`RehabTraining.tsx:55,109,119`). The isometric path must
+  honor the exercise's own fixed dose. frontend-engineer owns the fix; keep it
+  scoped so existing paced exercises are unchanged.
+- *"2+ sessions/day"* → **one new OPTIONAL catalog field
+  `dailySessionTarget?: number`** in `ExerciseDefinition` (pure domain data;
+  absent = today's behavior, so the other five entries are untouched). Adherence
+  is **computed** from existing `CompletedSession` history (already carries
+  `exerciseId` + `timestamp`) in `recoveryMilestones.ts`, grouped by local day.
+  **No new persisted state, no storage migration — invariant 1 intact.** Do NOT
+  put daily frequency in `UserSettings` or a new store key (second source of
+  truth). Display is a dashboard concern (ux/frontend).
+
+**D5 — No new files.** Everything lands in existing files: `rehabTypes.ts`
+(`FormFlag`), `exerciseCatalog.ts` (`posture` union, `trackingModel`,
+`dailySessionTarget?`, the new entry, `OVER_ELEVATION` copy),
+`shoulderKinematics.ts` (posture-aware geometry, second tracker class, new CONFIG
+per-view sets), `recoveryMilestones.ts` (daily-adherence calc),
+`usePoseTracker.ts` + `RehabTraining.tsx` + the posture-branching components
+(`ExerciseVideoCard`, `ExerciseLauncherCard`, `ExercisePickerModal`,
+`ExerciseLibrary`, `CustomRoutineBuilderModal`), and `uiStrings.ts`
+(`posture.sideLying*`, `flag.overElevation`). §2's file tree is therefore
+unchanged; only the `shoulderKinematics.ts` annotation was updated.
+
+**Open questions escalated to the user (do not build past these):**
+1. **Recovery-phase attribution.** The dashboard recovery model is hardcoded to
+   Phase 2 (active flexion to 90°, "20 sets", avg elevation → 90° = better).
+   This isometric hold belongs to **Phase 1 (Acute Protection & Isometric
+   Activation)**, which already names "pain-free isometric holds." It should
+   almost certainly NOT feed the Phase-2 progress bar or the elevation stats.
+   Needs a product + physiatrist decision before it can appear on the dashboard.
+2. **`peakElevation` reinterpretation.** Reusing `RehabRepRecord` (peak = fault
+   signal) avoids a storage migration but overloads the field's meaning. Confirm
+   that is acceptable versus a dedicated isometric record type.
+3. **Fixed vs tunable dose.** Confirm 5 holds and 20–30 s are a fixed
+   prescription for this exercise (recommended) rather than driven by the global
+   Settings sliders.
+4. **Side-lying framing.** The light-UI/webcam rationale (§5) and all framing
+   copy assume an upright subject facing the camera. A horizontal subject on a
+   mat/bed with a side-placed camera is a real UX + measurement concern
+   (ux-designer + measurement-engineer) — flagged, not yet solved.
+5. **Ceiling hardness.** Confirm 10–15° is the band and >15° is a hard fault
+   (vs a soft nudge) — measurement-engineer/physiatrist.

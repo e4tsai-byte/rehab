@@ -18,7 +18,7 @@ number that is clinically sensible, geometrically correct, and completely unusab
 |---|---|---|
 | **physiatrist** | Clinical content of `exerciseCatalog.ts`, the meaning of every `FormFlag` | Adding an exercise, setting angles/holds/reps, defining a compensation |
 | **kinematicist** | Vector geometry in `shoulderKinematics.ts` | Defining how an angle is computed, occlusion fallbacks, an angle reading wrong |
-| **measurement-engineer** | `CONFIG`, the state machine, hysteresis, rep validity | A rep miscounts, a flag fires spuriously, any constant needs a value |
+| **measurement-engineer** | `CONFIG`, **both** state machines (paced + isometric, `CLAUDE.md` §3), hysteresis, rep/hold validity | A rep or hold miscounts, a flag fires spuriously, any constant needs a value |
 | **evidence-analyst** | Literature verification, research docs | A number needs a source, a claim needs checking |
 | **frontend-engineer** | `components/`, `hooks/`, `surfaces/`, `data/`, `domain/` types, `App.tsx`, `main.tsx`, `index.html` | Building or refactoring UI, the render loop, typecheck failures |
 | **ux-designer** | Information architecture, flow, feedback timing, a11y | Designing a screen, deciding what appears mid-rep |
@@ -125,6 +125,14 @@ product-strategist → only now does it move from 🗓️ Planned to ✅ Live in
 ```
 
 **The last step is the point.** Nothing gets announced until the chain is complete.
+
+> **Model-choice gate (added 2026-08-21).** Before the chain runs, the architect
+> decides which of the two session models (`CLAUDE.md` §3) the exercise uses and
+> whether it needs a new `posture`/`FormFlag`/catalog field. The side-lying
+> supraspinatus hold was the first exercise to need the second model; its
+> decision record is `CLAUDE.md` §9. Any exercise that would need a *third*
+> model, or a fourth `posture` value, is an architect escalation, not a
+> physiatrist-first task.
 
 ### Merging anything that touches camera, storage, network, or dependencies
 
