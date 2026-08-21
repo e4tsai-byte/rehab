@@ -78,13 +78,13 @@
      solid, cards are glass over it, chrome is glass over cards. A glass card
      inside a glass card is a defect — legibility collapses and the blur has
      nothing true to sample. */
-  --mat-thin: rgba(255, 255, 255, 0.85);
-  --mat-regular: rgba(255, 255, 255, 0.94);
-  --mat-thick: rgba(255, 255, 255, 0.97);
+  --mat-thin: rgba(255, 255, 255, 0.52);
+  --mat-regular: rgba(255, 255, 255, 0.68);
+  --mat-thick: rgba(255, 255, 255, 0.78);
 
-  --mat-blur-thin: blur(20px) saturate(180%);
-  --mat-blur-regular: blur(24px) saturate(190%);
-  --mat-blur-thick: blur(30px) saturate(200%);
+  --mat-blur-thin: blur(24px) saturate(200%);
+  --mat-blur-regular: blur(34px) saturate(210%);
+  --mat-blur-thick: blur(44px) saturate(210%);
 
   /* The specular sheen. A material catches light along its top edge and falls
      away; a flat alpha does not. This is the difference between "glass" and
@@ -92,7 +92,7 @@
   --mat-sheen: linear-gradient(
     160deg,
     rgba(255, 255, 255, 0.75) 0%,
-    rgba(255, 255, 255, 0.25) 26%,
+    rgba(255, 255, 255, 0.22) 26%,
     rgba(255, 255, 255, 0) 52%
   );
 

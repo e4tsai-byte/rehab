@@ -36,10 +36,10 @@ html {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(60rem 42rem at 8% -6%, rgba(11, 121, 237, 0.28), transparent 58%),
-    radial-gradient(48rem 36rem at 92% 2%, rgba(41, 157, 80, 0.22), transparent 55%),
-    radial-gradient(44rem 34rem at 78% 96%, rgba(11, 121, 237, 0.2), transparent 56%),
-    radial-gradient(38rem 30rem at 22% 88%, rgba(216, 116, 0, 0.14), transparent 55%);
+    radial-gradient(65rem 45rem at 5% -2%, rgba(11, 121, 237, 0.38), transparent 60%),
+    radial-gradient(55rem 40rem at 95% 4%, rgba(41, 157, 80, 0.32), transparent 56%),
+    radial-gradient(50rem 40rem at 82% 96%, rgba(11, 121, 237, 0.28), transparent 58%),
+    radial-gradient(45rem 36rem at 18% 90%, rgba(216, 116, 0, 0.24), transparent 56%);
 }
 
 body {
