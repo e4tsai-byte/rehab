@@ -36,7 +36,9 @@ export function SessionSummary({ session, onReturnHome }: SessionSummaryProps) {
 
         <p className="scorecard__caption">
           {didAny
-            ? t('summary.captionDidAny', { done: session.completedReps, clean: session.cleanRepsCount })
+            ? exercise.trackingModel === 'isometricHold'
+              ? t('summary.captionDidAnyHold', { done: session.completedReps, clean: session.cleanRepsCount })
+              : t('summary.captionDidAny', { done: session.completedReps, clean: session.cleanRepsCount })
             : t('summary.captionNone')}
         </p>
 

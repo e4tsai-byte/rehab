@@ -16,6 +16,7 @@ const PRESET_THUMBNAILS: Array<{ id: string; labelKey: StringKey; url: string }>
   { id: 'scapular', labelKey: 'builder.presetScapular', url: 'images/thumb-routine-scapular.jpg' },
   { id: 'standing', labelKey: 'builder.presetStanding', url: 'images/thumb-standing-flexion.jpg' },
   { id: 'seated', labelKey: 'builder.presetSeated', url: 'images/thumb-seated-flexion.jpg' },
+  { id: 'sideLying', labelKey: 'builder.presetSideLying', url: 'images/thumb-side-lying-hold.jpg' },
   { id: 'desk', labelKey: 'builder.presetDesk', url: 'images/thumb-routine-desk.jpg' },
   { id: 'abduction', labelKey: 'builder.presetAbduction', url: 'images/thumb-lateral-abduction.jpg' },
 ]

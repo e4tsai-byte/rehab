@@ -448,11 +448,8 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_FAST: 'This is an isometric hold; there is no tempo to pace',
       PACING_TOO_SLOW: 'This is an isometric hold; there is no tempo to pace',
     },
-    // TODO: no side-lying asset exists yet — reusing the lateral-abduction thumb and
-    // the standing guide diagram as the least-wrong placeholders. Needs a dedicated
-    // side-lying thumbnail + motion diagram (design).
-    thumbnailUrl: 'images/thumb-lateral-abduction.jpg',
-    diagramUrl: 'images/standing-arm-flexion-guide.jpg',
+    thumbnailUrl: 'images/thumb-side-lying-hold.jpg',
+    diagramUrl: 'images/side-lying-abduction-guide.jpg',
     status: 'prescribed',
   },
 ]

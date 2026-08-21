@@ -65,6 +65,12 @@ const zh = {
   'spec.riseFall': '上升 / 下放',
   'spec.prescribedReps': '處方次數',
   'spec.secondsValue': '{n} 秒',
+  'spec.holdMode': '訓練模式',
+  'spec.holdModeValue': '低角度等長支撐',
+  'spec.holdDuration': '單次維持',
+  'spec.dailyTarget': '每日頻率',
+  'spec.dailyTargetValue': '{n} 回合 / 日',
+  'spec.holdAngleRange': '10° – 15° (低位)',
 
   // ── Exercise card / reminders (shared) ──────────────────────────────
   'card.todayPrescription': '今日處方',
@@ -73,6 +79,8 @@ const zh = {
   'card.tipsSafetyTitle': '💡 動作要點與安全防護',
   'card.tempoReminder':
     '節奏控制：嚴格維持 5 秒平穩舉起、5 秒頂點穩定停頓、5 秒緩慢下放，每完成 1 次自動休息 3 秒。',
+  'card.holdTempoReminder':
+    '等長維持：將手臂抬起至 10–15° 後穩定維持 20 秒，過程中自然呼吸，避免聳肩與後仰借力。每完成 1 次自動休息 3 秒。',
   'card.safetyReminder':
     '安全防護：若在抬起過程感到肩膀關節劇痛或明顯不適，請立即停止下放，切勿勉強。',
   'card.diagramAlt': '{name} 復健動作分解圖',
@@ -80,8 +88,11 @@ const zh = {
   // ── Posture labels ──────────────────────────────────────────────────
   'posture.standingShort': '站姿',
   'posture.seatedShort': '坐姿桌前',
+  'posture.sideLyingShort': '側臥',
   'posture.standingFull': '站姿全身',
   'posture.seatedDesk': '坐姿桌前',
+  'posture.sideLyingFull': '側臥姿勢',
+  'vcard.holdBadge': '{n}s 等長支撐',
 
   // ── Dashboard ───────────────────────────────────────────────────────
   'dash.heroTitle': '肩關節復健總覽',
@@ -125,6 +136,9 @@ const zh = {
   'train.step1': '以 {cadence} 秒緩慢平舉至 {angle}°',
   'train.step2': '維持停頓 {hold} 秒',
   'train.step3': '以 {cadence} 秒緩慢控制下放',
+  'train.holdStep1': '向左側躺就位，右手臂伸直貼於身側',
+  'train.holdStep2': '輕抬 10–15° 進入綠色區間，穩定維持 {hold} 秒',
+  'train.holdStep3': '平緩放下身側，每完成 1 次自動休息 3 秒',
   'train.startSet': '開始這一組 · {reps} 次',
   'train.repsOf': '/ {total} 次',
   'train.restBetween': '次間休息 {s}s',
@@ -169,6 +183,7 @@ const zh = {
 
   // ── Session summary ─────────────────────────────────────────────────
   'summary.captionDidAny': '完成 {done} 次，其中 {clean} 次抬到目標區間（90°）並維持 5 秒節奏。',
+  'summary.captionDidAnyHold': '完成 {done} 次，其中 {clean} 次維持在 10–15° 低位目標區間並達到標準維持時間。',
   'summary.captionNone': '這一組沒有記錄到完整動作。休息一下，等準備好再開始。',
   'summary.completedReps': '完成次數',
   'summary.avgTopHold': '平均頂點停頓',
@@ -190,6 +205,7 @@ const zh = {
   'lib.catRoutines': '處方課表 (含自訂)',
   'lib.catStanding': '站姿動作',
   'lib.catSeated': '坐姿桌前',
+  'lib.catSideLying': '側臥等長',
   'lib.catUpcoming': '進階規劃 (Roadmap)',
   'lib.tag': '臨床復健運動庫',
   'lib.heroTitle': '訓練動作與處方課表',
@@ -278,6 +294,7 @@ const zh = {
   'builder.presetSeated': '坐姿桌前',
   'builder.presetDesk': '辦公舒緩',
   'builder.presetAbduction': '側向外展',
+  'builder.presetSideLying': '側臥等長',
   'builder.defaultName': '醫師處方客製復健課表',
   'builder.defaultSubtitle': '主治醫師指定個別化居家處方',
   'builder.defaultDesc': '依據臨床醫師指示配置之動作組合與處方次數，落實每日居家肩關節復健。',
@@ -438,6 +455,12 @@ const en: Record<StringKey, string> = {
   'spec.riseFall': 'Up / down',
   'spec.prescribedReps': 'Prescribed reps',
   'spec.secondsValue': '{n} s',
+  'spec.holdMode': 'Mode',
+  'spec.holdModeValue': 'Low-angle isometric hold',
+  'spec.holdDuration': 'Hold duration',
+  'spec.dailyTarget': 'Daily frequency',
+  'spec.dailyTargetValue': '{n} sets / day',
+  'spec.holdAngleRange': '10° – 15° (low)',
 
   // ── Exercise card / reminders (shared) ──────────────────────────────
   'card.todayPrescription': "Today's prescription",
@@ -446,6 +469,8 @@ const en: Record<StringKey, string> = {
   'card.tipsSafetyTitle': '💡 Key points & safety',
   'card.tempoReminder':
     'Tempo: hold to a steady 5 seconds up, a 5-second hold at the top, and 5 seconds down, with an automatic 3-second rest after each rep.',
+  'card.holdTempoReminder':
+    'Isometric hold: lift the arm to 10–15° and maintain steady position for 20 seconds. Breathe naturally; avoid shrugging or rolling back. Rest 3s after each hold.',
   'card.safetyReminder':
     'Safety: if the shoulder joint becomes sharply painful or clearly uncomfortable while raising, lower the arm and stop — do not push through.',
   'card.diagramAlt': '{name} movement breakdown diagram',
@@ -453,8 +478,11 @@ const en: Record<StringKey, string> = {
   // ── Posture labels ──────────────────────────────────────────────────
   'posture.standingShort': 'Standing',
   'posture.seatedShort': 'Seated (desk)',
+  'posture.sideLyingShort': 'Side-lying',
   'posture.standingFull': 'Standing (full body)',
   'posture.seatedDesk': 'Seated (desk)',
+  'posture.sideLyingFull': 'Side-lying position',
+  'vcard.holdBadge': '{n}s isometric hold',
 
   // ── Dashboard ───────────────────────────────────────────────────────
   'dash.heroTitle': 'Shoulder Rehabilitation Overview',
@@ -500,6 +528,9 @@ const en: Record<StringKey, string> = {
   'train.step1': 'Raise slowly to {angle}° over {cadence} seconds',
   'train.step2': 'Hold for {hold} seconds',
   'train.step3': 'Lower under control over {cadence} seconds',
+  'train.holdStep1': 'Lie on left side with right arm straight along body',
+  'train.holdStep2': 'Lift gently to 10–15° into the green band and hold for {hold}s',
+  'train.holdStep3': 'Lower arm to rest by your side; rest 3s after each hold',
   'train.startSet': 'Start this set · {reps} reps',
   'train.repsOf': '/ {total} reps',
   'train.restBetween': 'Rest {s}s',
@@ -545,6 +576,8 @@ const en: Record<StringKey, string> = {
   // ── Session summary ─────────────────────────────────────────────────
   'summary.captionDidAny':
     'Completed {done} reps; {clean} of them reached the target range (90°) and held the 5-second tempo.',
+  'summary.captionDidAnyHold':
+    'Completed {done} holds; {clean} of them stayed on target in the 10–15° band for the full target time.',
   'summary.captionNone':
     'No complete movement was recorded for this set. Take a rest and begin again when ready.',
   'summary.completedReps': 'Completed',
@@ -567,6 +600,7 @@ const en: Record<StringKey, string> = {
   'lib.catRoutines': 'Menus (incl. custom)',
   'lib.catStanding': 'Standing',
   'lib.catSeated': 'Seated (desk)',
+  'lib.catSideLying': 'Side-lying',
   'lib.catUpcoming': 'Roadmap (planned)',
   'lib.tag': 'Clinical rehabilitation library',
   'lib.heroTitle': 'Exercises & Prescription Menus',
@@ -658,6 +692,7 @@ const en: Record<StringKey, string> = {
   'builder.presetSeated': 'Seated desk',
   'builder.presetDesk': 'Desk relief',
   'builder.presetAbduction': 'Abduction',
+  'builder.presetSideLying': 'Side-lying hold',
   'builder.defaultName': 'Custom prescription menu',
   'builder.defaultSubtitle': 'Individualized home prescription from your physician',
   'builder.defaultDesc':

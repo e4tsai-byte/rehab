@@ -143,8 +143,14 @@ export function RehabTraining({
           <canvas ref={canvasRef} className="training-camera__canvas" />
 
           <span className="vchip vchip--mode">
-            <span aria-hidden="true">{isSeated ? '🪑' : '🧍'}</span>
-            <span>{isSeated ? t('posture.seatedDesk') : t('posture.standingFull')}</span>
+            <span aria-hidden="true">{isSeated ? '🪑' : isIsometric ? '🛌' : '🧍'}</span>
+            <span>
+              {isSeated
+                ? t('posture.seatedDesk')
+                : isIsometric
+                  ? t('posture.sideLyingFull')
+                  : t('posture.standingFull')}
+            </span>
             {!isLoaded && <span className="vchip__muted">· {t('train.loading')}</span>}
           </span>
 
@@ -189,27 +195,39 @@ export function RehabTraining({
               <h2 className="training-intro__name">{ex.name}</h2>
               <p className="training-intro__body">{ex.framingHint}</p>
 
-              {/* The three numbered steps describe the paced 5-second raise / hold /
-                  lower tempo. That tempo does not exist for the isometric hold, so
-                  showing them would misdescribe the movement — the isometric user is
-                  guided by the framing hint and description above instead. (Isometric
-                  step copy is a copywriter concern; not invented here.) */}
-              {!isIsometric && (
-                <div className="training-intro__steps">
-                  <span className="training-step">
-                    <span className="training-step__n">1</span>
-                    <span>{t('train.step1', { cadence: settings.concentricCadenceS, angle: settings.targetAngleDeg })}</span>
-                  </span>
-                  <span className="training-step">
-                    <span className="training-step__n">2</span>
-                    <span>{t('train.step2', { hold: settings.holdDurationS })}</span>
-                  </span>
-                  <span className="training-step">
-                    <span className="training-step__n">3</span>
-                    <span>{t('train.step3', { cadence: settings.eccentricCadenceS })}</span>
-                  </span>
-                </div>
-              )}
+              <div className="training-intro__steps">
+                {isIsometric ? (
+                  <>
+                    <span className="training-step">
+                      <span className="training-step__n">1</span>
+                      <span>{t('train.holdStep1')}</span>
+                    </span>
+                    <span className="training-step">
+                      <span className="training-step__n">2</span>
+                      <span>{t('train.holdStep2', { hold: doseHoldS })}</span>
+                    </span>
+                    <span className="training-step">
+                      <span className="training-step__n">3</span>
+                      <span>{t('train.holdStep3')}</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="training-step">
+                      <span className="training-step__n">1</span>
+                      <span>{t('train.step1', { cadence: settings.concentricCadenceS, angle: settings.targetAngleDeg })}</span>
+                    </span>
+                    <span className="training-step">
+                      <span className="training-step__n">2</span>
+                      <span>{t('train.step2', { hold: settings.holdDurationS })}</span>
+                    </span>
+                    <span className="training-step">
+                      <span className="training-step__n">3</span>
+                      <span>{t('train.step3', { cadence: settings.eccentricCadenceS })}</span>
+                    </span>
+                  </>
+                )}
+              </div>
 
               <button className="btn btn--primary btn--lg" onClick={handleStart}>
                 {t('train.startSet', { reps: doseReps })}

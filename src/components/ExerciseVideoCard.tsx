@@ -43,19 +43,29 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
         {/* Top Badges */}
         <div className="video-card__badges-top">
           <span className="video-badge video-badge--posture">
-            <span aria-hidden="true">{exercise.posture === 'standing' ? '🧍' : '🪑'}</span>
-            <span>{exercise.posture === 'standing' ? t('posture.standingShort') : t('posture.seatedShort')}</span>
+            <span aria-hidden="true">
+              {exercise.posture === 'standing' ? '🧍' : exercise.posture === 'seated' ? '🪑' : '🛌'}
+            </span>
+            <span>
+              {exercise.posture === 'standing'
+                ? t('posture.standingShort')
+                : exercise.posture === 'seated'
+                  ? t('posture.seatedShort')
+                  : t('posture.sideLyingShort')}
+            </span>
           </span>
 
           <span className="video-badge video-badge--angle">
-            {exercise.targetAngleDeg}°
+            {exercise.trackingModel === 'isometricHold' ? '10°–15°' : `${exercise.targetAngleDeg}°`}
           </span>
         </div>
 
         {/* Bottom Cadence Badge */}
         <div className="video-card__badges-bottom">
           <span className="video-badge video-badge--cadence">
-            ⏱️ {exercise.concentricCadenceS}s-{exercise.holdDurationS}s-{exercise.eccentricCadenceS}s
+            {exercise.trackingModel === 'isometricHold'
+              ? `⏱️ ${t('vcard.holdBadge', { n: String(exercise.holdDurationS ?? 20) })}`
+              : `⏱️ ${exercise.concentricCadenceS}s-${exercise.holdDurationS}s-${exercise.eccentricCadenceS}s`}
           </span>
           {isPrescribed ? (
             <span className="video-badge video-badge--status-active">{t('vcard.todayBadge')}</span>

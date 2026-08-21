@@ -24,13 +24,14 @@ interface ExerciseLibraryProps {
   onStartRoutine: (routine: RehabRoutine) => void
 }
 
-type FilterCategory = 'all' | 'routines' | 'standing' | 'seated' | 'upcoming'
+type FilterCategory = 'all' | 'routines' | 'standing' | 'seated' | 'sideLying' | 'upcoming'
 
 const CATEGORY_CHIPS: Array<{ id: FilterCategory; labelKey: StringKey; icon?: string }> = [
   { id: 'all', labelKey: 'lib.catAll' },
   { id: 'routines', labelKey: 'lib.catRoutines', icon: '📑' },
   { id: 'standing', labelKey: 'lib.catStanding', icon: '🧍' },
   { id: 'seated', labelKey: 'lib.catSeated', icon: '🪑' },
+  { id: 'sideLying', labelKey: 'lib.catSideLying', icon: '🛌' },
   { id: 'upcoming', labelKey: 'lib.catUpcoming', icon: '🔒' },
 ]
 
@@ -89,6 +90,7 @@ export function ExerciseLibrary({
     if (activeFilter === 'routines') return false
     if (activeFilter === 'standing') return ex.posture === 'standing' && ex.status === 'prescribed'
     if (activeFilter === 'seated') return ex.posture === 'seated' && ex.status === 'prescribed'
+    if (activeFilter === 'sideLying') return ex.posture === 'sideLying' && ex.status === 'prescribed'
     if (activeFilter === 'upcoming') return ex.status === 'upcoming'
     return true
   })

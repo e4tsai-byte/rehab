@@ -81,24 +81,58 @@ export function ExerciseDetailModal({
 
         {/* Specs Grid */}
         <div className="routine-card__specs">
-          <span className="spec-pill">
-            <span className="spec-pill__label">{t('spec.targetAngle')}</span>
-            <span className="spec-pill__val">{settings.targetAngleDeg}°</span>
-          </span>
-          <span className="spec-pill">
-            <span className="spec-pill__label">{t('spec.topHold')}</span>
-            <span className="spec-pill__val">{t('spec.secondsValue', { n: settings.holdDurationS.toFixed(1) })}</span>
-          </span>
-          <span className="spec-pill">
-            <span className="spec-pill__label">{t('spec.riseFall')}</span>
-            <span className="spec-pill__val">
-              {settings.concentricCadenceS}s / {settings.eccentricCadenceS}s
-            </span>
-          </span>
-          <span className="spec-pill">
-            <span className="spec-pill__label">{t('spec.prescribedReps')}</span>
-            <span className="spec-pill__val">{t('fmt.reps', { n: settings.targetReps })}</span>
-          </span>
+          {exercise.trackingModel === 'isometricHold' ? (
+            <>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.targetAngle')}</span>
+                <span className="spec-pill__val">{t('spec.holdAngleRange')}</span>
+              </span>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.holdDuration')}</span>
+                <span className="spec-pill__val">
+                  {t('spec.secondsValue', { n: String(exercise.holdDurationS ?? 20) })}
+                </span>
+              </span>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.prescribedReps')}</span>
+                <span className="spec-pill__val">{t('fmt.reps', { n: exercise.targetReps ?? 5 })}</span>
+              </span>
+              {exercise.dailySessionTarget ? (
+                <span className="spec-pill">
+                  <span className="spec-pill__label">{t('spec.dailyTarget')}</span>
+                  <span className="spec-pill__val">
+                    {t('spec.dailyTargetValue', { n: exercise.dailySessionTarget })}
+                  </span>
+                </span>
+              ) : (
+                <span className="spec-pill">
+                  <span className="spec-pill__label">{t('spec.holdMode')}</span>
+                  <span className="spec-pill__val">{t('spec.holdModeValue')}</span>
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.targetAngle')}</span>
+                <span className="spec-pill__val">{settings.targetAngleDeg}°</span>
+              </span>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.topHold')}</span>
+                <span className="spec-pill__val">{t('spec.secondsValue', { n: settings.holdDurationS.toFixed(1) })}</span>
+              </span>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.riseFall')}</span>
+                <span className="spec-pill__val">
+                  {settings.concentricCadenceS}s / {settings.eccentricCadenceS}s
+                </span>
+              </span>
+              <span className="spec-pill">
+                <span className="spec-pill__label">{t('spec.prescribedReps')}</span>
+                <span className="spec-pill__val">{t('fmt.reps', { n: settings.targetReps })}</span>
+              </span>
+            </>
+          )}
         </div>
 
         {/* Description & Framing Hint */}
@@ -123,7 +157,11 @@ export function ExerciseDetailModal({
             ))}
             <li className="routine-card__reminders-item">
               <span className="routine-card__reminders-dot">•</span>
-              <span>{t('card.tempoReminder')}</span>
+              <span>
+                {exercise.trackingModel === 'isometricHold'
+                  ? t('card.holdTempoReminder')
+                  : t('card.tempoReminder')}
+              </span>
             </li>
             <li className="routine-card__reminders-item routine-card__reminders-item--warn">
               <span className="routine-card__reminders-dot">⚠️</span>
