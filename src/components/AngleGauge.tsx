@@ -1,4 +1,3 @@
-import React from 'react'
 import { Digits } from './Digits'
 
 interface AngleGaugeProps {
@@ -11,18 +10,12 @@ interface AngleGaugeProps {
 
 export function AngleGauge({
   currentAngle,
-  targetAngle = 90,
   isTargetZone = false,
   minAngle = 0,
   maxAngle = 120,
 }: AngleGaugeProps) {
   const clampedAngle = Math.max(minAngle, Math.min(maxAngle, currentAngle))
-  // Arc calculation: 180 deg semi-circle (from -180 to 0)
   const angleRatio = clampedAngle / maxAngle
-  const rotationDeg = -180 + angleRatio * 180
-
-  const targetRatio = targetAngle / maxAngle
-  const targetLeft = `${targetRatio * 100}%`
 
   return (
     <div className={`gauge ${isTargetZone ? 'gauge--target' : ''}`}>

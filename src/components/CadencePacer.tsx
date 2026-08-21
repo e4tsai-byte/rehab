@@ -1,4 +1,3 @@
-import React from 'react'
 import { Digits } from './Digits'
 import type { RehabPhase } from '../domain/rehabTypes'
 

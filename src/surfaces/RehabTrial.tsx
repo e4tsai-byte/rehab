@@ -1,108 +1,72 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AngleGauge } from '../components/AngleGauge'
 import { CadencePacer } from '../components/CadencePacer'
 import { Digits } from '../components/Digits'
 import { FormAlertBanner } from '../components/FormAlertBanner'
 import { RailButton } from '../components/RailButton'
 import { RepPips } from '../components/RepPips'
-import { useDataSource } from '../data/context'
-import type { FormFlag, RehabLiveState, RehabRepRecord } from '../domain/rehabTypes'
-import { useCameraPreview } from '../hooks/useCameraPreview'
+import type { RehabRepRecord } from '../domain/rehabTypes'
 import { useChime } from '../hooks/useChime'
+import { usePoseTracker } from '../hooks/usePoseTracker'
 
 export function RehabTrial({
   onDone,
 }: {
   onDone: (summary: { completedReps: number; reps: RehabRepRecord[] }) => void
 }) {
-  const src = useDataSource()
   const { chime, armAudio } = useChime()
-  const camera = useCameraPreview()
-  
-  const [liveState, setLiveState] = useState<RehabLiveState>({
-    elevation: 0,
-    phase: 'RESTING',
-    holdRemaining: 5.0,
-    concentricElapsed: 0,
-    eccentricElapsed: 0,
-    isTargetZone: false,
-    flags: [],
-    repsCompleted: 0,
-    targetReps: 10,
-  })
-  
   const [completedReps, setCompletedReps] = useState<RehabRepRecord[]>([])
   const [isStarted, setIsStarted] = useState(false)
-  const [backendConnected, setBackendConnected] = useState(false)
-  const prevPhaseRef = useRef<string>('RESTING')
+  const [cameraError, setCameraError] = useState<string | null>(null)
 
-  // Start browser camera automatically on mount
-  useEffect(() => {
-    void camera.start()
-    return () => camera.stop()
-  }, [])
-
-  // Listen to WebSocket stream from localhost:8765
-  useEffect(() => {
-    if (!isStarted) return
-
-    let ws: WebSocket | null = null
-    try {
-      ws = new WebSocket('ws://127.0.0.1:8765/ws/trials/T-1')
-      ws.onopen = () => setBackendConnected(true)
-      ws.onclose = () => setBackendConnected(false)
-      ws.onerror = () => setBackendConnected(false)
-
-      ws.onmessage = (ev) => {
-        try {
-          const data = JSON.parse(ev.data)
-          if (data.type === 'rehab_live') {
-            setLiveState({
-              elevation: data.elevation ?? 0,
-              phase: data.phase ?? 'RESTING',
-              holdRemaining: data.holdRemaining ?? 0,
-              concentricElapsed: data.concentricElapsed ?? 0,
-              eccentricElapsed: data.eccentricElapsed ?? 0,
-              isTargetZone: Boolean(data.isTargetZone),
-              flags: (data.flags ?? []) as FormFlag[],
-              repsCompleted: data.repsCompleted ?? 0,
-              targetReps: data.targetReps ?? 10,
-            })
-            
-            // Audio chime cues on phase changes
-            if (prevPhaseRef.current !== data.phase) {
-              if (data.phase === 'HOLDING') {
-                chime()
-              } else if (data.phase === 'DESCENDING' && prevPhaseRef.current === 'HOLDING') {
-                chime()
-              }
-              prevPhaseRef.current = data.phase
-            }
-          } else if (data.type === 'rehab_rep') {
-            chime()
-            setCompletedReps((prev) => [...prev, data.rep])
-          }
-        } catch {
-          // ignore parsing error
-        }
+  const { isLoaded, liveState, videoRef, canvasRef } = usePoseTracker({
+    onRep: (rep) => {
+      chime()
+      setCompletedReps((prev) => [...prev, rep])
+    },
+    onPhaseChange: (oldPhase, newPhase) => {
+      if (newPhase === 'HOLDING') {
+        chime()
+      } else if (newPhase === 'DESCENDING' && oldPhase === 'HOLDING') {
+        chime()
       }
-    } catch {
-      // ignore connection error
+    },
+  })
+
+  useEffect(() => {
+    let stream: MediaStream | null = null
+
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        })
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          await videoRef.current.play().catch(() => {})
+        }
+      } catch (err) {
+        console.error('Camera access error:', err)
+        setCameraError('請在瀏覽器網址列允許相機存取權限')
+      }
     }
+
+    void startCamera()
 
     return () => {
-      if (ws) ws.close()
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop())
+      }
     }
-  }, [isStarted, chime])
+  }, [videoRef])
 
   function handleStart() {
     armAudio()
-    void camera.start()
     setIsStarted(true)
   }
 
   function handleFinish() {
-    camera.stop()
     onDone({
       completedReps: liveState.repsCompleted,
       reps: completedReps,
@@ -112,11 +76,23 @@ export function RehabTrial({
   return (
     <div className="zones">
       <div className="field field--locked field--split">
-        {/* Left Half: Live Mirrored Camera View */}
+        {/* Left Half: Mirrored Video Feed with Real-time Skeleton Overlay */}
         <div className="field__view">
-          <div className="selfview" style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
+          <div
+            className="selfview"
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#0a0f1d',
+              overflow: 'hidden',
+            }}
+          >
             <video
-              ref={camera.attach}
+              ref={videoRef}
               autoPlay
               playsInline
               muted
@@ -125,23 +101,63 @@ export function RehabTrial({
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transform: 'scaleX(-1)', // Mirror for natural movement
+                transform: 'scaleX(-1)',
               }}
             />
-            {camera.status === 'denied' && (
-              <div style={{ position: 'absolute', color: '#fff', textAlign: 'center', padding: '20px' }}>
-                <p>⚠️ 請在瀏覽器網址列允許相機權限以進行即時動作追蹤</p>
+
+            <canvas
+              ref={canvasRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none',
+              }}
+            />
+
+            {!isLoaded && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  left: '16px',
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  color: '#e2e8f0',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                <span>⚡ AI 姿勢偵測引擎載入中...</span>
               </div>
             )}
-            {camera.status === 'starting' && (
-              <div style={{ position: 'absolute', color: '#fff' }}>
-                <p>正在啟動相機...</p>
+
+            {cameraError && (
+              <div
+                style={{
+                  position: 'absolute',
+                  color: '#fff',
+                  textAlign: 'center',
+                  padding: '24px',
+                  background: 'rgba(0,0,0,0.85)',
+                  borderRadius: '12px',
+                }}
+              >
+                <p style={{ fontSize: '18px', fontWeight: 600 }}>⚠️ 相機權限未開啟</p>
+                <p style={{ marginTop: '8px', color: '#94a3b8' }}>{cameraError}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Half: Rehab Coaching Engine */}
+        {/* Right Half: Live Goniometer & Cadence Coaching Engine */}
         <div className="field__stage">
           {!isStarted ? (
             <div className="cue">
@@ -152,22 +168,15 @@ export function RehabTrial({
               <p className="cue__framing">
                 請面向鏡頭站立，確保上半身與右手完整進入畫面中
               </p>
-              {camera.status === 'denied' && (
-                <p style={{ color: 'var(--accent)', marginTop: '12px' }}>
-                  提示：請點擊網址列旁的相機圖示開啟權限
-                </p>
-              )}
             </div>
           ) : (
             <div className="rehab-stage">
-              {/* Real-time Angle Goniometer */}
               <AngleGauge
                 currentAngle={liveState.elevation}
                 targetAngle={90}
                 isTargetZone={liveState.isTargetZone}
               />
 
-              {/* 5s - 5s - 5s Cadence Pacer & Hold Ring */}
               <CadencePacer
                 phase={liveState.phase}
                 holdRemaining={liveState.holdRemaining}
@@ -175,7 +184,6 @@ export function RehabTrial({
                 eccentricElapsed={liveState.eccentricElapsed}
               />
 
-              {/* Real-time Compensation / Form Alerts */}
               <FormAlertBanner flags={liveState.flags} />
             </div>
           )}
@@ -190,7 +198,7 @@ export function RehabTrial({
           </span>
           <span className="rail__context-label">
             {liveState.phase === 'HOLDING'
-              ? '維持停頓中'
+              ? '維持停頓中 (90°)'
               : liveState.phase === 'ASCENDING'
               ? '平舉抬起中'
               : liveState.phase === 'DESCENDING'
