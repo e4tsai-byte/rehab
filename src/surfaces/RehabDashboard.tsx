@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
 import type { CompletedSession, UserSettings } from '../domain/rehabTypes'
 import { ExerciseCard } from '../components/ExerciseCard'
@@ -14,7 +15,8 @@ export function RehabDashboard({
   history,
   onStartExercise,
 }: RehabDashboardProps) {
-  const primaryExercise = EXERCISE_CATALOG[0]!
+  const [selectedTab, setSelectedTab] = useState<string>(EXERCISE_CATALOG[0]!.id)
+  const currentExercise = EXERCISE_CATALOG.find((e) => e.id === selectedTab) ?? EXERCISE_CATALOG[0]!
 
   // Aggregate stats
   const totalSets = history.length
@@ -30,15 +32,51 @@ export function RehabDashboard({
       <div className="rehab-hero">
         <h1 className="rehab-hero__title">肩關節復健首頁</h1>
         <p className="rehab-hero__sub">
-          配合即時電腦視覺追蹤與動作節奏引導，在家精準落實術後復健。
+          配合即時電腦視覺追蹤與動作節奏引導，在家或辦公桌前精準落實術後復健。
         </p>
       </div>
 
-      {/* Routine Hero Card */}
+      {/* Exercise Tabs Switcher */}
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        {EXERCISE_CATALOG.map((ex) => {
+          const isActive = ex.id === selectedTab
+          const icon = ex.posture === 'standing' ? '🧍' : '🪑'
+          return (
+            <button
+              key={ex.id}
+              onClick={() => setSelectedTab(ex.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                border: isActive
+                  ? '1px solid rgba(56, 189, 248, 0.4)'
+                  : '1px solid var(--rehab-border)',
+                background: isActive
+                  ? 'linear-gradient(145deg, #172554 0%, #0f172a 100%)'
+                  : 'var(--rehab-surface)',
+                color: isActive ? '#38bdf8' : 'var(--rehab-text-muted)',
+                fontWeight: 700,
+                fontSize: '15px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: isActive ? '0 0 20px var(--rehab-cyan-glow)' : 'none',
+              }}
+            >
+              <span>{icon}</span>
+              <span>{ex.nameZh}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Active Exercise Hero Card */}
       <ExerciseCard
-        exercise={primaryExercise}
+        exercise={currentExercise}
         settings={settings}
-        onStart={() => onStartExercise(primaryExercise.id)}
+        onStart={() => onStartExercise(currentExercise.id)}
       />
 
       {/* Stats Grid */}

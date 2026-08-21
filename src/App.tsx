@@ -10,6 +10,7 @@ import {
   saveSession,
   saveSettings,
 } from './data/rehabStore'
+import { EXERCISE_CATALOG } from './domain/exerciseCatalog'
 import type { CompletedSession, UserSettings } from './domain/rehabTypes'
 import { RehabDashboard } from './surfaces/RehabDashboard'
 import { RehabTraining } from './surfaces/RehabTraining'
@@ -19,6 +20,7 @@ type ViewMode = 'dashboard' | 'training' | 'summary'
 
 export function App() {
   const [view, setView] = useState<ViewMode>('dashboard')
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string>(EXERCISE_CATALOG[0]!.id)
   const [settings, setSettings] = useState<UserSettings>(loadSettings)
   const [history, setHistory] = useState<CompletedSession[]>(loadHistory)
   const [activeSession, setActiveSession] = useState<CompletedSession | null>(null)
@@ -26,7 +28,8 @@ export function App() {
 
   const streak = calculateStreak(history)
 
-  function handleStartExercise(_exerciseId: string) {
+  function handleStartExercise(exerciseId: string) {
+    setSelectedExerciseId(exerciseId)
     setView('training')
   }
 
@@ -63,6 +66,7 @@ export function App() {
 
       {view === 'training' && (
         <RehabTraining
+          exerciseId={selectedExerciseId}
           settings={settings}
           onFinishSession={handleFinishSession}
           onCancel={() => setView('dashboard')}

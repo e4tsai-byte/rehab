@@ -35,7 +35,8 @@ export const CONFIG = {
   CADENCE_ECCENTRIC_MIN_S: 3.0,
   
   COMPENSATION_ELBOW_MIN_DEG: 155.0,
-  COMPENSATION_SHOULDER_HIKE_RATIO: 0.08,
+  COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.08,
+  COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.12,
   COMPENSATION_TORSO_LEAN_DEG: 12.0,
 }
 
@@ -61,16 +62,41 @@ export function angleBetweenVectorsDeg(v1: number[], v2: number[]): number {
   return (Math.acos(cosTheta) * 180.0) / Math.PI
 }
 
-export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[]): number {
+export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated = false): number {
   const rShoulder = worldLandmarks[LANDMARKS.RIGHT_SHOULDER]
+  const lShoulder = worldLandmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = worldLandmarks[LANDMARKS.RIGHT_HIP]
   const rElbow = worldLandmarks[LANDMARKS.RIGHT_ELBOW]
-  if (!rShoulder || !rHip || !rElbow) return 0
+  const nose = worldLandmarks[LANDMARKS.NOSE]
+  if (!rShoulder || !rElbow) return 0
 
-  const vTorsoDown = [rHip.x - rShoulder.x, rHip.y - rShoulder.y, rHip.z - rShoulder.z]
   const vArm = [rElbow.x - rShoulder.x, rElbow.y - rShoulder.y, rElbow.z - rShoulder.z]
 
-  return angleBetweenVectorsDeg(vTorsoDown, vArm)
+  // If hips are visible and standing, use standard hip-to-shoulder torso vector
+  const hipsVisible = rHip && (rHip.visibility ?? 1) > 0.4
+  if (!isSeated && hipsVisible) {
+    const vTorsoDown = [rHip.x - rShoulder.x, rHip.y - rShoulder.y, rHip.z - rShoulder.z]
+    return angleBetweenVectorsDeg(vTorsoDown, vArm)
+  }
+
+  // Seated / Desk mode: construct torso spine vector from head-to-neck orientation
+  if (lShoulder && nose) {
+    const midShoulder = [
+      (rShoulder.x + lShoulder.x) / 2,
+      (rShoulder.y + lShoulder.y) / 2,
+      (rShoulder.z + lShoulder.z) / 2,
+    ]
+    // Vector from neck midpoint down along the spine
+    const vSpineDown = [
+      midShoulder[0]! - nose.x,
+      midShoulder[1]! - nose.y,
+      midShoulder[2]! - nose.z,
+    ]
+    return angleBetweenVectorsDeg(vSpineDown, vArm)
+  }
+
+  // Fallback: assume vertical downward axis (0, 1, 0)
+  return angleBetweenVectorsDeg([0, 1, 0], vArm)
 }
 
 export function computeElbowExtensionDeg(landmarks: Landmark3D[]): number {
@@ -84,29 +110,46 @@ export function computeElbowExtensionDeg(landmarks: Landmark3D[]): number {
   return angleBetweenVectorsDeg(v1, v2)
 }
 
-export function computeShoulderHikeRatio(landmarks: Landmark3D[]): number {
+export function computeShoulderHikeRatio(landmarks: Landmark3D[], isSeated = false): number {
   const rShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER]
   const lShoulder = landmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = landmarks[LANDMARKS.RIGHT_HIP]
-  if (!rShoulder || !lShoulder || !rHip) return 0
+  if (!rShoulder || !lShoulder) return 0
 
+  if (isSeated || !rHip || (rHip.visibility ?? 1) <= 0.4) {
+    // Seated Desk normalization: normalized by shoulder width
+    const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y)
+    if (shoulderWidth < 1e-6) return 0
+    return (lShoulder.y - rShoulder.y) / shoulderWidth
+  }
+
+  // Standing normalization: normalized by torso length
   const torsoLen = Math.hypot(rShoulder.x - rHip.x, rShoulder.y - rHip.y)
   if (torsoLen < 1e-6) return 0
-
   return (lShoulder.y - rShoulder.y) / torsoLen
 }
 
-export function computeTorsoTiltDeg(landmarks: Landmark3D[]): number {
+export function computeTorsoTiltDeg(landmarks: Landmark3D[], isSeated = false): number {
   const rShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER]
   const lShoulder = landmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = landmarks[LANDMARKS.RIGHT_HIP]
   const lHip = landmarks[LANDMARKS.LEFT_HIP]
-  if (!rShoulder || !lShoulder || !rHip || !lHip) return 0
+  const nose = landmarks[LANDMARKS.NOSE]
+  if (!rShoulder || !lShoulder) return 0
 
   const shoulderMid = [(rShoulder.x + lShoulder.x) / 2, (rShoulder.y + lShoulder.y) / 2]
-  const hipMid = [(rHip.x + lHip.x) / 2, (rHip.y + lHip.y) / 2]
-  const torsoVec = [(shoulderMid[0] ?? 0) - (hipMid[0] ?? 0), (shoulderMid[1] ?? 0) - (hipMid[1] ?? 0)]
 
+  if (isSeated || !rHip || !lHip || (rHip.visibility ?? 1) <= 0.4) {
+    // Seated / Desk mode: head-to-neck tilt relative to straight up [0, -1]
+    if (nose) {
+      const headVec = [(nose.x - shoulderMid[0]!), (nose.y - shoulderMid[1]!)]
+      return angleBetweenVectorsDeg(headVec, [0, -1])
+    }
+    return 0
+  }
+
+  const hipMid = [(rHip.x + lHip.x) / 2, (rHip.y + lHip.y) / 2]
+  const torsoVec = [(shoulderMid[0]! - hipMid[0]!), (shoulderMid[1]! - hipMid[1]!)]
   return angleBetweenVectorsDeg(torsoVec, [0, -1])
 }
 
@@ -115,6 +158,7 @@ export class ClientShoulderFlexionTracker {
   private repCount = 0
   private nextRepIndex = 1
   private targetReps: number
+  private isSeated: boolean
   
   private concentricStartT = 0
   private concentricDurationS = 0
@@ -127,8 +171,13 @@ export class ClientShoulderFlexionTracker {
   private peakAngleDeg = 0
   private smoothedBuffer: number[] = []
 
-  constructor(targetReps = 10) {
+  constructor(targetReps = 10, isSeated = false) {
     this.targetReps = targetReps
+    this.isSeated = isSeated
+  }
+
+  public setSeatedMode(seated: boolean): void {
+    this.isSeated = seated
   }
 
   private getSmoothedAngle(rawAngle: number): number {
@@ -161,7 +210,7 @@ export class ClientShoulderFlexionTracker {
       }
     }
 
-    const rawAngle = computeShoulderFlexion3D(worldLandmarks)
+    const rawAngle = computeShoulderFlexion3D(worldLandmarks, this.isSeated)
     const angle = this.getSmoothedAngle(rawAngle)
 
     const activeFlags: FormFlag[] = []
@@ -170,12 +219,15 @@ export class ClientShoulderFlexionTracker {
       activeFlags.push('ELBOW_BENT')
     }
 
-    const hikeRatio = computeShoulderHikeRatio(landmarks2D)
-    if (hikeRatio > CONFIG.COMPENSATION_SHOULDER_HIKE_RATIO) {
+    const hikeRatio = computeShoulderHikeRatio(landmarks2D, this.isSeated)
+    const hikeThreshold = this.isSeated
+      ? CONFIG.COMPENSATION_SHOULDER_HIKE_RATIO_SEATED
+      : CONFIG.COMPENSATION_SHOULDER_HIKE_RATIO_STANDING
+    if (hikeRatio > hikeThreshold) {
       activeFlags.push('SHOULDER_HIKE')
     }
 
-    const torsoTilt = computeTorsoTiltDeg(landmarks2D)
+    const torsoTilt = computeTorsoTiltDeg(landmarks2D, this.isSeated)
     if (torsoTilt > CONFIG.COMPENSATION_TORSO_LEAN_DEG) {
       activeFlags.push('TORSO_LEAN')
     }

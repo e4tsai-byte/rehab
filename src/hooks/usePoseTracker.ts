@@ -4,9 +4,11 @@ import type { RehabLiveState, RehabRepRecord } from '../domain/rehabTypes'
 import { ClientShoulderFlexionTracker, type Landmark3D } from '../pose/shoulderKinematics'
 
 export function usePoseTracker({
+  isSeated = false,
   onRep,
   onPhaseChange,
 }: {
+  isSeated?: boolean
   onRep?: (rep: RehabRepRecord) => void
   onPhaseChange?: (oldPhase: string, newPhase: string) => void
 }) {
@@ -28,6 +30,9 @@ export function usePoseTracker({
   const landmarkerRef = useRef<PoseLandmarker | null>(null)
   const trackerRef = useRef<ClientShoulderFlexionTracker>(new ClientShoulderFlexionTracker(10))
   const animIdRef = useRef<number | null>(null)
+  useEffect(() => {
+    trackerRef.current.setSeatedMode(isSeated)
+  }, [isSeated])
   const prevPhaseRef = useRef<string>('RESTING')
 
   useEffect(() => {

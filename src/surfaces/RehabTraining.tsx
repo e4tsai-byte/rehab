@@ -4,23 +4,34 @@ import { CadencePacer } from '../components/CadencePacer'
 import { Digits } from '../components/Digits'
 import { FormAlertBanner } from '../components/FormAlertBanner'
 import { RepPips } from '../components/RepPips'
+import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
 import type { CompletedSession, RehabRepRecord, UserSettings } from '../domain/rehabTypes'
 import { useChime } from '../hooks/useChime'
 import { usePoseTracker } from '../hooks/usePoseTracker'
 
 interface RehabTrainingProps {
+  exerciseId: string
   settings: UserSettings
   onFinishSession: (session: CompletedSession) => void
   onCancel: () => void
 }
 
-export function RehabTraining({ settings, onFinishSession, onCancel }: RehabTrainingProps) {
+export function RehabTraining({
+  exerciseId,
+  settings,
+  onFinishSession,
+  onCancel,
+}: RehabTrainingProps) {
   const { chime, armAudio } = useChime()
   const [completedReps, setCompletedReps] = useState<RehabRepRecord[]>([])
   const [isStarted, setIsStarted] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
 
+  const exercise = EXERCISE_CATALOG.find((e) => e.id === exerciseId) ?? EXERCISE_CATALOG[0]!
+  const isSeated = exercise.posture === 'seated'
+
   const { isLoaded, liveState, videoRef, canvasRef } = usePoseTracker({
+    isSeated,
     onRep: (rep) => {
       if (settings.soundEnabled) chime()
       setCompletedReps((prev) => [...prev, rep])
@@ -88,8 +99,8 @@ export function RehabTraining({ settings, onFinishSession, onCancel }: RehabTrai
 
     const session: CompletedSession = {
       id: `session-${Date.now()}`,
-      exerciseId: 'right-arm-forward-flexion',
-      exerciseNameZh: '站姿右手前舉復健訓練',
+      exerciseId: exercise.id,
+      exerciseNameZh: exercise.nameZh,
       timestamp: Date.now(),
       completedReps: completedReps.length,
       targetReps: settings.targetReps,
@@ -118,27 +129,28 @@ export function RehabTraining({ settings, onFinishSession, onCancel }: RehabTrai
 
           <canvas ref={canvasRef} className="training-camera__canvas" />
 
-          {!isLoaded && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '16px',
-                left: '16px',
-                background: 'rgba(0, 0, 0, 0.75)',
-                color: '#e2e8f0',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid var(--rehab-border)',
-              }}
-            >
-              <span>⚡ AI 姿勢偵測引擎載入中...</span>
-            </div>
-          )}
+          {/* Mode Badge (Standing vs Seated) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '16px',
+              left: '16px',
+              background: 'rgba(15, 23, 42, 0.85)',
+              color: '#38bdf8',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+            }}
+          >
+            <span>{isSeated ? '🪑 坐姿桌前模式' : '🧍 站姿全身模式'}</span>
+            {!isLoaded && <span style={{ color: '#94a3b8', fontWeight: 400 }}>• AI 載入中...</span>}
+          </div>
 
           {cameraError && (
             <div
@@ -162,9 +174,12 @@ export function RehabTraining({ settings, onFinishSession, onCancel }: RehabTrai
         <div className="training-panel">
           {!isStarted ? (
             <div style={{ textAlign: 'center', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 style={{ fontSize: '28px', color: '#fff', margin: 0 }}>準備開始訓練</h2>
+              <div style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700, textTransform: 'uppercase' }}>
+                {exercise.category}
+              </div>
+              <h2 style={{ fontSize: '28px', color: '#fff', margin: 0 }}>{exercise.nameZh}</h2>
               <p style={{ fontSize: '15px', color: 'var(--rehab-text-muted)', lineHeight: '1.6', margin: 0 }}>
-                請面向鏡頭站立，確保上半身完整進入鏡頭畫面。<br />
+                {exercise.framingHintZh}<br />
                 平舉右手至 90° $	o$ 停頓 {settings.holdDurationS} 秒 $	o$ 緩慢下放。
               </p>
               <button
@@ -182,7 +197,7 @@ export function RehabTraining({ settings, onFinishSession, onCancel }: RehabTrai
                   marginTop: '16px',
                 }}
               >
-                開始第一組 (10 次)
+                開始第一組 ({settings.targetReps} 次)
               </button>
             </div>
           ) : (
