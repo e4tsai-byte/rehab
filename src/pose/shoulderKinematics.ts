@@ -38,7 +38,15 @@ export const CONFIG = {
   CADENCE_ECCENTRIC_MIN_S: 2.5,
   
   REST_BETWEEN_REPS_S: 3.0,
-  
+
+  // Unstickable per-state wall-clock timeouts (Invariant 1.3). Measured against elapsed
+  // time in the state, so no arm angle parked in a dead band can defeat them. PLACEHOLDER
+  // values pending footage validation; deliberately generous so they never clip a slow-but-
+  // -valid rep (see the non-regression sequence in the fix PR's before/after run).
+  ASCENDING_TIMEOUT_S: 15.0,   // 3x concentric target: never reaching hold-enter in 15s => rep not completing
+  HOLDING_TIMEOUT_S: 12.0,     // >2x hold target: resolves a hold parked below the accumulate zone
+  DESCENDING_TIMEOUT_S: 12.0,  // >2x eccentric target: resolves an arm parked above the lowered threshold
+
   COMPENSATION_ELBOW_MIN_DEG: 155.0,
   COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.08,
   COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.12,
@@ -100,14 +108,38 @@ export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated 
   return angleBetweenVectorsDeg([0, 1, 0], vArm)
 }
 
-export function computeElbowExtensionDeg(landmarks: Landmark3D[]): number {
-  const shoulder = landmarks[LANDMARKS.RIGHT_SHOULDER]
-  const elbow = landmarks[LANDMARKS.RIGHT_ELBOW]
-  const wrist = landmarks[LANDMARKS.RIGHT_WRIST]
+// Elbow extension angle at the RIGHT elbow: the interior angle between the upper-arm
+// vector (elbow -> shoulder) and the forearm vector (elbow -> wrist), in MediaPipe metric
+// WORLD space. 0° = elbow fully folded, 180° = elbow fully straight. So a value below
+// COMPENSATION_ELBOW_MIN_DEG means the elbow is bent past ~25° off straight.
+//
+// Geometry is taken from `worldLandmarks`, NOT image landmarks, on purpose: in a frontal
+// camera the arm points toward the lens at ~90° forward flexion, and the 2D projection
+// foreshortens a straight arm into a false bend (spurious ELBOW_BENT right at the target
+// hold). Occlusion, however, is an image-plane property and `worldLandmarks` do not
+// reliably carry a visibility field, so the visibility gate reads from `landmarks2D`.
+//
+// Degeneracies (Invariant 1.2): a missing/occluded elbow or wrist, or a zero-norm vector
+// from coincident landmarks, returns 180° ("assume straight, do not flag") — a lost
+// landmark must never manufacture a compensation warning. (The prior 2D version fell
+// through to angleBetweenVectorsDeg, which returns 0° on a zero-norm input, fabricating a
+// spurious bend.)
+export function computeElbowExtensionDeg(
+  worldLandmarks: Landmark3D[],
+  landmarks2D: Landmark3D[],
+): number {
+  const shoulder = worldLandmarks[LANDMARKS.RIGHT_SHOULDER]
+  const elbow = worldLandmarks[LANDMARKS.RIGHT_ELBOW]
+  const wrist = worldLandmarks[LANDMARKS.RIGHT_WRIST]
   if (!shoulder || !elbow || !wrist) return 180
+
+  const elbow2D = landmarks2D[LANDMARKS.RIGHT_ELBOW]
+  const wrist2D = landmarks2D[LANDMARKS.RIGHT_WRIST]
+  if ((elbow2D?.visibility ?? 1) < 0.4 || (wrist2D?.visibility ?? 1) < 0.4) return 180
 
   const v1 = [shoulder.x - elbow.x, shoulder.y - elbow.y, (shoulder.z ?? 0) - (elbow.z ?? 0)]
   const v2 = [wrist.x - elbow.x, wrist.y - elbow.y, (wrist.z ?? 0) - (elbow.z ?? 0)]
+  if (norm(v1) < 1e-6 || norm(v2) < 1e-6) return 180
   return angleBetweenVectorsDeg(v1, v2)
 }
 
@@ -160,6 +192,7 @@ export class ClientShoulderFlexionTracker {
   
   private concentricStartT = 0
   private concentricDurationS = 0
+  private holdEnterT = 0
   private holdDurationS = 0
   private eccentricStartT = 0
   private eccentricDurationS = 0
@@ -217,7 +250,7 @@ export class ClientShoulderFlexionTracker {
     const angle = this.getSmoothedAngle(rawAngle)
 
     const activeFlags: FormFlag[] = []
-    const elbowAngle = computeElbowExtensionDeg(landmarks2D)
+    const elbowAngle = computeElbowExtensionDeg(worldLandmarks, landmarks2D)
     if (elbowAngle < CONFIG.COMPENSATION_ELBOW_MIN_DEG) {
       activeFlags.push('ELBOW_BENT')
     }
@@ -301,6 +334,7 @@ export class ClientShoulderFlexionTracker {
         if (angle >= CONFIG.TARGET_HOLD_ENTER) {
           this.concentricDurationS = concentricElapsed
           this.phase = 'HOLDING'
+          this.holdEnterT = timestampS
           this.accumulatedHoldS = 0
           holdRemaining = CONFIG.CADENCE_HOLD_TARGET_S
         } else {
@@ -308,9 +342,23 @@ export class ClientShoulderFlexionTracker {
           paceStatus = 'TOO_SLOW'
           activeFlags.push('PACING_TOO_SLOW')
         }
-      } else if (angle < restingEnter && concentricElapsed > 2.0) {
-        // Abort if user dropped arm completely during ascent
+      }
+
+      // Unstickable exit: abort if the arm dropped back to rest during ascent, OR time out
+      // a stalled ascent parked below the hold-enter angle (Invariant 1.3). Either way the
+      // arm never reached target (peak < TARGET_HOLD_ENTER), so this is NOT a valid rep:
+      // discard it and return cleanly to the idle rest state — no broken rep recorded, no
+      // frozen screen (Invariant 1.6). The clean reset (restStartT/repFlags/peakAngleDeg)
+      // also fixes the former abort, which left the machine re-arming every frame.
+      if (
+        this.phase === 'ASCENDING' &&
+        ((angle < restingEnter && concentricElapsed > 2.0) ||
+          concentricElapsed >= CONFIG.ASCENDING_TIMEOUT_S)
+      ) {
         this.phase = 'RESTING'
+        this.restStartT = timestampS
+        this.repFlags.clear()
+        this.peakAngleDeg = 0
       }
     } else if (this.phase === 'HOLDING') {
       const dt = this.lastTimestampS > 0 ? Math.max(0, Math.min(0.2, timestampS - this.lastTimestampS)) : 0.033
@@ -335,8 +383,15 @@ export class ClientShoulderFlexionTracker {
         this.phase = 'DESCENDING'
         this.eccentricStartT = timestampS
         holdRemaining = 0
-      } else if (angle < CONFIG.TARGET_HOLD_ABORT_THRESHOLD) {
-        // Arm dropped significantly below 52° -> abort hold into descent
+      } else if (
+        angle < CONFIG.TARGET_HOLD_ABORT_THRESHOLD ||
+        timestampS - this.holdEnterT >= CONFIG.HOLDING_TIMEOUT_S
+      ) {
+        // Unstickable exit (Invariant 1.3): the arm dropped below the abort threshold, OR
+        // the hold timed out while parked between the abort threshold and the accumulate
+        // zone (where the timer neither accrues nor aborts). The arm DID reach target to
+        // enter HOLDING (peak >= TARGET_HOLD_ENTER), so this is a legitimate rep with a
+        // short hold — finalize into descent carrying INCOMPLETE_HOLD, not discarded.
         this.holdDurationS = this.accumulatedHoldS
         this.repFlags.add('INCOMPLETE_HOLD')
         this.phase = 'DESCENDING'
@@ -371,11 +426,15 @@ export class ClientShoulderFlexionTracker {
         this.repFlags.add('RUSHED_ECCENTRIC')
       }
 
-      // STRICT PACING: Only finalize rep once the full 5.0s descent duration has elapsed AND arm has lowered
+      // STRICT PACING: Only finalize rep once the full 5.0s descent duration has elapsed AND arm has lowered.
+      // Unstickable exit (Invariant 1.3): also finalize on timeout if the arm is parked above the lowered
+      // threshold after DESCENDING_TIMEOUT_S — the concentric and hold already happened, and not returning
+      // fully to rest is not a form fault worth hanging the machine on.
       const isTimeComplete = eccentricElapsed >= CONFIG.CADENCE_ECCENTRIC_TARGET_S
       const isArmLowered = angle <= (restingEnter + 8.0)
+      const isTimedOut = eccentricElapsed >= CONFIG.DESCENDING_TIMEOUT_S
 
-      if (isTimeComplete && isArmLowered) {
+      if ((isTimeComplete && isArmLowered) || isTimedOut) {
         this.eccentricDurationS = eccentricElapsed
 
         if (this.peakAngleDeg >= CONFIG.TARGET_HOLD_ENTER) {
