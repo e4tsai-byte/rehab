@@ -1,3 +1,5 @@
+from ..rehab.shoulder_flexion import ShoulderFlexionTracker
+from ..rehab.types import FormFlag, RehabPhase
 """The always-on background camera+pipeline loop, the idle/live/lost
 mapping (`TrackingHub`), and the fixed-5-rep per-trial controller
 (`TrialController` / `TrialManager`).
@@ -119,22 +121,10 @@ class TrackingHub:
             self._loop.call_soon_threadsafe(q.put_nowait, message)
 
 
+
 class TrialController:
-    """One trial's fixed-5-rep clock, started on the explicit cue
-    (`startTrial`), not on first movement.
-
-    Void-reason boundary (see builder's report): a sustained UNKNOWN run
-    (>= VOID_UNKNOWN_GRACE_S) becomes `tracking_lost` if this trial has ever
-    had at least one non-UNKNOWN frame since the cue, otherwise
-    `out_of_frame` (a person was never actually seen at all this trial).
-
-    `roi_multiple_people` is never emitted by this controller -- see the
-    builder's report: `PoseCapture` is configured with `num_poses=1`
-    (capture.py), so `PersonSelector` can never actually receive more than
-    one candidate observation in this build, making that void reason
-    unreachable from real camera input. Flagged as a deferred/stubbed case
-    rather than guessed at.
-    """
+    """Rehabilitation Trial Controller: manages live kinematics, compensation checks,
+    and 5s-5s-5s cadence for Right Arm Forward Flexion."""
 
     def __init__(
         self,
@@ -143,6 +133,7 @@ class TrialController:
         participant_id: str,
         cue_timestamp: float,
         on_settled: Callable[["TrialController"], None],
+        target_reps: int = 10,
     ):
         self.trial_id = trial_id
         self.session_id = session_id
@@ -151,10 +142,10 @@ class TrialController:
 
         self._cue_timestamp = cue_timestamp
         self._on_settled = on_settled
+        self.target_reps = target_reps
 
-        self._rep_counter = RepCounter()
-        self.rep_times_ms: List[int] = []
-        self._cumulative_elapsed_ms = 0
+        self._rehab_tracker = ShoulderFlexionTracker(side=Side.RIGHT, target_reps=target_reps)
+        self.rehab_reps: List[Dict] = []
         self._unknown_run_start: Optional[float] = None
         self._seen_any_valid_frame = False
 
@@ -183,104 +174,103 @@ class TrialController:
             self._loop.call_soon_threadsafe(q.put_nowait, event)
 
     def _close_ws(self) -> None:
-        # Sentinel `None` tells the `/ws/trials/{id}` handler to close the
-        # socket now that a 'settled' event has gone out.
         if self._loop is None:
             return
         for q in list(self._subscribers):
             self._loop.call_soon_threadsafe(q.put_nowait, None)
 
     def on_tracking_state(self, mapped_state: str) -> None:
-        """Mirrors the always-on tracking state onto this trial's own event
-        stream too, since `TrialEvent` explicitly includes a 'tracking'
-        variant -- called by `TrialManager` whenever `TrackingHub`'s mapped
-        state changes while this trial is active."""
         with self._lock:
             if self.settled:
                 return
         self._emit({"type": "tracking", "state": mapped_state})
 
-    def process_frame(self, frame: FrameOutput) -> None:
-        """Called from the background capture thread for every frame while
-        this trial is the active one."""
+    def process_observations(self, observations: List[PoseObservation], timestamp: float) -> None:
         with self._lock:
             if self.settled:
                 return
 
-            if frame.state is State.UNKNOWN:
+            obs = observations[0] if observations else None
+            if obs is None:
                 if self._unknown_run_start is None:
-                    self._unknown_run_start = frame.timestamp
-                elif frame.timestamp - self._unknown_run_start >= VOID_UNKNOWN_GRACE_S:
+                    self._unknown_run_start = timestamp
+                elif timestamp - self._unknown_run_start >= VOID_UNKNOWN_GRACE_S:
                     self._settle_void_locked()
                     return
             else:
                 self._unknown_run_start = None
                 self._seen_any_valid_frame = True
 
-            # Every frame (including UNKNOWN ones) is fed to RepCounter
-            # regardless of the void bookkeeping above, so its own
-            # any-UNKNOWN-during-concentric-phase discard rule (rep_counter.py)
-            # keeps seeing an unbroken frame sequence -- skipping frames here
-            # would silently break that rule.
-            new_rep = self._rep_counter.process(frame)
-            if new_rep is None:
-                return
+            new_rep, live_state = self._rehab_tracker.process(obs, timestamp)
+            
+            live_event = {
+                "type": "rehab_live",
+                "elevation": live_state.current_elevation_deg,
+                "phase": live_state.phase.value,
+                "holdRemaining": live_state.hold_seconds_remaining,
+                "concentricElapsed": live_state.concentric_elapsed_s,
+                "eccentricElapsed": live_state.eccentric_elapsed_s,
+                "isTargetZone": live_state.is_target_zone,
+                "flags": live_state.active_flags,
+                "repsCompleted": live_state.reps_completed,
+                "targetReps": live_state.target_reps,
+            }
 
-            elapsed_ms = round((frame.timestamp - self._cue_timestamp) * 1000)
-            rep_ms = elapsed_ms - self._cumulative_elapsed_ms
-            self._cumulative_elapsed_ms = elapsed_ms
-            self.rep_times_ms.append(rep_ms)
-            rep_event = {"type": "rep", "index": new_rep.rep_index, "repMs": rep_ms, "elapsedMs": elapsed_ms}
+            rep_event = None
+            settle_now = False
 
-            settle_now = len(self.rep_times_ms) >= PRESCRIBED_REPS
-            if settle_now:
-                self._settle_complete_locked()
+            if new_rep is not None:
+                rep_dict = {
+                    "index": new_rep.rep_index,
+                    "concentricDuration": new_rep.concentric_duration_s,
+                    "holdDuration": new_rep.hold_duration_s,
+                    "eccentricDuration": new_rep.eccentric_duration_s,
+                    "peakElevation": new_rep.peak_elevation_deg,
+                    "flags": new_rep.form_flags,
+                    "isClean": new_rep.is_clean,
+                }
+                self.rehab_reps.append(rep_dict)
+                rep_event = {"type": "rehab_rep", "rep": rep_dict}
+                
+                if len(self.rehab_reps) >= self.target_reps:
+                    settle_now = True
+                    self._settle_complete_locked()
 
-        # Outside the lock: I/O and cross-thread notification.
-        self._emit(rep_event)
+        # Emit events outside lock
+        self._emit(live_event)
+        if rep_event is not None:
+            self._emit(rep_event)
         if settle_now:
             self._finish()
+
+    def process_frame(self, frame: FrameOutput) -> None:
+        pass  # Deprecated in favor of process_observations
 
     def _settle_complete_locked(self) -> None:
         self.settled = True
         self.outcome = {
             "kind": "complete",
-            "repsCompleted": PRESCRIBED_REPS,
-            "repTimesMs": list(self.rep_times_ms),
-            "totalMs": sum(self.rep_times_ms),
+            "repsCompleted": len(self.rehab_reps),
+            "rehabReps": list(self.rehab_reps),
         }
 
     def _settle_void_locked(self) -> None:
         self.settled = True
         reason = "tracking_lost" if self._seen_any_valid_frame else "out_of_frame"
-        self.outcome = {"kind": "void", "reason": reason, "repsCompleted": len(self.rep_times_ms)}
+        self.outcome = {"kind": "void", "reason": reason, "repsCompleted": len(self.rehab_reps)}
         self._emit({"type": "void", "reason": reason})
         self._finish()
 
     def end(self) -> Dict:
-        """Explicit facilitator-driven end (`POST /trials/{id}/end`).
-        Idempotent: a trial that already settled (auto-complete at rep 5, or
-        a void) just returns its recorded outcome instead of erroring, since
-        this is invoked over HTTP where a client retry is possible."""
         with self._lock:
             if self.settled:
                 return self.outcome
             self.settled = True
-            reps = len(self.rep_times_ms)
-            if reps >= PRESCRIBED_REPS:
-                self.outcome = {
-                    "kind": "complete",
-                    "repsCompleted": PRESCRIBED_REPS,
-                    "repTimesMs": list(self.rep_times_ms),
-                    "totalMs": sum(self.rep_times_ms),
-                }
-            else:
-                self.outcome = {
-                    "kind": "incomplete",
-                    "repsCompleted": reps,
-                    "repTimesMs": list(self.rep_times_ms),
-                    "elapsedMs": self._cumulative_elapsed_ms,
-                }
+            self.outcome = {
+                "kind": "incomplete",
+                "repsCompleted": len(self.rehab_reps),
+                "rehabReps": list(self.rehab_reps),
+            }
         self._finish()
         return self.outcome
 
@@ -292,8 +282,7 @@ class TrialController:
             self.outcome = {
                 "kind": "aborted",
                 "reason": reason,
-                "repsCompleted": len(self.rep_times_ms),
-                "elapsedMs": self._cumulative_elapsed_ms,
+                "repsCompleted": len(self.rehab_reps),
             }
         self._finish()
         return self.outcome
@@ -328,8 +317,12 @@ class TrialManager:
     def get(self, trial_id: str) -> Optional[TrialController]:
         return self._trials.get(trial_id)
 
+    def process_observations(self, observations: List[PoseObservation], timestamp: float) -> None:
+        active = self._active
+        if active is not None and not active.settled:
+            active.process_observations(observations, timestamp)
+
     def process_frame(self, frame: FrameOutput) -> None:
-        """Called from the background capture thread for every frame."""
         active = self._active
         if active is not None and not active.settled:
             active.process_frame(frame)
@@ -408,7 +401,7 @@ class CaptureRunner:
                     )
                     last_logged_state = output.state.value
                 self._tracking_hub.on_frame_state(output.state)
-                self._trial_manager.process_frame(output)
+                self._trial_manager.process_observations(observations, timestamp)
 
                 preview = frame_bgr.copy()
                 if observations:

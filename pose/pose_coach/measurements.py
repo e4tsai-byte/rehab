@@ -101,3 +101,74 @@ def hip_height_norm(world_landmarks: Sequence[Landmark], side: Side) -> Optional
     if torso_length < geometry.EPSILON:
         return None
     return (ankle.y - hip.y) / torso_length
+
+
+def shoulder_flexion_3d_deg(world_landmarks: Sequence[Landmark], side: Side) -> Optional[float]:
+    """Forward elevation / flexion angle of the arm relative to the torso,
+    computed from metric 3D `pose_world_landmarks`.
+    
+    Vector 1: Torso downward vector = Hip - Shoulder
+    Vector 2: Arm vector = Elbow - Shoulder
+    
+    0° = Arm resting straight down beside hip.
+    90° = Arm raised straight forward horizontally (parallel to floor).
+    180° = Arm straight overhead.
+    """
+    idx = _side_indices(side)
+    shoulder = world_landmarks[idx["shoulder"]]
+    hip = world_landmarks[idx["hip"]]
+    elbow = world_landmarks[idx["elbow"]] if "elbow" in idx else world_landmarks[config.RIGHT_ELBOW if side is Side.RIGHT else config.LEFT_ELBOW]
+    
+    v_torso_down = geometry.vector(_xyz(shoulder), _xyz(hip))
+    v_arm = geometry.vector(_xyz(shoulder), _xyz(elbow))
+    return geometry.angle_between_vectors_deg(v_torso_down, v_arm)
+
+
+def elbow_extension_deg(landmarks_2d: Sequence[Landmark], side: Side) -> Optional[float]:
+    """Interior angle at the elbow: SHOULDER -> ELBOW -> WRIST.
+    180° = straight arm. < 155° indicates elbow bending compensation.
+    """
+    idx = _side_indices(side)
+    shoulder = landmarks_2d[idx["shoulder"]]
+    elbow_idx = config.RIGHT_ELBOW if side is Side.RIGHT else config.LEFT_ELBOW
+    wrist_idx = config.RIGHT_WRIST if side is Side.RIGHT else config.LEFT_WRIST
+    elbow = landmarks_2d[elbow_idx]
+    wrist = landmarks_2d[wrist_idx]
+    return geometry.interior_angle_deg(_xy(elbow), _xy(shoulder), _xy(wrist))
+
+
+def shoulder_hike_ratio(landmarks_2d: Sequence[Landmark], side: Side) -> Optional[float]:
+    """Measures vertical displacement (shrug / hike) of the exercising shoulder
+    relative to the opposite shoulder, normalized by torso length.
+    
+    In image coords (y increases downward):
+    A positive value means the exercising shoulder is elevated higher (smaller y)
+    than the contralateral shoulder.
+    """
+    r_shoulder = landmarks_2d[config.RIGHT_SHOULDER]
+    l_shoulder = landmarks_2d[config.LEFT_SHOULDER]
+    r_hip = landmarks_2d[config.RIGHT_HIP]
+    
+    torso_len = geometry.euclidean_distance(_xy(r_shoulder), _xy(r_hip))
+    if torso_len < geometry.EPSILON:
+        return None
+        
+    if side is Side.RIGHT:
+        # If right shoulder y is smaller than left shoulder y, right is hiked
+        return (l_shoulder.y - r_shoulder.y) / torso_len
+    else:
+        return (r_shoulder.y - l_shoulder.y) / torso_len
+
+
+def torso_tilt_deg(landmarks_2d: Sequence[Landmark]) -> Optional[float]:
+    """Angle of torso (hip midpoint to shoulder midpoint) relative to vertical.
+    0° = perfectly upright. > 12° indicates lateral or posterior lean compensation.
+    """
+    r_shoulder, l_shoulder = landmarks_2d[config.RIGHT_SHOULDER], landmarks_2d[config.LEFT_SHOULDER]
+    r_hip, l_hip = landmarks_2d[config.RIGHT_HIP], landmarks_2d[config.LEFT_HIP]
+    
+    shoulder_mid = ((r_shoulder.x + l_shoulder.x) / 2.0, (r_shoulder.y + l_shoulder.y) / 2.0)
+    hip_mid = ((r_hip.x + l_hip.x) / 2.0, (r_hip.y + l_hip.y) / 2.0)
+    
+    torso_vec = geometry.vector(hip_mid, shoulder_mid)
+    return geometry.angle_to_vertical_deg(torso_vec)

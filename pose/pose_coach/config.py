@@ -112,3 +112,25 @@ TARGET_FPS_FLOOR = 15  # demo-readiness floor, not enforced in code -- see model
 # runtime, so a flaky venue network can't trigger the model-load failure
 # path in front of judges.
 MODEL_ASSET_PATH = Path(__file__).resolve().parent.parent / "models" / "pose_landmarker_lite.task"
+
+# --- Shoulder Rehab: Right Arm Forward Flexion (rehab) ----------------------
+SHOULDER_RESTING_ENTER = 20.0       # deg, threshold to enter RESTING
+SHOULDER_RESTING_EXIT = 28.0        # deg, threshold to leave RESTING into ASCENDING
+SHOULDER_TARGET_HOLD_ENTER = 85.0   # deg, threshold to enter HOLDING
+SHOULDER_TARGET_HOLD_EXIT = 80.0    # deg, threshold to drop out of HOLDING
+SHOULDER_TARGET_ANGLE_NOMINAL = 90.0# deg, target elevation
+SHOULDER_TARGET_HOLD_MAX = 105.0    # deg, upper bound for valid hold zone
+
+CADENCE_CONCENTRIC_TARGET_S = 5.0   # target seconds to reach 90 deg
+CADENCE_CONCENTRIC_MIN_S = 3.0      # faster than this is flagged as RUSHED_CONCENTRIC
+CADENCE_HOLD_TARGET_S = 5.0         # target hold duration in seconds
+CADENCE_HOLD_MIN_S = 3.0            # minimum hold duration to count rep
+CADENCE_ECCENTRIC_TARGET_S = 5.0    # target seconds to return to resting
+CADENCE_ECCENTRIC_MIN_S = 3.0       # faster than this is flagged as RUSHED_ECCENTRIC
+
+COMPENSATION_ELBOW_MIN_DEG = 155.0  # elbow interior angle below this -> ELBOW_BENT
+COMPENSATION_SHOULDER_HIKE_RATIO = 0.08 # right shoulder height vs left delta -> SHOULDER_HIKE
+COMPENSATION_TORSO_LEAN_DEG = 12.0  # torso tilt angle to vertical -> TORSO_LEAN
+
+LEFT_ELBOW, RIGHT_ELBOW = 13, 14
+LEFT_WRIST, RIGHT_WRIST = 15, 16

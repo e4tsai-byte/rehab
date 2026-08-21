@@ -1,3 +1,4 @@
+import { RehabTrial } from './surfaces/RehabTrial'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppHeader, type Crumb } from './components/AppHeader'
 import { DemoBadge } from './components/DemoDisclosure'
@@ -46,7 +47,7 @@ type View =
       not have to re-derive which of several attempts it is showing. */
   | { kind: 'result'; participantId: ParticipantId; outcome: Outcome }
   | { kind: 'detail'; participantId: ParticipantId }
-  | { kind: 'sheet' }
+  | { kind: 'sheet' } | { kind: 'rehab' }
 
 export function App() {
   const src = useDataSource()
@@ -148,7 +149,9 @@ export function App() {
       go: view.kind === 'roster' ? undefined : goRoster,
     })
   }
-  if (view.kind === 'trial') {
+  if (view.kind === 'rehab') {
+    trail.push({ title: '右肩前舉復健訓練 (5s-5s-5s)', icon: 'trial' })
+  } else if (view.kind === 'trial') {
     trail.push({ title: strings.nav.placeTrial(current?.label ?? ''), icon: 'trial' })
   } else if (view.kind === 'result') {
     trail.push({ title: strings.nav.placeTrialResult(current?.label ?? ''), icon: 'record' })
@@ -199,6 +202,10 @@ export function App() {
 
   return shell(
     <>
+      {view.kind === 'rehab' && (
+        <RehabTrial onDone={() => goRoster()} />
+      )}
+
       {view.kind === 'roster' && (
         <div className="zones">
           <div className="field">
@@ -217,6 +224,9 @@ export function App() {
             <div className="rail__spacer" />
             <div className="rail__actions">
               {/* No phase toggle here any more. Phase is chosen once, on setup. */}
+              <RailButton variant="quiet" icon="start" onClick={() => setView({ kind: 'rehab' })}>
+                右肩復健模式
+              </RailButton>
               <RailButton variant="primary" icon="sheet" onClick={() => setView({ kind: 'sheet' })}>
                 {strings.roster.openSheet}
               </RailButton>
