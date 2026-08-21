@@ -161,7 +161,10 @@ class ShoulderFlexionTracker:
             eccentric_elapsed = max(0.0, timestamp - self._eccentric_start_t)
             concentric_elapsed = self._concentric_duration_s
             
-            if smoothed_angle <= config.SHOULDER_RESTING_ENTER:
+            is_resting = smoothed_angle <= config.SHOULDER_RESTING_ENTER
+            is_stabilized_bottom = eccentric_elapsed >= 4.0 and smoothed_angle <= (config.SHOULDER_RESTING_ENTER + 8.0)
+            
+            if is_resting or is_stabilized_bottom:
                 # Returned to resting hip position -> finalize rep
                 self._eccentric_duration_s = eccentric_elapsed
                 if self._eccentric_duration_s < config.CADENCE_ECCENTRIC_MIN_S:

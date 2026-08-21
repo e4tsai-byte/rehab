@@ -20,24 +20,26 @@ export const LANDMARKS = {
 }
 
 export const CONFIG = {
-  RESTING_ENTER: 20.0,
-  RESTING_EXIT: 28.0,
-  TARGET_HOLD_ENTER: 85.0,
-  TARGET_HOLD_EXIT: 80.0,
+  RESTING_ENTER_STANDING: 30.0,
+  RESTING_ENTER_SEATED: 38.0,       // Lap/desk natural resting angle
+  RESTING_EXIT_STANDING: 40.0,
+  RESTING_EXIT_SEATED: 48.0,
+  TARGET_HOLD_ENTER: 80.0,
+  TARGET_HOLD_EXIT: 72.0,
   TARGET_ANGLE_NOMINAL: 90.0,
-  TARGET_HOLD_MAX: 105.0,
+  TARGET_HOLD_MAX: 110.0,
   
   CADENCE_CONCENTRIC_TARGET_S: 5.0,
-  CADENCE_CONCENTRIC_MIN_S: 3.0,
+  CADENCE_CONCENTRIC_MIN_S: 2.5,
   CADENCE_HOLD_TARGET_S: 5.0,
-  CADENCE_HOLD_MIN_S: 3.0,
+  CADENCE_HOLD_MIN_S: 2.5,
   CADENCE_ECCENTRIC_TARGET_S: 5.0,
-  CADENCE_ECCENTRIC_MIN_S: 3.0,
+  CADENCE_ECCENTRIC_MIN_S: 2.5,
   
   COMPENSATION_ELBOW_MIN_DEG: 155.0,
   COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.08,
   COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.12,
-  COMPENSATION_TORSO_LEAN_DEG: 12.0,
+  COMPENSATION_TORSO_LEAN_DEG: 14.0,
 }
 
 function dot(a: number[], b: number[]): number {
@@ -243,8 +245,11 @@ export class ClientShoulderFlexionTracker {
     let concentricElapsed = 0
     let eccentricElapsed = 0
 
+    const restingEnter = this.isSeated ? CONFIG.RESTING_ENTER_SEATED : CONFIG.RESTING_ENTER_STANDING
+    const restingExit = this.isSeated ? CONFIG.RESTING_EXIT_SEATED : CONFIG.RESTING_EXIT_STANDING
+
     if (this.phase === 'RESTING') {
-      if (angle > CONFIG.RESTING_EXIT) {
+      if (angle > restingExit) {
         this.phase = 'ASCENDING'
         this.concentricStartT = timestampS
         this.repFlags.clear()
@@ -260,7 +265,7 @@ export class ClientShoulderFlexionTracker {
         this.phase = 'HOLDING'
         this.holdStartT = timestampS
         holdRemaining = CONFIG.CADENCE_HOLD_TARGET_S
-      } else if (angle < CONFIG.RESTING_ENTER) {
+      } else if (angle < restingEnter) {
         this.phase = 'RESTING'
       }
     } else if (this.phase === 'HOLDING') {
@@ -286,7 +291,11 @@ export class ClientShoulderFlexionTracker {
       eccentricElapsed = Math.max(0, timestampS - this.eccentricStartT)
       concentricElapsed = this.concentricDurationS
 
-      if (angle <= CONFIG.RESTING_ENTER) {
+      // Check if arm reached resting position OR stabilized at the bottom
+      const isRestingAngle = angle <= restingEnter
+      const isSlowDescentStabilized = eccentricElapsed >= 4.0 && angle <= (restingEnter + 8.0)
+
+      if (isRestingAngle || isSlowDescentStabilized) {
         this.eccentricDurationS = eccentricElapsed
         if (this.eccentricDurationS < CONFIG.CADENCE_ECCENTRIC_MIN_S) {
           this.repFlags.add('RUSHED_ECCENTRIC')

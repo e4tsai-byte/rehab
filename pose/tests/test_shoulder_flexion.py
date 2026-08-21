@@ -107,9 +107,9 @@ class TestShoulderFlexionTracker(unittest.TestCase):
             self.assertEqual(state.phase, RehabPhase.RESTING)
 
         # 2. Smooth concentric ascent from t=1.0 to t=6.5 (5.5s ascent)
-        for i in range(1, 61):
+        for i in range(1, 81):
             t = 1.0 + i * 0.1
-            frac = min(1.0, i / 60.0)
+            frac = min(1.0, i / 80.0)
             y3 = 1.40 - 0.30 * (1.0 - frac)
             z3 = 0.30 * frac
             obs_step = _make_dummy_landmarks(r_elbow_3d=(0.20, y3, z3))
@@ -129,9 +129,9 @@ class TestShoulderFlexionTracker(unittest.TestCase):
 
         # 4. Smooth eccentric descent over 5.5s
         rep = None
-        for i in range(1, 61):
+        for i in range(1, 81):
             t += 0.1
-            frac = min(1.0, i / 60.0)
+            frac = min(1.0, i / 80.0)
             y3 = 1.40 - 0.30 * frac
             z3 = 0.30 * (1.0 - frac)
             obs_step = _make_dummy_landmarks(r_elbow_3d=(0.20, y3, z3))
@@ -175,9 +175,9 @@ class TestShoulderFlexionTracker(unittest.TestCase):
             
         # Lower over 5s
         rep = None
-        for i in range(1, 61):
+        for i in range(1, 81):
             t += 0.1
-            frac = min(1.0, i / 60.0)
+            frac = min(1.0, i / 80.0)
             y3 = 1.40 - 0.30 * frac
             z3 = 0.30 * (1.0 - frac)
             obs_step = _make_dummy_landmarks(r_elbow_3d=(0.20, y3, z3))
