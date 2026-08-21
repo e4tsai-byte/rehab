@@ -26,7 +26,14 @@ html {
 }
 
 body {
-  background: var(--rehab-ground);
+  min-height: 100%;
+  background-color: var(--rehab-ground);
+  background-image:
+    radial-gradient(60rem 42rem at 8% -6%, rgba(11, 121, 237, 0.28), transparent 58%),
+    radial-gradient(48rem 36rem at 92% 2%, rgba(41, 157, 80, 0.22), transparent 55%),
+    radial-gradient(44rem 34rem at 78% 96%, rgba(11, 121, 237, 0.2), transparent 56%),
+    radial-gradient(38rem 30rem at 22% 88%, rgba(216, 116, 0, 0.14), transparent 55%);
+  background-attachment: fixed;
   color: var(--rehab-ink);
   font-family: var(--rehab-font);
   font-size: var(--t-md);
@@ -43,31 +50,6 @@ body {
      whole panel jitter as the value changes. */
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-}
-
-/* ─── Ambient ground ─────────────────────────────────────────────────────────
-   Two very wide, very faint washes behind everything.
-
-   This is not decoration and it is not a gradient for its own sake: glass reads
-   as glass only when there is luminance variation behind it to refract. Over a
-   perfectly flat fill, backdrop-filter has nothing to sample and every surface
-   collapses into a flat rectangle at reduced opacity.
-
-   Both washes were checked against the ink: the darkest point under either
-   still measures ~14:1 for body text, so the ambience costs no legibility.
-   `fixed` so the washes belong to the room, not to the scroll. */
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(60rem 42rem at 8% -6%, rgba(11, 121, 237, 0.26), transparent 58%),
-    radial-gradient(48rem 36rem at 92% 2%, rgba(41, 157, 80, 0.2), transparent 55%),
-    radial-gradient(44rem 34rem at 78% 96%, rgba(11, 121, 237, 0.18), transparent 56%),
-    radial-gradient(38rem 30rem at 22% 88%, rgba(216, 116, 0, 0.1), transparent 55%);
 }
 
 button {
