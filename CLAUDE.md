@@ -187,25 +187,43 @@ tokens.css → base.css → telemetry.css → rehab.css
 ```
 
 * **`tokens.css`** is the ONLY place design tokens are defined, and its polarity
-  is **DARK** — light text on `#070a13`, per `DESIGN.md`. A token defined
-  anywhere else, or a light-polarity token block, is a defect.
-* **`base.css`** is reset, focus, and the Digits primitive. Consumes tokens,
-  defines none.
-* **`telemetry.css`** holds the goniometer, pacer, form-alert, and pip rules.
-  Extracted verbatim from velocare's `app.css` during the deletion, because
-  those rules were live dependencies of shipping components. It still consumes
-  the legacy unprefixed token names (`--ink`, `--surface`, `--s-4` …), kept
-  alive as a **dark alias layer** at the bottom of `tokens.css`.
-* **`rehab.css`** is everything else.
+  is **LIGHT** — Apple system materials on a cool near-white ground. A token
+  defined anywhere else is a defect. The light choice is load-bearing rather
+  than aesthetic: the screen acts as a fill light for the webcam, and MediaPipe's
+  landmark confidence rises with subject exposure. A dark UI in a dark room hands
+  the tracker an underlit subject. See `DESIGN.md` section 1.
+* **`base.css`** — reset, the ambient field, focus, glass primitives, buttons,
+  and the Digits primitive. Consumes tokens, defines none.
+* **`telemetry.css`** — angle HUD, cadence pacer, form alert, rep pips.
+* **`rehab.css`** — everything else, including every breakpoint.
 
-**Two standing defects, owned by brand-designer:**
+**The three material rules that carry the design:**
 
-1. Migrate `telemetry.css` to `--rehab-*` and delete the alias layer. One
-   change, with a visual diff of the training surface — not opportunistically.
-2. `rehab.css` still contains raw hex and `rgba()` literals. Every one should
-   become a `var(--rehab-*)`. A hardcoded colour in a component is a bug.
+1. **Never stack a light translucent surface on another.** Ground is solid, cards
+   are glass over it, chrome is glass over cards. Solid cards *inside* glass are
+   correct and are how spec pills, setting rows, and the pacer are built. Glass
+   inside glass is a defect: the blur has nothing true to sample.
+2. **Everything over the camera feed is dark.** Every light accent fails contrast
+   against a blown-out video frame — blue 4.23, green 3.15, orange 2.79. The dark
+   scrim at 0.72 alpha is the only tier that passes at both frame extremes.
+3. **Accents have two tiers.** Plain (`--rehab-blue`) for graphical objects only;
+   `-deep` for anything that is text or carries white text. White on plain blue
+   measures 4.23 and fails.
 
----
+**Verify with the harness, not by eye:**
+
+```bash
+npm run build && npx vite preview --port 4173 &
+node tools/audit.mjs
+```
+
+It walks every surface in a live browser and reports contrast **against the real
+composite backdrop**, tap targets under 44px, and nested-glass violations. Static
+palette maths is not sufficient — it passed `--rehab-orange-deep` at 4.50 on
+white, and the live audit then measured it at 3.93 on its own wash over glass.
+
+`node tools/shoot.mjs <label>` captures every surface at three viewports with a
+fake camera device.
 
 ## 6. Deployment
 

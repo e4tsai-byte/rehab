@@ -8,11 +8,26 @@ interface CadencePacerProps {
   concentricElapsed: number
   eccentricElapsed: number
   paceStatus?: PaceStatus
-  currentAngle?: number
-  expectedAngle?: number
   targetDuration?: number
+  restTotal?: number
 }
 
+const RING_R = 74
+const RING_C = 2 * Math.PI * RING_R
+
+/**
+ * The telemetry panel's single numeral.
+ *
+ * THE ONE-NUMBER RULE: exactly one value is at hero scale here at any moment,
+ * chosen by phase — cadence seconds while moving, hold countdown while holding,
+ * rest countdown while resting. The angle is the camera region's number and is
+ * never duplicated here.
+ *
+ * The pace verdict is four characters at most. It replaced strings like
+ * 「⚠️ 速度過快（請放慢）」 — nine characters, unreadable mid-rep by someone
+ * holding their arm up two metres from the screen. Each state also carries its
+ * own glyph, because colour must never be the only thing distinguishing them.
+ */
 export function CadencePacer({
   phase,
   holdRemaining,
@@ -21,124 +36,117 @@ export function CadencePacer({
   eccentricElapsed,
   paceStatus = 'IDLE',
   targetDuration = 5.0,
+  restTotal = 3.0,
 }: CadencePacerProps) {
-  // 1. Post-Rep 3-Second Rest Countdown
+  // Rest between reps.
   if (phase === 'RESTING' && restRemaining > 0) {
-    const restTotal = 3.0
     const progress = Math.max(0, Math.min(1, (restTotal - restRemaining) / restTotal))
     return (
-      <div className="pacer pacer--rest" style={{ background: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-        <div className="pacer__hold-ring">
-          <svg viewBox="0 0 100 100" className="pacer__svg">
-            <circle cx="50" cy="50" r="42" className="pacer__ring-bg" />
+      <div className="pacer pacer--rest">
+        <div className="pacer__ring">
+          <svg viewBox="0 0 168 168" className="pacer__ring-svg" aria-hidden="true">
+            <circle cx="84" cy="84" r={RING_R} className="pacer__ring-bg" />
             <circle
-              cx="50"
-              cy="50"
-              r="42"
+              cx="84"
+              cy="84"
+              r={RING_R}
               className="pacer__ring-fill"
-              style={{
-                stroke: '#f59e0b',
-                strokeDasharray: 264,
-                strokeDashoffset: 264 * (1 - progress),
-              }}
+              strokeDasharray={RING_C}
+              strokeDashoffset={RING_C * (1 - progress)}
             />
           </svg>
-          <div className="pacer__hold-text">
-            <span className="pacer__hold-num" style={{ color: '#fbbf24' }}>
+          <div className="pacer__ring-center">
+            <span className="pacer__hero">
               <Digits value={restRemaining.toFixed(1)} />
+              <span className="pacer__hero-unit">秒</span>
             </span>
-            <span className="pacer__hold-unit">秒</span>
           </div>
         </div>
-        <p className="pacer__label" style={{ color: '#fbbf24' }}>☕ 次間休息放鬆</p>
+        <p className="pacer__caption">次間休息</p>
       </div>
     )
   }
 
-  // 2. Idle Ready
+  // Idle, before the first rep of a set.
   if (phase === 'RESTING') {
     return (
-      <div className="pacer pacer--idle">
-        <p className="pacer__hint">準備完成後，將右手臂以 5 秒平緩向前平舉</p>
+      <div className="pacer">
+        <p className="pacer__idle">
+          準備完成後，將右手臂以 5 秒平緩向前平舉
+        </p>
       </div>
     )
   }
 
-  // 3. 5-Second Isometric Hold Ring
+  // Isometric hold.
   if (phase === 'HOLDING') {
     const progress = Math.max(0, Math.min(1, (targetDuration - holdRemaining) / targetDuration))
     return (
       <div className="pacer pacer--hold">
-        <div className="pacer__hold-ring">
-          <svg viewBox="0 0 100 100" className="pacer__svg">
-            <circle cx="50" cy="50" r="42" className="pacer__ring-bg" />
+        <div className="pacer__ring">
+          <svg viewBox="0 0 168 168" className="pacer__ring-svg" aria-hidden="true">
+            <circle cx="84" cy="84" r={RING_R} className="pacer__ring-bg" />
             <circle
-              cx="50"
-              cy="50"
-              r="42"
+              cx="84"
+              cy="84"
+              r={RING_R}
               className="pacer__ring-fill"
-              style={{
-                strokeDasharray: 264,
-                strokeDashoffset: 264 * (1 - progress),
-              }}
+              strokeDasharray={RING_C}
+              strokeDashoffset={RING_C * (1 - progress)}
             />
           </svg>
-          <div className="pacer__hold-text">
-            <span className="pacer__hold-num">
+          <div className="pacer__ring-center">
+            <span className="pacer__hero">
               <Digits value={holdRemaining.toFixed(1)} />
+              <span className="pacer__hero-unit">秒</span>
             </span>
-            <span className="pacer__hold-unit">秒</span>
           </div>
         </div>
-        <p className="pacer__label">維持水平 90° 停頓</p>
+        <p className="pacer__caption">維持水平停頓</p>
       </div>
     )
   }
 
-  // 4. Moving Ascent / Descent with Real-Time Pacing Guidance
+  // Moving: concentric or eccentric.
   const isAscent = phase === 'ASCENDING'
   const elapsed = isAscent ? concentricElapsed : eccentricElapsed
   const progressPct = Math.min(100, (elapsed / targetDuration) * 100)
 
-  return (
-    <div className="pacer pacer--active">
-      <div className="pacer__header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="pacer__phase-name">
-            {isAscent ? '向上平舉 (5 秒節奏)' : '控制下放 (5 秒節奏)'}
-          </span>
-          
-          {/* Live Pace Feedback Badge */}
-          {paceStatus === 'TOO_FAST' && (
-            <span style={{ fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', border: '1px solid #ef4444' }}>
-              ⚠️ 速度過快（請放慢）
-            </span>
-          )}
-          {paceStatus === 'TOO_SLOW' && (
-            <span style={{ fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', border: '1px solid #f59e0b' }}>
-              ⚠️ 速度過慢（稍微加快）
-            </span>
-          )}
-          {paceStatus === 'ON_TRACK' && (
-            <span style={{ fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid #10b981' }}>
-              ✨ 節奏完美
-            </span>
-          )}
-        </div>
+  const verdict =
+    paceStatus === 'TOO_FAST'
+      ? { cls: 'fast', glyph: '↓', text: '慢一點' }
+      : paceStatus === 'TOO_SLOW'
+        ? { cls: 'slow', glyph: '↑', text: '快一點' }
+        : paceStatus === 'ON_TRACK'
+          ? { cls: 'ontrack', glyph: '✓', text: '很好' }
+          : null
 
-        <span className="pacer__elapsed">
-          <Digits value={elapsed.toFixed(1)} /> / {targetDuration.toFixed(1)} 秒
+  return (
+    <div className="pacer">
+      <span className="pacer__hero">
+        <Digits value={elapsed.toFixed(1)} />
+        <span className="pacer__hero-unit">秒</span>
+      </span>
+
+      <p className="pacer__caption">
+        {isAscent ? '向上平舉' : '控制下放'} · 目標 {targetDuration.toFixed(1)} 秒
+      </p>
+
+      {verdict ? (
+        <span className={`pacer__verdict pacer__verdict--${verdict.cls}`} aria-live="polite">
+          <span aria-hidden="true">{verdict.glyph}</span>
+          {verdict.text}
         </span>
-      </div>
+      ) : null}
 
       <div className="pacer__bar">
         <div
           className={`pacer__bar-fill ${
             paceStatus === 'TOO_FAST'
               ? 'pacer__bar-fill--fast'
-              : isAscent
-              ? 'pacer__bar-fill--up'
-              : 'pacer__bar-fill--down'
+              : paceStatus === 'TOO_SLOW'
+                ? 'pacer__bar-fill--slow'
+                : ''
           }`}
           style={{ width: `${progressPct}%` }}
         />

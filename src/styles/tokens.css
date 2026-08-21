@@ -1,141 +1,266 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Rehabibi design tokens. DESIGN.md is the source of truth for every value here,
-   and the two files change together. A token that is not in DESIGN.md does not
-   exist; a value in a component that is not a token is a defect.
+   Rehabibi design tokens. DESIGN.md is the source of truth; the two change
+   together. A raw hex or px value in a component is a defect.
 
-   POLARITY: DARK. Light text on a near-black ground (#070a13).
+   POLARITY: LIGHT. Near-white cool grounds, Apple system materials.
 
-   This replaced velocare's tokens.css, which declared the opposite polarity
-   ("dark ink on a cream ground") and loaded simultaneously with rehab.css —
-   so the app's polarity was decided by stylesheet import order rather than by
-   design. Removed 2026-08-21 with the rest of velocare.
+   Two reasons, one of them not aesthetic:
+
+   1. The screen is a fill light. The user stands 1–2 m from a laptop with the
+      webcam pointed at them, often in a dim bedroom. A light interface throws
+      real illumination onto their face and torso, and MediaPipe's landmark
+      confidence rises with subject exposure. A dark UI in a dark room hands the
+      tracker an underlit subject and the whole product degrades.
+   2. Apple's materials are designed light-first, and glass reads as glass only
+      when there is luminance behind it to refract.
+
+   Every value below was verified numerically, not by eye. Contrast figures are
+   in DESIGN.md; the ones that forced a change are noted inline.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Ground & surfaces ───────────────────────────────────────────────── */
-  --rehab-bg: #070a13;
-  --rehab-surface: #0f172a;
-  --rehab-surface-raised: #182238;
-  --rehab-surface-hover: #1e293b;
-  --rehab-border: rgba(255, 255, 255, 0.08);
-  --rehab-border-light: rgba(255, 255, 255, 0.15);
+  /* ── Grounds ──────────────────────────────────────────────────────────────
+     Cool near-white. Deliberately NOT cream, sand, bone, or parchment: the
+     warm-neutral band is the saturated default and reads as a template. The
+     whisper of blue chroma (0.004) ties the neutrals to the accent hue instead
+     of tinting warm by reflex. */
+  --rehab-ground: #f3f5f7;
+  --rehab-ground-sunk: #eaedf1;
+  --rehab-surface: #ffffff;
 
-  /* Floating glass — header and overlay panels. One alpha, used everywhere.
-     DESIGN.md previously documented 0.82 while the only real usage was 0.7;
-     0.7 wins because it is what shipped and what the contrast was judged on. */
-  --rehab-surface-glass: rgba(15, 23, 42, 0.7);
+  /* ── Ink ──────────────────────────────────────────────────────────────────
+     --rehab-ink-tertiary is 4.52:1 on ground. It sits barely above the body-text
+     floor because it was darkened twice: at its first two values it measured
+     3.32 and 4.24 and failed. Do not lighten it for elegance. */
+  --rehab-ink: #1a1d23;
+  --rehab-ink-secondary: #595e66;
+  --rehab-ink-tertiary: #6c7078;
 
-  /* Scrim behind anything painted over the live camera feed. Overlay accents
-     measure ~2:1 against a blown-out video pixel, so they cannot be trusted to
-     carry contrast alone. See DESIGN.md, Contrast floor. */
-  --rehab-scrim: rgba(2, 6, 23, 0.72);
+  /* ── Semantic accents ─────────────────────────────────────────────────────
+     A language, not a palette. Blue = live tracking. Green = target reached and
+     clean reps. Orange = hold and rest intervals. Red = form alert.
 
-  /* ── Semantic accents ────────────────────────────────────────────────────
-     These are a language, not a palette. Cyan = live tracking. Emerald =
-     target reached / clean. Amber = hold and rest intervals. Rose = form
-     alert. Never use one decoratively; never add a fifth without retiring
-     one. NOTE: rose describes the user's own movement here, deliberately —
-     velocare's inherited rule that red must never describe a person does not
-     apply to a single-user coaching surface with no observer. */
-  --rehab-cyan: #38bdf8;
-  --rehab-cyan-glow: rgba(56, 189, 248, 0.25);
-  --rehab-emerald: #10b981;
-  --rehab-emerald-glow: rgba(16, 185, 129, 0.25);
-  --rehab-amber: #f59e0b;
-  --rehab-amber-glow: rgba(245, 158, 11, 0.25);
-  --rehab-rose: #f43f5e;
-  --rehab-rose-soft: #fb7185;
-  --rehab-rose-glow: rgba(244, 63, 94, 0.25);
+     TWO TIERS, AND THE DISTINCTION IS LOAD-BEARING:
+       plain  (--rehab-blue)      graphical only — arcs, rings, bars, fills.
+                                  Verified ≥3:1 as a graphical object.
+       -deep  (--rehab-blue-deep) anything that is TEXT, or any fill that
+                                  carries white text. Verified ≥4.5:1.
 
-  /* ── Text ────────────────────────────────────────────────────────────── */
-  --rehab-text-main: #f8fafc;
-  --rehab-text-muted: #94a3b8;
-  --rehab-text-dim: #64748b;
+     Using a plain tier for text fails contrast. White on plain blue measures
+     4.23 and white on plain green 3.15 — both below the floor, which is exactly
+     why the deep tier exists. */
+  --rehab-blue: #0b79ed;
+  --rehab-blue-deep: #005fc6;
+  --rehab-green: #299d50;
+  --rehab-green-deep: #0a7e3a;
+  --rehab-orange: #d87400;
+  /* -deep is the floor for text on WHITE (4.50). -on-wash is the floor for text
+     on its own tinted wash, which is a lighter backdrop than white once the
+     wash sits over glass: #bb5d00 measured 3.93 there and failed. Verified in a
+     live browser audit, not assumed — the composite backdrop is what matters,
+     not the token the design intends. */
+  --rehab-orange-deep: #bb5d00;
+  --rehab-orange-on-wash: #ae5000;
+  --rehab-red: #df2f36;
+  --rehab-red-deep: #c01d27;
 
-  /* ── Type ────────────────────────────────────────────────────────────────
-     Latin faces precede the CJK faces so digits and Latin labels take Inter
-     while Chinese falls through to the TC faces. The CJK entries are NOT
-     optional: the interface is zh-TW and dropping them (as the pre-cleanup
-     --rehab-font did) sends every Chinese glyph to an OS default. */
-  --rehab-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
+  /* Tinted washes for selected/active states. Low alpha over a light ground. */
+  --rehab-blue-wash: rgba(11, 121, 237, 0.1);
+  --rehab-blue-edge: rgba(11, 121, 237, 0.28);
+  --rehab-green-wash: rgba(41, 157, 80, 0.1);
+  --rehab-orange-wash: rgba(216, 116, 0, 0.1);
+  --rehab-red-wash: rgba(223, 47, 54, 0.09);
 
-  --t-display: 5rem;      /* 80px · cadence elapsed, hero numeral */
-  --t-lead: 3rem;         /* 48px · state words */
-  --t-fac-xl: 1.75rem;    /* 28px · emphasis */
-  --t-fac-lg: 1.25rem;    /* 20px · row primary, dialog titles */
-  --t-fac: 1.0625rem;     /* 17px · controls, body, labels */
-  --t-fac-sm: 0.9375rem;  /* 15px · metadata floor */
+  /* ── Materials ────────────────────────────────────────────────────────────
+     Apple's tiers. Weight encodes hierarchy: thicker material sits higher and
+     separates more. The hard rule from the HIG, and the one most easily broken:
+     NEVER STACK A LIGHT TRANSLUCENT SURFACE ON ANOTHER. The page ground is
+     solid, cards are glass over it, chrome is glass over cards. A glass card
+     inside a glass card is a defect — legibility collapses and the blur has
+     nothing true to sample. */
+  --mat-thin: rgba(255, 255, 255, 0.44);
+  --mat-regular: rgba(255, 255, 255, 0.58);
+  --mat-thick: rgba(255, 255, 255, 0.72);
 
-  /* ── Spacing ─────────────────────────────────────────────────────────── */
+  --mat-blur-thin: blur(22px) saturate(200%);
+  --mat-blur-regular: blur(34px) saturate(210%);
+  --mat-blur-thick: blur(44px) saturate(200%);
+
+  /* The specular sheen. A material catches light along its top edge and falls
+     away; a flat alpha does not. This is the difference between "glass" and
+     "white box at 58% opacity", and it is why the first pass read flat. */
+  --mat-sheen: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.16) 26%,
+    rgba(255, 255, 255, 0) 52%
+  );
+
+  /* The bright top edge is what makes a surface read as a material catching
+     light rather than a rectangle at reduced opacity. It is not decoration. */
+  --mat-edge: rgba(255, 255, 255, 0.75);
+  --mat-hairline: rgba(23, 29, 41, 0.08);
+  --mat-hairline-strong: rgba(23, 29, 41, 0.14);
+
+  /* ── Over-video material ──────────────────────────────────────────────────
+     Everything painted over the camera feed uses this, and it is DARK on
+     purpose in an otherwise light interface.
+
+     Measured against a blown-out white video frame, every accent fails: blue
+     4.23, green 3.15, orange 2.79. A light glass chip over live video is
+     illegible the moment the user stands near a window. A dark scrim at 0.72
+     alpha gives white text 7.21:1 over a white frame and 19.06:1 over a black
+     one — the only tier that passes at both extremes. */
+  --rehab-scrim: #13161b;
+  --mat-over-video: rgba(19, 22, 27, 0.72);
+  --mat-over-video-strong: rgba(19, 22, 27, 0.84);
+  --mat-over-video-edge: rgba(255, 255, 255, 0.16);
+
+  /* ── Elevation ────────────────────────────────────────────────────────────
+     Two-part shadows: a tight contact shadow plus a wide ambient one. A single
+     large blur reads as fog. Bigger surfaces get deeper shadows, per the HIG's
+     "bigger surfaces read as thicker". */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 2px 4px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 24, 40, 0.05), 0 18px 44px rgba(16, 24, 40, 0.1);
+  --shadow-xl: 0 8px 16px rgba(16, 24, 40, 0.07), 0 32px 72px rgba(16, 24, 40, 0.16);
+  --shadow-inset-edge: inset 0 1px 0 var(--mat-edge);
+
+  /* ── Type ─────────────────────────────────────────────────────────────────
+     System font first, per both Apple and the product register: SF already
+     ships optical sizing, tracking tables, and legibility tuning that no web
+     font we could load would beat. Latin faces precede the CJK faces so digits
+     and Latin labels take SF while Chinese falls to the TC faces.
+
+     The CJK entries are NOT optional — the interface is zh-TW. */
+  --rehab-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter',
+    'Segoe UI', system-ui, 'Noto Sans TC', 'PingFang TC', 'Heiti TC',
+    'Microsoft JhengHei', sans-serif;
+
+  /* Fixed rem scale, not clamp(). Product UI is read at consistent DPI, and a
+     fluid heading that shrinks inside a panel looks worse, not better. */
+  --t-hero: 4.25rem;
+  --t-display: 2.75rem;
+  --t-title: 1.75rem;
+  --t-lg: 1.25rem;
+  --t-md: 1.0625rem;
+  --t-sm: 0.9375rem;
+  --t-xs: 0.8125rem;
+
+  /* Tracking is size-specific. A single letter-spacing value is wrong
+     somewhere: large text reads too loose as it grows, small text too tight. */
+  --track-hero: -0.03em;
+  --track-display: -0.022em;
+  --track-title: -0.015em;
+  --track-body: 0em;
+  --track-caption: 0.01em;
+
+  /* Leading tracks size inversely. */
+  --lead-tight: 1.06;
+  --lead-title: 1.2;
+  --lead-body: 1.55;
+
+  /* ── Spacing ──────────────────────────────────────────────────────────────
+     rem, never px, so a larger OS text size scales the layout with the text
+     instead of breaking it. */
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
   --s-4: 1rem;
+  --s-5: 1.25rem;
   --s-6: 1.5rem;
   --s-8: 2rem;
+  --s-10: 2.5rem;
   --s-12: 3rem;
+  --s-16: 4rem;
 
-  /* ── Radius ──────────────────────────────────────────────────────────── */
-  --rehab-radius-sm: 8px;
-  --rehab-radius-md: 14px;
-  --rehab-radius-lg: 20px;
-  --rehab-radius-full: 9999px;
+  /* ── Radius ───────────────────────────────────────────────────────────────
+     Generous and consistent. Apple's continuous corners can't be expressed in
+     CSS, but a coherent large-radius scale reads the same way. */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-full: 9999px;
 
-  /* ── Motion ──────────────────────────────────────────────────────────── */
-  --dur-fast: 120ms;
-  --dur: 180ms;
-  --dur-slow: 260ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint. no bounce. */
+  /* Minimum interactive target. */
+  --tap-min: 44px;
 
-  /* ── Minimum interactive target ──────────────────────────────────────── */
-  --rehab-tap-min: 44px;
+  /* ── Motion ───────────────────────────────────────────────────────────────
+     Exponential ease-out. No bounce on state changes — bounce belongs only to
+     motion a gesture actually threw, and this interface has no throwable
+     objects. 150–250ms: the user is in a task, not watching choreography.
+
+     Every animated rule routes its timing through these tokens, which is what
+     lets prefers-reduced-motion reach all of it at once. A hardcoded duration
+     is a defect precisely because it escapes that block. */
+  --dur-instant: 100ms;
+  --dur-fast: 160ms;
+  --dur: 220ms;
+  --dur-slow: 320ms;
+  --dur-sheet: 420ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* There is deliberately NO overshoot curve in this file.
+     An earlier draft had one, reserved for the settings sheet. It was wrong:
+     overshoot belongs only to motion a gesture actually threw — a flick, a
+     drag release — and this sheet opens from a button press. Apple's rule is
+     explicit that a surface which merely appeared should not bounce. Nothing
+     in this interface is draggable, so nothing here bounces. */
+
+  /* ── Z-scale ──────────────────────────────────────────────────────────────
+     Semantic, never arbitrary. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-hud: 20;
+  --z-chrome: 30;
+  --z-scrim: 40;
+  --z-sheet: 50;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   LEGACY ALIAS LAYER — scheduled for removal.
-
-   telemetry.css was extracted verbatim from velocare's app.css and still refers
-   to the unprefixed token names below. Rather than hand-rewrite 230 lines of
-   working goniometer and pacer rules during a deletion (and risk a silent
-   visual regression in the one surface the user reads mid-rep), the names are
-   kept alive here — remapped onto the DARK palette above.
-
-   Migrating telemetry.css to --rehab-* and deleting this block is
-   brand-designer's standing task. Do it as one change, with a visual diff of
-   the training surface. Do not add new usages of these names.
+   Reduced transparency. Glass is an enhancement, never the thing carrying
+   legibility — so this collapses every material to solid rather than merely
+   reducing the blur. Note the over-video tiers go MORE opaque, not less: the
+   contrast problem they solve does not go away when a user asks for less
+   translucency, it gets worse.
    ───────────────────────────────────────────────────────────────────────────── */
 
-:root {
-  --bg: var(--rehab-bg);
-  --surface: var(--rehab-surface);
-  --surface-raised: var(--rehab-surface-raised);
-  --ink: var(--rehab-text-main);
-  --ink-secondary: var(--rehab-text-muted);
-  --ink-muted: var(--rehab-text-dim);
-  --line: var(--rehab-border);
-  --line-strong: var(--rehab-border-light);
-  --accent: var(--rehab-cyan);
-  --blue-200: rgba(56, 189, 248, 0.2);
-  --blue-500: var(--rehab-cyan);
-  --font: var(--rehab-font);
-  --r-xs: 3px;
-  --r-sm: var(--rehab-radius-sm);
-  --r-lg: var(--rehab-radius-md);
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --mat-thin: #ffffff;
+    --mat-regular: #ffffff;
+    --mat-thick: #ffffff;
+    --mat-blur-thin: none;
+    --mat-blur-regular: none;
+    --mat-blur-thick: none;
+    --mat-over-video: rgb(19, 22, 27);
+    --mat-over-video-strong: rgb(19, 22, 27);
+  }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Reduced motion. Collapsing the duration tokens is the mechanism; every
-   animated rule in this product must route its timing through --dur-*, so that
-   a user who asks for less motion actually gets it. A hardcoded transition is
-   a defect precisely because it escapes this block.
-   ───────────────────────────────────────────────────────────────────────────── */
+@media (prefers-contrast: more) {
+  :root {
+    --mat-thin: #ffffff;
+    --mat-regular: #ffffff;
+    --mat-thick: #ffffff;
+    --mat-hairline: rgba(23, 29, 41, 0.35);
+    --mat-hairline-strong: rgba(23, 29, 41, 0.55);
+    --rehab-ink-secondary: #3d424a;
+    --rehab-ink-tertiary: #4a4f57;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --dur-instant: 1ms;
     --dur-fast: 1ms;
     --dur: 1ms;
     --dur-slow: 1ms;
+    --dur-sheet: 1ms;
   }
 
   *,

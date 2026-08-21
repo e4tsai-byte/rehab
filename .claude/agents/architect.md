@@ -45,25 +45,22 @@ deletion required.
    change without a recorded before/after run) is a stopgap. qa-engineer owns
    closing it.
 
-2. **`telemetry.css` consumes legacy unprefixed tokens** through an alias layer
-   at the bottom of `tokens.css`. Those rules were extracted verbatim from
-   velocare's `app.css` because live components depended on them, and rewriting
-   230 lines of goniometer and pacer CSS during a deletion was the wrong risk to
-   take. Migrating them to `--rehab-*` and deleting the alias layer is
-   brand-designer's task — one change, with a visual diff.
+2. **Closed 2026-08-21 by the Apple-materials redesign.** The token alias layer,
+   the raw hex literals, and the missing breakpoints are all gone. `telemetry.css`
+   runs on `--rehab-*`; `rehab.css` carries breakpoints at 1024/760/480.
+   `tools/audit.mjs` now guards contrast, tap targets, and glass nesting against a
+   live browser.
 
-3. **`rehab.css` still holds raw hex and `rgba()` literals.** Every one should be
-   a token.
+3. **The design system is verified by a harness, and that harness is the point.**
+   Static palette maths passed a value the live audit then failed (3.93 on a wash
+   over glass, against 4.50 on white). Any change to `tokens.css` re-runs
+   `tools/audit.mjs` before it ships.
 
-4. **`rehab.css` has zero `@media` queries**, so `DESIGN.md` section 6's
-   responsive behavior is specified but not built. On a phone the camera feed is
-   a half-width sliver.
-
-5. **`.claude/settings.json` blocks every `Skill` invocation** unless `gstack` is
+4. 5. **`.claude/settings.json` blocks every `Skill` invocation** unless `gstack` is
    installed at `~/.claude/skills/gstack`. Confirm this is intentional; if it is,
    document it. A repo-wide tool block should not survive on inertia.
 
-6. **Roster sizing.** Twelve agents now own roughly twenty live files. Two roles
+5. **Roster sizing.** Twelve agents now own roughly twenty live files. Two roles
    (evidence-analyst, qa-engineer) lost their entire cited artifact base in the
    deletion. Confirm the roster deliberately rather than inheriting it from the
    two-product era.

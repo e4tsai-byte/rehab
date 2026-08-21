@@ -5,10 +5,14 @@ import { ClientShoulderFlexionTracker, type Landmark3D } from '../pose/shoulderK
 
 export function usePoseTracker({
   isSeated = false,
+  holdDurationS = 5.0,
+  targetReps = 10,
   onRep,
   onPhaseChange,
 }: {
   isSeated?: boolean
+  holdDurationS?: number
+  targetReps?: number
   onRep?: (rep: RehabRepRecord) => void
   onPhaseChange?: (oldPhase: string, newPhase: string) => void
 }) {
@@ -35,7 +39,9 @@ export function usePoseTracker({
   const animIdRef = useRef<number | null>(null)
   useEffect(() => {
     trackerRef.current.setSeatedMode(isSeated)
-  }, [isSeated])
+    trackerRef.current.setHoldDuration(holdDurationS)
+    trackerRef.current.setTargetReps(targetReps)
+  }, [isSeated, holdDurationS, targetReps])
   const prevPhaseRef = useRef<string>('RESTING')
 
   useEffect(() => {
@@ -173,8 +179,8 @@ function drawSkeleton(
   ]
 
   ctx.save()
-  ctx.translate(w, 0)
-  ctx.scale(-1, 1)
+  // NOTE: The <canvas> element is already mirrored via CSS (transform: scaleX(-1))
+  // along with the <video>. Therefore, we do NOT flip the canvas context again here.
 
   for (const [i, j] of connections) {
     const p1 = landmarks[i]

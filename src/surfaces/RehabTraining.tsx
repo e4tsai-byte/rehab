@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AngleGauge } from '../components/AngleGauge'
 import { CadencePacer } from '../components/CadencePacer'
-import { Digits } from '../components/Digits'
 import { FormAlertBanner } from '../components/FormAlertBanner'
 import { RepPips } from '../components/RepPips'
 import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
-import type { CompletedSession, RehabRepRecord, UserSettings } from '../domain/rehabTypes'
+import type { CompletedSession, RehabPhase, RehabRepRecord, UserSettings } from '../domain/rehabTypes'
 import { useChime } from '../hooks/useChime'
 import { usePoseTracker } from '../hooks/usePoseTracker'
 
@@ -14,6 +13,20 @@ interface RehabTrainingProps {
   settings: UserSettings
   onFinishSession: (session: CompletedSession) => void
   onCancel: () => void
+}
+
+const PHASE_LABEL: Record<RehabPhase, string> = {
+  RESTING: '準備開始',
+  ASCENDING: '向上平舉',
+  HOLDING: '維持停頓',
+  DESCENDING: '控制下放',
+}
+
+const PHASE_CLASS: Record<RehabPhase, string> = {
+  RESTING: 'resting',
+  ASCENDING: 'ascending',
+  HOLDING: 'holding',
+  DESCENDING: 'descending',
 }
 
 export function RehabTraining({
@@ -32,21 +45,22 @@ export function RehabTraining({
 
   const { isLoaded, liveState, videoRef, canvasRef } = usePoseTracker({
     isSeated,
+    // Both of these are optional on the hook, so omitting them is a silent
+    // fallback to 5.0s / 10 reps rather than a type error — the user's settings
+    // would simply never reach the tracker.
+    holdDurationS: settings.holdDurationS,
+    targetReps: settings.targetReps,
     onRep: (rep) => {
       if (settings.soundEnabled) chime()
       setCompletedReps((prev) => [...prev, rep])
     },
     onPhaseChange: (oldPhase, newPhase) => {
       if (!settings.soundEnabled) return
-      if (newPhase === 'HOLDING') {
-        chime() // Reached target zone
-      } else if (newPhase === 'DESCENDING' && oldPhase === 'HOLDING') {
-        chime() // 5s hold completed
-      }
+      if (newPhase === 'HOLDING') chime()
+      else if (newPhase === 'DESCENDING' && oldPhase === 'HOLDING') chime()
     },
   })
 
-  // Start browser camera stream
   useEffect(() => {
     let stream: MediaStream | null = null
 
@@ -60,8 +74,7 @@ export function RehabTraining({
           videoRef.current.srcObject = stream
           await videoRef.current.play().catch(() => {})
         }
-      } catch (err) {
-        console.error('Camera access error:', err)
+      } catch {
         setCameraError('請在瀏覽器網址列允許相機存取權限')
       }
     }
@@ -69,35 +82,20 @@ export function RehabTraining({
     void startCamera()
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
-      }
+      if (stream) stream.getTracks().forEach((track) => track.stop())
     }
   }, [videoRef])
 
-  // Auto-finish set when target reps reached
-  useEffect(() => {
-    if (completedReps.length >= settings.targetReps && isStarted) {
-      handleComplete()
-    }
-  }, [completedReps.length, settings.targetReps, isStarted])
-
-  function handleStart() {
-    armAudio()
-    setIsStarted(true)
-  }
-
-  function handleComplete() {
+  const handleComplete = useCallback(() => {
     const cleanCount = completedReps.filter((r) => r.isClean).length
     const qualityScore =
       completedReps.length > 0 ? Math.round((cleanCount / completedReps.length) * 100) : 100
-
     const totalHold = completedReps.reduce((acc, r) => acc + r.holdDuration, 0)
-    const avgHold = completedReps.length > 0 ? totalHold / completedReps.length : settings.holdDurationS
+    const avgHold =
+      completedReps.length > 0 ? totalHold / completedReps.length : settings.holdDurationS
+    const peakDeg = completedReps.reduce((max, r) => Math.max(max, r.peakElevation), 0)
 
-    const peakDeg = completedReps.reduce((max, r) => Math.max(max, r.peakElevation), 90)
-
-    const session: CompletedSession = {
+    onFinishSession({
       id: `session-${Date.now()}`,
       exerciseId: exercise.id,
       exerciseNameZh: exercise.nameZh,
@@ -109,107 +107,82 @@ export function RehabTraining({
       averageHoldDurationS: Math.round(avgHold * 10) / 10,
       peakElevationDeg: peakDeg,
       reps: completedReps,
-    }
+    })
+  }, [completedReps, exercise, settings, onFinishSession])
 
-    onFinishSession(session)
+  useEffect(() => {
+    if (isStarted && completedReps.length >= settings.targetReps) handleComplete()
+  }, [completedReps.length, settings.targetReps, isStarted, handleComplete])
+
+  function handleStart() {
+    armAudio()
+    setIsStarted(true)
   }
+
+  const phaseLabel = PHASE_LABEL[liveState.phase]
 
   return (
     <div className="training-surface">
       <div className="training-body">
-        {/* Left Half: 60 FPS Mirrored Camera + Glowing Turquoise Skeleton */}
         <div className="training-camera">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="training-camera__video"
-          />
-
+          <video ref={videoRef} autoPlay playsInline muted className="training-camera__video" />
           <canvas ref={canvasRef} className="training-camera__canvas" />
 
-          {/* Mode Badge (Standing vs Seated) */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '16px',
-              left: '16px',
-              background: 'rgba(15, 23, 42, 0.85)',
-              color: '#38bdf8',
-              padding: '6px 14px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-            }}
-          >
-            <span>{isSeated ? '🪑 坐姿桌前模式' : '🧍 站姿全身模式'}</span>
-            {!isLoaded && <span style={{ color: '#94a3b8', fontWeight: 400 }}>• AI 載入中...</span>}
-          </div>
+          <span className="vchip vchip--mode">
+            <span aria-hidden="true">{isSeated ? '🪑' : '🧍'}</span>
+            <span>{isSeated ? '坐姿桌前' : '站姿全身'}</span>
+            {!isLoaded && <span className="vchip__muted">· 載入中</span>}
+          </span>
+
+          {/* The angle readout sits on the feed, where the user's eyes already
+              are. Only safe because this surface is dark — see tokens.css. */}
+          {isStarted && !cameraError && (
+            <AngleGauge
+              currentAngle={liveState.elevation}
+              isTargetZone={liveState.isTargetZone}
+              phaseLabel={phaseLabel}
+              hint={liveState.isTargetZone ? '很好，停在這裡' : undefined}
+            />
+          )}
+
+          {isStarted && <FormAlertBanner flags={liveState.flags} />}
 
           {cameraError && (
-            <div
-              style={{
-                position: 'absolute',
-                color: '#fff',
-                textAlign: 'center',
-                padding: '24px',
-                background: 'rgba(0,0,0,0.85)',
-                borderRadius: '12px',
-                border: '1px solid #ef4444',
-              }}
-            >
-              <p style={{ fontSize: '18px', fontWeight: 600 }}>⚠️ 相機權限未開啟</p>
-              <p style={{ marginTop: '8px', color: '#94a3b8' }}>{cameraError}</p>
+            <div className="camera-error" role="alert">
+              <span className="camera-error__title">相機權限未開啟</span>
+              <span className="camera-error__body">{cameraError}</span>
             </div>
           )}
         </div>
 
-        {/* Right Half: Live Coaching Goniometer & Pacer */}
         <div className="training-panel">
           {!isStarted ? (
-            <div style={{ textAlign: 'center', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700, textTransform: 'uppercase' }}>
-                {exercise.category}
+            <div className="training-intro">
+              <p className="training-intro__tag">{exercise.category}</p>
+              <h2 className="training-intro__name">{exercise.nameZh}</h2>
+              <p className="training-intro__body">{exercise.framingHintZh}</p>
+
+              <div className="training-intro__steps">
+                <span className="training-step">
+                  <span className="training-step__n">1</span>
+                  <span>以 {settings.concentricCadenceS} 秒緩慢平舉至 {settings.targetAngleDeg}°</span>
+                </span>
+                <span className="training-step">
+                  <span className="training-step__n">2</span>
+                  <span>維持停頓 {settings.holdDurationS} 秒</span>
+                </span>
+                <span className="training-step">
+                  <span className="training-step__n">3</span>
+                  <span>以 {settings.eccentricCadenceS} 秒緩慢控制下放</span>
+                </span>
               </div>
-              <h2 style={{ fontSize: '28px', color: '#fff', margin: 0 }}>{exercise.nameZh}</h2>
-              <p style={{ fontSize: '15px', color: 'var(--rehab-text-muted)', lineHeight: '1.6', margin: 0 }}>
-                {exercise.framingHintZh}<br />
-                平舉右手至 90° $	o$ 停頓 {settings.holdDurationS} 秒 $	o$ 緩慢下放。
-              </p>
-              <button
-                onClick={handleStart}
-                style={{
-                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '16px 32px',
-                  borderRadius: '12px',
-                  fontSize: '18px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 24px var(--rehab-cyan-glow)',
-                  marginTop: '16px',
-                }}
-              >
-                開始第一組 ({settings.targetReps} 次)
+
+              <button className="btn btn--primary btn--lg" onClick={handleStart}>
+                開始這一組 · {settings.targetReps} 次
               </button>
             </div>
           ) : (
-            <div style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {/* Angle Goniometer */}
-              <AngleGauge
-                currentAngle={liveState.elevation}
-                targetAngle={settings.targetAngleDeg}
-                isTargetZone={liveState.isTargetZone}
-              />
-
-              {/* 5s - 5s - 5s Cadence & Hold Pacer with 3s Post-Rep Rest */}
+            <>
               <CadencePacer
                 phase={liveState.phase}
                 holdRemaining={liveState.holdRemaining}
@@ -217,79 +190,42 @@ export function RehabTraining({
                 concentricElapsed={liveState.concentricElapsed}
                 eccentricElapsed={liveState.eccentricElapsed}
                 paceStatus={liveState.paceStatus}
-                currentAngle={liveState.elevation}
-                expectedAngle={liveState.expectedAngle}
                 targetDuration={settings.holdDurationS}
               />
 
-              {/* Real-time Compensation Alerts */}
-              <FormAlertBanner flags={liveState.flags} />
-            </div>
+              <div className="training-progress">
+                <div className="training-progress__head">
+                  <span className="training-progress__count">
+                    {completedReps.length}
+                    <span className="training-progress__of"> / {settings.targetReps} 次</span>
+                  </span>
+                </div>
+                <RepPips done={completedReps.length} total={settings.targetReps} />
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Persistent Bottom Action Rail */}
       <div className="training-rail">
         <div className="training-rail__state">
-          <div className="rep-counter-pill">
-            第 <Digits value={completedReps.length} /> / {settings.targetReps} 次
-          </div>
-
-          <div
-            className={`phase-pill phase-pill--${
-              liveState.phase === 'HOLDING'
-                ? 'holding'
-                : liveState.phase === 'ASCENDING'
-                ? 'ascending'
-                : liveState.phase === 'DESCENDING'
-                ? 'descending'
-                : 'resting'
-            }`}
-          >
-            {liveState.phase === 'HOLDING'
-              ? '維持水平停頓中 (90°)'
-              : liveState.phase === 'ASCENDING'
-              ? '平舉抬起中 (5秒節奏)'
-              : liveState.phase === 'DESCENDING'
-              ? '控制下放中 (5秒節奏)'
-              : liveState.restRemaining > 0
-              ? `次間休息中 (${liveState.restRemaining.toFixed(1)}s)`
-              : '準備開始'}
-          </div>
-
-          <RepPips done={completedReps.length} total={settings.targetReps} />
+          <span className={`phase-chip phase-chip--${PHASE_CLASS[liveState.phase]}`}>
+            {liveState.phase === 'RESTING' && liveState.restRemaining > 0
+              ? `次間休息 ${liveState.restRemaining.toFixed(1)}s`
+              : phaseLabel}
+          </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={onCancel}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '8px',
-              border: '1px solid var(--rehab-border)',
-              background: 'transparent',
-              color: '#94a3b8',
-              cursor: 'pointer',
-            }}
-          >
-            結束返回
+        <div className="training-rail__actions">
+          {/* Leaving mid-set keeps the reps already done. Someone who stopped
+              at rep 4 because their shoulder told them to made a correct
+              decision, and it gets recorded as a session, not as nothing. */}
+          <button className="btn btn--quiet" onClick={isStarted ? handleComplete : onCancel}>
+            {isStarted ? '結束並記錄' : '返回'}
           </button>
-
           {isStarted && (
-            <button
-              onClick={handleComplete}
-              style={{
-                padding: '10px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                background: '#10b981',
-                color: '#fff',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              結算此組
+            <button className="btn btn--confirm" onClick={handleComplete}>
+              完成這一組
             </button>
           )}
         </div>

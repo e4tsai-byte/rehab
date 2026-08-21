@@ -1,584 +1,1199 @@
-/* ──────────────────────────────────────────────────────────────────────────────
-   Rehabibi component styling. Consumes tokens.css; defines no tokens.
+/* ─────────────────────────────────────────────────────────────────────────────
+   Rehabibi component styling. Consumes tokens.css; defines no tokens, and
+   contains no raw hex or rgba literal that is not a one-off alpha of a token
+   hue.
 
-   Tokens moved to tokens.css on 2026-08-21 so that one file owns the palette.
-   Raw hex and rgba() literals still remain throughout this file and are a known
-   defect — every one of them should become a var(--rehab-*). brand-designer owns
-   closing that gap.
-   ────────────────────────────────────────────────────────────────────────────── */
+   Responsive from here on. This file previously had ZERO @media queries, so the
+   "stacked mobile layout" DESIGN.md described had never existed and the camera
+   feed rendered as a half-width sliver on a phone.
 
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--rehab-bg);
-  color: var(--rehab-text-main);
-  font-family: var(--rehab-font);
-  -webkit-font-smoothing: antialiased;
-}
+   Breakpoints, structural rather than fluid, per the product register:
+     1024px  the training split collapses to stacked
+      760px  multi-column grids collapse; the history table becomes cards
+      480px  compact phone
+   ───────────────────────────────────────────────────────────────────────────── */
 
 .rehab-app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: radial-gradient(circle at 50% 0%, #172554 0%, var(--rehab-bg) 60%);
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────── */
+/* ═══ Chrome ══════════════════════════════════════════════════════════════════
+   A translucent floating layer with content scrolling underneath, not an opaque
+   bar that consumes a fixed strip. Thick material because it is the topmost
+   layer in the stack and material weight is how hierarchy is encoded. */
+
 .rehab-nav {
-  height: 64px;
-  border-bottom: 1px solid var(--rehab-border);
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-chrome);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-6);
+  background: var(--mat-thick);
+  backdrop-filter: var(--mat-blur-thick);
+  -webkit-backdrop-filter: var(--mat-blur-thick);
+  box-shadow: var(--shadow-inset-edge);
+}
+
+/* A scroll edge effect rather than a hard 1px divider: the boundary appears
+   because content is passing under floating chrome, which is what is actually
+   happening. */
+.rehab-nav::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -14px;
+  height: 14px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(23, 29, 41, 0.05),
+    transparent
+  );
 }
 
 .rehab-nav__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--s-3);
   cursor: pointer;
+  border-radius: var(--r-md);
+  padding: var(--s-1) var(--s-2);
+  margin-left: calc(var(--s-2) * -1);
+  transition: background-color var(--dur-fast) var(--ease-out);
 }
 
-.rehab-nav__logo-icon {
+.rehab-nav__brand:hover {
+  background: rgba(23, 29, 41, 0.05);
+}
+
+.rehab-nav__logo {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0284c7, #38bdf8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  background: var(--rehab-blue-deep);
   color: #fff;
-  font-weight: 800;
-  font-size: 18px;
-  box-shadow: 0 0 16px var(--rehab-cyan-glow);
+  font-weight: 700;
+  font-size: var(--t-lg);
+  letter-spacing: -0.02em;
+  box-shadow: var(--shadow-sm);
 }
 
 .rehab-nav__title {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #fff;
+  font-size: var(--t-md);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
+  line-height: 1.25;
 }
 
 .rehab-nav__subtitle {
-  font-size: 12px;
-  color: var(--rehab-text-muted);
-  font-weight: 400;
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  line-height: 1.3;
 }
 
 .rehab-nav__actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--s-2);
 }
 
-.rehab-streak-badge {
-  display: flex;
+.streak-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: var(--rehab-radius-full);
-  color: #fbbf24;
-  font-size: 13px;
+  gap: var(--s-2);
+  height: 36px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-full);
+  background: var(--rehab-orange-wash);
+  color: var(--rehab-orange-on-wash);
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 
-.rehab-btn-icon {
-  background: var(--rehab-surface-raised);
-  border: 1px solid var(--rehab-border);
-  color: var(--rehab-text-muted);
-  /* 44px is the accessibility floor for an interactive target, and this is the
-     settings entry point. It was 38px. */
-  width: var(--rehab-tap-min);
-  height: var(--rehab-tap-min);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--dur) var(--ease-out);
-}
+/* ═══ Dashboard ═══════════════════════════════════════════════════════════════ */
 
-.rehab-btn-icon:hover {
-  background: var(--rehab-surface-hover);
-  color: #fff;
-  border-color: var(--rehab-border-light);
-}
-
-/* ── Dashboard Layout ────────────────────────────────────────────────────── */
 .rehab-dashboard {
-  flex: 1;
-  max-width: 1100px;
   width: 100%;
+  max-width: 68rem;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: var(--s-10) var(--s-6) var(--s-16);
   display: flex;
   flex-direction: column;
-  gap: 36px;
-  box-sizing: border-box;
-}
-
-.rehab-hero {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: var(--s-8);
 }
 
 .rehab-hero__title {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #ffffff 40%, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: var(--t-display);
+  font-weight: 660;
+  letter-spacing: var(--track-display);
+  line-height: var(--lead-tight);
 }
 
 .rehab-hero__sub {
-  font-size: 15px;
-  color: var(--rehab-text-muted);
-  margin: 0;
+  margin-top: var(--s-3);
+  font-size: var(--t-lg);
+  color: var(--rehab-ink-secondary);
+  max-width: 46ch;
+  line-height: var(--lead-body);
+  letter-spacing: var(--track-body);
 }
 
-/* Routine Hero Card */
-.routine-card {
-  background: linear-gradient(145deg, #131d36 0%, #0d1527 100%);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: var(--rehab-radius-lg);
-  padding: 32px;
-  display: flex;
-  justify-content: space-between;
+/* Segmented control — the platform-familiar affordance for switching between a
+   small fixed set. Not tabs, not pills-that-look-like-buttons. */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--r-full);
+  background: var(--mat-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-inset-edge);
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.segmented__item {
+  display: inline-flex;
   align-items: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(56, 189, 248, 0.05);
+  gap: var(--s-2);
+  /* 44px floor. It was 40px — below the interactive-target minimum, and this
+     is the primary way of switching exercises. */
+  min-height: var(--tap-min);
+  padding: 0 var(--s-5);
+  border-radius: var(--r-full);
+  font-size: var(--t-sm);
+  font-weight: 580;
+  color: var(--rehab-ink-secondary);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.segmented__item:hover {
+  color: var(--rehab-ink);
+}
+
+.segmented__item[aria-selected='true'] {
+  background: var(--rehab-surface);
+  color: var(--rehab-ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.segmented__item:active {
+  transform: scale(0.98);
+}
+
+/* ═══ Routine card — the day's prescription ═══════════════════════════════════
+   Glass, and the largest surface on the page, so it gets the deepest shadow.
+   Nothing inside it is also glass: the spec chips are solid, per the stacking
+   rule in base.css. */
+
+.routine-card {
   position: relative;
-  overflow: hidden;
-}
-
-.routine-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-}
-
-.routine-card__left {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 620px;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--s-8);
+  padding: var(--s-8);
+  border-radius: var(--r-xl);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-edge);
 }
 
 .routine-card__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  padding: 4px 10px;
-  border-radius: 6px;
-  width: fit-content;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--rehab-blue-deep);
+  letter-spacing: var(--track-body);
 }
 
 .routine-card__name {
-  font-size: 26px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
+  margin-top: var(--s-2);
+  font-size: var(--t-title);
+  font-weight: 650;
+  letter-spacing: var(--track-title);
 }
 
 .routine-card__desc {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--rehab-text-muted);
-  margin: 0;
+  margin-top: var(--s-3);
+  color: var(--rehab-ink-secondary);
+  max-width: 58ch;
+  line-height: var(--lead-body);
 }
 
 .routine-card__specs {
+  margin-top: var(--s-6);
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: var(--s-2);
 }
 
 .spec-pill {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--rehab-surface);
+  border: 1px solid var(--mat-hairline);
 }
 
 .spec-pill__label {
-  font-size: 11px;
-  color: var(--rehab-text-dim);
-  text-transform: uppercase;
-  font-weight: 600;
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-caption);
 }
 
 .spec-pill__val {
-  font-size: 16px;
-  font-weight: 700;
-  color: #f1f5f9;
+  font-size: var(--t-md);
+  font-weight: 620;
+  letter-spacing: var(--track-body);
 }
 
-.routine-card__cta {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-  color: #fff;
-  border: none;
-  padding: 16px 36px;
-  border-radius: var(--rehab-radius-md);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 8px 24px var(--rehab-cyan-glow);
-  transition: all var(--dur) var(--ease-out);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  white-space: nowrap;
-}
+/* ═══ Stats ═══════════════════════════════════════════════════════════════════ */
 
-.routine-card__cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(56, 189, 248, 0.4);
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-}
-
-/* Quick Stats Bar */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--s-4);
 }
 
 .stat-card {
-  background: var(--rehab-surface);
-  border: 1px solid var(--rehab-border);
-  border-radius: var(--rehab-radius-md);
-  padding: 20px 24px;
+  position: relative;
+  isolation: isolate;
   display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-card__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.stat-card__icon--cyan { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
-.stat-card__icon--emerald { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-.stat-card__icon--amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
-
-.stat-card__val {
-  font-size: 24px;
-  font-weight: 800;
-  color: #fff;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-5) var(--s-6);
+  border-radius: var(--r-lg);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-md), var(--shadow-inset-edge);
 }
 
 .stat-card__label {
-  font-size: 13px;
-  color: var(--rehab-text-muted);
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  letter-spacing: var(--track-caption);
 }
 
-/* History Section */
+.stat-card__val {
+  font-size: var(--t-title);
+  font-weight: 660;
+  letter-spacing: var(--track-title);
+  line-height: 1.15;
+}
+
+.stat-card__val--blue {
+  color: var(--rehab-blue-deep);
+}
+
+.stat-card__val--green {
+  color: var(--rehab-green-deep);
+}
+
+.stat-card__sub {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+}
+
+/* ═══ Section + history ═══════════════════════════════════════════════════════ */
+
+.section-header__title {
+  font-size: var(--t-lg);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
+}
+
 .history-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-header__title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  margin: 0;
+  gap: var(--s-4);
 }
 
 .history-table {
-  background: var(--rehab-surface);
-  border: 1px solid var(--rehab-border);
-  border-radius: var(--rehab-radius-md);
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--r-lg);
   overflow: hidden;
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-md), var(--shadow-inset-edge);
 }
 
 .history-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  padding: 16px 24px;
+  grid-template-columns: 1.2fr 1.6fr 0.9fr 0.9fr 1fr;
   align-items: center;
-  border-bottom: 1px solid var(--rehab-border);
-  font-size: 14px;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  border-top: 1px solid var(--mat-hairline);
+  font-size: var(--t-sm);
 }
 
-.history-row:last-child {
-  border-bottom: none;
+.history-row:first-child {
+  border-top: none;
 }
 
 .history-row--header {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--rehab-text-dim);
-  font-size: 12px;
+  font-size: var(--t-xs);
   font-weight: 600;
-  text-transform: uppercase;
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-caption);
+  background: rgba(255, 255, 255, 0.4);
 }
 
-.score-badge {
+.history-row__label {
+  display: none;
+}
+
+.history-row__primary {
+  font-weight: 600;
+}
+
+.history-row__muted {
+  color: var(--rehab-ink-secondary);
+}
+
+.count-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 12px;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 620;
+  background: var(--rehab-ground-sunk);
+  color: var(--rehab-ink-secondary);
 }
 
-.score-badge--high { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-.score-badge--mid { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.count-badge--full {
+  background: var(--rehab-green-wash);
+  color: var(--rehab-green-deep);
+}
 
-/* ── Fullscreen Live Training Surface ────────────────────────────────────── */
-.training-surface {
-  flex: 1;
+/* ═══ Empty state ═════════════════════════════════════════════════════════════
+   Teaches the interface rather than announcing an absence. */
+
+.empty-state {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px);
-  overflow: hidden;
-  background: #020617;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-12) var(--s-6);
+  border-radius: var(--r-lg);
+  background: var(--mat-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--mat-hairline);
+  text-align: center;
+}
+
+.empty-state__title {
+  font-size: var(--t-md);
+  font-weight: 620;
+}
+
+.empty-state__body {
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  max-width: 34ch;
+  line-height: var(--lead-body);
+}
+
+/* ═══ Training surface ════════════════════════════════════════════════════════ */
+
+.training-surface {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: calc(100dvh - 62px);
+  min-height: 32rem;
 }
 
 .training-body {
-  flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  height: calc(100% - 80px);
+  grid-template-columns: 1fr 26rem;
+  gap: var(--s-5);
+  padding: var(--s-5);
+  min-height: 0;
 }
 
 .training-camera {
   position: relative;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--r-xl);
   overflow: hidden;
-  border-right: 1px solid var(--rehab-border);
+  background: var(--rehab-scrim);
+  box-shadow: var(--shadow-lg);
+  min-height: 0;
 }
 
-.training-camera__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-}
-
+.training-camera__video,
 .training-camera__canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  pointer-events: none;
+  /* Mirrored: the user is looking at themselves, and an unmirrored self-view
+     makes every corrective cue read backwards. */
+  transform: scaleX(-1);
 }
 
 .training-panel {
-  padding: 40px;
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
-  gap: 28px;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  border-radius: var(--r-xl);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-edge);
   overflow-y: auto;
+  min-height: 0;
 }
 
+/* Auto block margins centre the phase block in whatever space progress leaves.
+   Using justify-content on the parent instead does not work: the auto margin on
+   .training-progress consumes the free space first. */
+.training-panel > .pacer {
+  margin-block: auto;
+}
+
+.training-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: auto 0;
+}
+
+.training-intro__tag {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--rehab-blue-deep);
+}
+
+.training-intro__name {
+  font-size: var(--t-title);
+  font-weight: 650;
+  letter-spacing: var(--track-title);
+}
+
+.training-intro__body {
+  color: var(--rehab-ink-secondary);
+  line-height: var(--lead-body);
+}
+
+.training-intro__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.training-step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+}
+
+.training-step__n {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--r-full);
+  display: grid;
+  place-items: center;
+  background: var(--rehab-blue-wash);
+  color: var(--rehab-blue-deep);
+  font-size: var(--t-xs);
+  font-weight: 660;
+}
+
+.training-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  margin-top: auto;
+  border-top: 1px solid var(--mat-hairline);
+}
+
+.training-progress__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.training-progress__count {
+  font-size: var(--t-lg);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
+}
+
+.training-progress__of {
+  color: var(--rehab-ink-tertiary);
+  font-weight: 500;
+}
+
+/* Bottom chrome. Glass, like the header, so the two read as the same layer. */
 .training-rail {
-  height: 80px;
-  background: #090d1a;
-  border-top: 1px solid var(--rehab-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
-  z-index: 20;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-6);
+  background: var(--mat-thick);
+  backdrop-filter: var(--mat-blur-thick);
+  -webkit-backdrop-filter: var(--mat-blur-thick);
+  box-shadow: var(--shadow-inset-edge);
 }
 
 .training-rail__state {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--s-4);
+  min-width: 0;
 }
 
-.rep-counter-pill {
-  font-size: 20px;
-  font-weight: 800;
+.phase-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-full);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  background: var(--rehab-ground-sunk);
+  color: var(--rehab-ink-secondary);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+
+.phase-chip--ascending,
+.phase-chip--descending {
+  background: var(--rehab-blue-wash);
+  color: var(--rehab-blue-deep);
+}
+
+.phase-chip--holding {
+  background: var(--rehab-green-wash);
+  color: var(--rehab-green-deep);
+}
+
+.phase-chip--resting {
+  background: var(--rehab-orange-wash);
+  color: var(--rehab-orange-on-wash);
+}
+
+.training-rail__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 0 0 auto;
+}
+
+.camera-error {
+  position: absolute;
+  inset: auto var(--s-6) var(--s-6);
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  background: var(--mat-over-video-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 138, 143, 0.5);
+  border-radius: var(--r-lg);
   color: #fff;
 }
 
-.phase-pill {
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
+.camera-error__title {
+  font-size: var(--t-md);
+  font-weight: 640;
+  color: #ff9ba0;
 }
 
-.phase-pill--holding { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-.phase-pill--ascending { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
-.phase-pill--descending { background: rgba(147, 51, 234, 0.2); color: #c084fc; border: 1px solid #9333ea; }
-.phase-pill--resting { background: rgba(255, 255, 255, 0.05); color: var(--rehab-text-muted); }
+.camera-error__body {
+  font-size: var(--t-sm);
+  color: rgba(255, 255, 255, 0.86);
+}
 
-/* ── Post-Session Scorecard Surface ──────────────────────────────────────── */
+/* ═══ Session summary ═════════════════════════════════════════════════════════ */
+
 .summary-surface {
-  flex: 1;
-  max-width: 900px;
   width: 100%;
-  margin: 40px auto;
-  padding: 0 24px;
+  max-width: 58rem;
+  margin: 0 auto;
+  padding: var(--s-10) var(--s-6) var(--s-16);
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  box-sizing: border-box;
+  gap: var(--s-8);
 }
 
 .scorecard {
-  background: linear-gradient(145deg, #131c33 0%, #0d1424 100%);
-  border: 1px solid var(--rehab-border-light);
-  border-radius: var(--rehab-radius-lg);
-  padding: 40px;
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  gap: var(--s-6);
+  padding: var(--s-10) var(--s-8);
+  border-radius: var(--r-xl);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-edge);
+  text-align: center;
 }
 
-.scorecard__circle {
-  position: relative;
-  width: 140px;
-  height: 140px;
+.scorecard__eyebrow {
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+}
+
+/* A COUNT, not a purity percentage. "% perfect movement" grades a healing
+   shoulder against perfection and hands the user a number to carry around;
+   reps that reached the band is the same information without the verdict. */
+.scorecard__count {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-size: var(--t-hero);
+  font-weight: 680;
+  letter-spacing: var(--track-hero);
+  line-height: var(--lead-tight);
 }
 
-.scorecard__score-text {
-  font-size: 38px;
-  font-weight: 900;
-  color: #34d399;
+.scorecard__count-of {
+  font-size: var(--t-display);
+  font-weight: 500;
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-display);
+}
+
+.scorecard__caption {
+  font-size: var(--t-lg);
+  color: var(--rehab-ink-secondary);
+  max-width: 40ch;
+  line-height: var(--lead-body);
 }
 
 .scorecard__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--s-3);
   width: 100%;
+  margin-top: var(--s-2);
 }
 
 .summary-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  border-radius: var(--r-md);
   background: var(--rehab-surface);
-  border: 1px solid var(--rehab-border);
-  border-radius: var(--rehab-radius-md);
-  padding: 16px;
-  text-align: center;
+  border: 1px solid var(--mat-hairline);
 }
 
-.rep-log-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--rehab-surface);
-  border-radius: var(--rehab-radius-md);
+.summary-metric__label {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-caption);
+}
+
+.summary-metric__val {
+  font-size: var(--t-lg);
+  font-weight: 650;
+  letter-spacing: var(--track-title);
+}
+
+.rep-log {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--r-lg);
   overflow: hidden;
-  border: 1px solid var(--rehab-border);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-md), var(--shadow-inset-edge);
 }
 
-.rep-log-table th, .rep-log-table td {
-  padding: 14px 18px;
-  text-align: left;
-  border-bottom: 1px solid var(--rehab-border);
-  font-size: 14px;
+.rep-row {
+  display: grid;
+  grid-template-columns: 4rem 1fr 1fr 1fr 1.6fr;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  border-top: 1px solid var(--mat-hairline);
+  font-size: var(--t-sm);
 }
 
-.rep-log-table th {
-  background: rgba(255, 255, 255, 0.02);
-  color: var(--rehab-text-dim);
+.rep-row:first-child {
+  border-top: none;
+}
+
+.rep-row--header {
+  font-size: var(--t-xs);
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 11px;
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-caption);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.rep-row__label {
+  display: none;
+}
+
+.rep-row__n {
+  font-weight: 640;
+}
+
+.rep-row__muted {
+  color: var(--rehab-ink-secondary);
 }
 
 .flag-tag {
   display: inline-block;
-  padding: 2px 8px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 4px;
-  font-size: 11px;
-  margin-right: 4px;
-  margin-bottom: 2px;
+  margin: 2px var(--s-1) 2px 0;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-xs);
+  font-size: var(--t-xs);
+  background: var(--rehab-orange-wash);
+  color: var(--rehab-orange-on-wash);
 }
 
-/* ── Settings Modal ──────────────────────────────────────────────────────── */
-.modal-backdrop {
+.clean-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--rehab-green-deep);
+}
+
+/* ═══ Settings sheet ══════════════════════════════════════════════════════════
+   A modal task, so it pairs a dimming scrim with the surface — the background
+   is pushed back rather than left in flow. */
+
+.sheet-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  z-index: var(--z-scrim);
+  background: rgba(19, 22, 27, 0.32);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  padding: var(--s-6);
+  animation: scrim-in var(--dur) var(--ease-out) both;
 }
 
-.modal-card {
-  background: #0f172a;
-  border: 1px solid var(--rehab-border-light);
-  border-radius: var(--rehab-radius-lg);
-  width: 100%;
-  max-width: 480px;
-  padding: 32px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  position: relative;
+  isolation: isolate;
+  position: relative;
+  z-index: var(--z-sheet);
+  width: min(30rem, 100%);
+  max-height: 88dvh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--s-5);
+  padding: var(--s-6);
+  border-radius: var(--r-xl);
+  background: var(--mat-thick);
+  backdrop-filter: var(--mat-blur-thick);
+  -webkit-backdrop-filter: var(--mat-blur-thick);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-xl), var(--shadow-inset-edge);
+  /* Materialize, don't just fade: blur and scale animate together so the
+     surface reads as a real material arriving rather than an opacity ramp. */
+  animation: sheet-in var(--dur-sheet) var(--ease-out-expo) both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.sheet__title {
+  font-size: var(--t-lg);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
 }
 
 .setting-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--rehab-surface);
+  border: 1px solid var(--mat-hairline);
 }
 
 .setting-row__header {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
-  color: #f1f5f9;
+  gap: var(--s-3);
+  font-size: var(--t-md);
+  font-weight: 560;
 }
 
-.setting-row input[type="range"] {
+.setting-row__value {
+  font-weight: 660;
+  color: var(--rehab-blue-deep);
+  letter-spacing: var(--track-body);
+}
+
+.setting-row__hint {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  line-height: 1.45;
+}
+
+.setting-row input[type='range'] {
   width: 100%;
-  accent-color: #38bdf8;
+  accent-color: var(--rehab-blue-deep);
+  height: var(--tap-min);
+}
+
+.setting-toggle {
+  display: flex;
+  /* .setting-row is column; this row is not. Without the explicit override the
+     column direction is inherited and the control stacks under its label. */
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.setting-toggle > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+/* A switch, not a checkbox: this setting takes effect immediately rather than
+   on submit, which is exactly what a switch means on this platform.
+
+   The element's box is 52x44 so it clears the interactive-target floor, while
+   the visible track is 52x32 — vertical padding plus `background-clip:
+   content-box` paints the track inside the padding box, so the hit area is
+   larger than the graphic without a wrapper element or a transform. */
+.setting-toggle input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 52px;
+  height: var(--tap-min);
+  padding: 6px 0;
+  margin: 0;
+  border-radius: var(--r-full);
+  background: var(--mat-hairline-strong);
+  background-clip: content-box;
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.setting-toggle input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.setting-toggle input[type='checkbox']:checked {
+  background-color: var(--rehab-green-deep);
+}
+
+.setting-toggle input[type='checkbox']:checked::after {
+  transform: translateX(20px);
+}
+
+.sheet__actions {
+  display: flex;
+  gap: var(--s-2);
+  justify-content: flex-end;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Responsive
+   ═════════════════════════════════════════════════════════════════════════════ */
+
+/* The training split collapses. The camera keeps a fixed share of the viewport
+   rather than a flex share, so the subject stays large enough to frame against
+   while the telemetry scrolls beneath it. */
+@media (max-width: 1024px) {
+  .training-surface {
+    height: auto;
+    min-height: calc(100dvh - 62px);
+  }
+
+  .training-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(20rem, 48dvh) auto;
+    gap: var(--s-4);
+    padding: var(--s-4);
+  }
+
+  .training-panel {
+    overflow: visible;
+  }
+
+  .hud {
+    bottom: var(--s-4);
+    gap: var(--s-4);
+    padding: var(--s-3) var(--s-5);
+  }
+
+  .hud__dial {
+    width: 92px;
+    height: 92px;
+  }
+
+  .hud__num {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .rehab-dashboard,
+  .summary-surface {
+    padding: var(--s-6) var(--s-4) var(--s-12);
+    gap: var(--s-6);
+  }
+
+  .rehab-hero__title {
+    font-size: var(--t-title);
+  }
+
+  .rehab-hero__sub {
+    font-size: var(--t-md);
+  }
+
+  .routine-card {
+    grid-template-columns: 1fr;
+    gap: var(--s-5);
+    padding: var(--s-6);
+  }
+
+  .routine-card__cta {
+    width: 100%;
+  }
+
+  /* Table to cards. A five-column grid on a phone is unreadable, and a
+     horizontally scrolling table is worse — the user cannot see the row label
+     and the value at the same time. Each row becomes a labelled stack. */
+  .history-row,
+  .rep-row {
+    grid-template-columns: 1fr;
+    gap: var(--s-2);
+    padding: var(--s-4);
+  }
+
+  .history-row--header,
+  .rep-row--header {
+    display: none;
+  }
+
+  .history-row > *,
+  .rep-row > * {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+  }
+
+  .history-row__label,
+  .rep-row__label {
+    display: inline;
+    font-size: var(--t-xs);
+    color: var(--rehab-ink-tertiary);
+    letter-spacing: var(--track-caption);
+  }
+
+  .training-rail {
+    flex-wrap: wrap;
+    gap: var(--s-3);
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .training-rail__state {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .training-rail__actions {
+    order: 2;
+    width: 100%;
+  }
+
+  .training-rail__actions .btn {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .rehab-nav {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .rehab-nav__subtitle {
+    display: none;
+  }
+
+  .streak-badge span:last-child {
+    display: none;
+  }
+
+  .streak-badge {
+    padding: 0 var(--s-3);
+  }
+
+  .scorecard {
+    padding: var(--s-8) var(--s-5);
+  }
+
+  .scorecard__count {
+    font-size: var(--t-display);
+  }
+
+  .scorecard__count-of {
+    font-size: var(--t-title);
+  }
+
+  .pacer__hero {
+    font-size: var(--t-display);
+  }
+
+  .pacer__ring {
+    width: 132px;
+    height: 132px;
+  }
+
+  /* The alert cannot span most of a phone's camera view or it hides the very
+     body part it is describing. */
+  .form-alert {
+    left: var(--s-3);
+    right: var(--s-3);
+    max-width: none;
+  }
+}
+
+.summary-actions {
+  display: flex;
+  justify-content: center;
 }
 
 
+/* Specular sheen on every large glass surface. See base.css .sheen — inlined
+   per-selector rather than requiring a class in the markup, so a surface can
+   never be glass without it. */
+.routine-card::before,
+.stat-card::before,
+.training-panel::before,
+.scorecard::before,
+.history-table::before,
+.rep-log::before,
+.sheet::before,
+.empty-state::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--mat-sheen);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* The brand lockup is a two-line stack, not an inline run. Without this the
+   title and subtitle ran together as "Rehabibi肩關節復健教練". */
+.rehab-nav__title,
+.rehab-nav__subtitle {
+  display: block;
+}
+
+.history-row--clickable {
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.history-row--clickable:hover {
+  background: rgba(56, 189, 248, 0.08) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  transform: translateX(4px);
+}

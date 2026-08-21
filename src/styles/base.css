@@ -1,5 +1,6 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Reset, focus, and the Digits primitive. Consumes tokens.css; defines none.
+   Reset, ambient ground, focus, glass primitives, Digits.
+   Consumes tokens.css; defines none.
    ───────────────────────────────────────────────────────────────────────────── */
 
 *,
@@ -20,26 +21,53 @@ body,
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--rehab-bg);
-  color: var(--rehab-text-main);
+  background: var(--rehab-ground);
+  color: var(--rehab-ink);
   font-family: var(--rehab-font);
-  font-size: var(--t-fac);
-  line-height: 1.5;
+  font-size: var(--t-md);
+  line-height: var(--lead-body);
+  letter-spacing: var(--track-body);
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 
-  /* Tabular figures everywhere, belt one of two. The Digits primitive is
-     belt two and survives a fallback face, which this alone does not.
-     Non-negotiable: telemetry updates many times a second and proportional
-     figures make the readout jitter as its value changes. */
+  /* Tabular figures everywhere, belt one of two. The Digits primitive below is
+     belt two and survives a font fallback, which this alone does not. A
+     proportional figure in a readout that updates many times a second makes the
+     whole panel jitter as the value changes. */
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+}
+
+/* ─── Ambient ground ─────────────────────────────────────────────────────────
+   Two very wide, very faint washes behind everything.
+
+   This is not decoration and it is not a gradient for its own sake: glass reads
+   as glass only when there is luminance variation behind it to refract. Over a
+   perfectly flat fill, backdrop-filter has nothing to sample and every surface
+   collapses into a flat rectangle at reduced opacity.
+
+   Both washes were checked against the ink: the darkest point under either
+   still measures ~14:1 for body text, so the ambience costs no legibility.
+   `fixed` so the washes belong to the room, not to the scroll. */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 42rem at 8% -6%, rgba(11, 121, 237, 0.26), transparent 58%),
+    radial-gradient(48rem 36rem at 92% 2%, rgba(41, 157, 80, 0.2), transparent 55%),
+    radial-gradient(44rem 34rem at 78% 96%, rgba(11, 121, 237, 0.18), transparent 56%),
+    radial-gradient(38rem 30rem at 22% 88%, rgba(216, 116, 0, 0.1), transparent 55%);
 }
 
 button {
@@ -51,37 +79,203 @@ button {
   font-variant-numeric: inherit;
 }
 
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
 ul,
 ol {
   list-style: none;
 }
 
-/* ─── Focus ──────────────────────────────────────────────────────────────── */
-/* No hover-only affordances anywhere, so focus-visible is the primary state,
-   not an afterthought. Cyan reads against every surface in the dark palette. */
+/* ─── Focus ──────────────────────────────────────────────────────────────────
+   There are no hover-only affordances anywhere in this product, so
+   focus-visible is the primary state rather than an afterthought. */
 
 :focus-visible {
-  outline: 3px solid var(--rehab-cyan);
+  outline: 3px solid var(--rehab-blue);
   outline-offset: 2px;
-  border-radius: var(--rehab-radius-sm);
+  border-radius: var(--r-sm);
 }
 
 :focus:not(:focus-visible) {
   outline: none;
 }
 
-/* ─── Typography helpers ─────────────────────────────────────────────────── */
+/* ─── Typography ─────────────────────────────────────────────────────────── */
 
 h1,
 h2,
-h3 {
-  font-weight: 500;
-  line-height: 1.2;
+h3,
+h4 {
+  font-weight: 600;
+  line-height: var(--lead-title);
+  letter-spacing: var(--track-title);
   text-wrap: balance;
 }
 
-/* ─── Digits primitive ───────────────────────────────────────────────────── */
-/* Each character occupies a fixed 1ch cell. Font-independent: a digit cannot
+p {
+  text-wrap: pretty;
+}
+
+/* The sheen layer. Applied via ::before so it composites over the material's
+   own translucency without tinting the backdrop-filter beneath it. Any surface
+   using it must establish a stacking context and clip to its own radius. */
+.sheen {
+  position: relative;
+  isolation: isolate;
+}
+
+.sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--mat-sheen);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ─── Glass primitives ───────────────────────────────────────────────────────
+   The material system, in three tiers. Weight encodes hierarchy.
+
+   THE STACKING RULE, which is the one that actually matters: the page ground is
+   solid, a glass surface sits on the ground, and chrome sits above both. Never
+   nest one of these inside another. A glass card inside a glass card has
+   nothing true to sample, and its legibility collapses — Apple's HIG states it
+   as a hard prohibition and it is worth treating as one. */
+
+.glass {
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-md), var(--shadow-inset-edge);
+  border-radius: var(--r-lg);
+}
+
+.glass--thin {
+  background: var(--mat-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-edge);
+}
+
+/* Bigger surfaces read as thicker: stronger blur, deeper shadow. */
+.glass--thick {
+  background: var(--mat-thick);
+  backdrop-filter: var(--mat-blur-thick);
+  -webkit-backdrop-filter: var(--mat-blur-thick);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-edge);
+}
+
+/* Everything painted over the camera feed. Dark, in an otherwise light
+   interface, because measured against a blown-out video frame every light
+   treatment fails the contrast floor. See tokens.css. */
+.glass--over-video {
+  background: var(--mat-over-video);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--mat-over-video-edge);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  color: #fff;
+  border-radius: var(--r-md);
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────────
+   Feedback lives on the press and it is instant. Waiting for the click event
+   to show a state change is the single most common way an interface stops
+   feeling direct. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: var(--tap-min);
+  padding: 0 var(--s-5);
+  border-radius: var(--r-full);
+  font-size: var(--t-md);
+  font-weight: 590;
+  letter-spacing: var(--track-body);
+  white-space: nowrap;
+  transition:
+    transform var(--dur-instant) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--primary {
+  background: var(--rehab-blue-deep);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: #0055b2;
+}
+
+.btn--confirm {
+  background: var(--rehab-green-deep);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--confirm:hover:not(:disabled) {
+  background: #09702f;
+}
+
+/* Quiet: the secondary action. Never a colored outline — an outlined button
+   beside a filled one reads as two primaries competing. */
+.btn--quiet {
+  background: transparent;
+  color: var(--rehab-ink-secondary);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: rgba(23, 29, 41, 0.06);
+  color: var(--rehab-ink);
+}
+
+.btn--glass {
+  background: var(--mat-thick);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--mat-hairline);
+  color: var(--rehab-ink);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-edge);
+}
+
+.btn--lg {
+  min-height: 54px;
+  padding: 0 var(--s-8);
+  font-size: var(--t-lg);
+}
+
+.btn--icon {
+  width: var(--tap-min);
+  height: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0;
+  border-radius: var(--r-full);
+}
+
+/* ─── Digits primitive ───────────────────────────────────────────────────────
+   Each character occupies a fixed 1ch cell. Font-independent: a digit cannot
    change width as its value changes even if the CJK face fails to load. */
 
 .digits {

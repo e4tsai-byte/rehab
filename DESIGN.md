@@ -1,145 +1,296 @@
 # Rehabibi — Design System & Visual Specification
 
-> This document is read as plain Markdown, not KaTeX. Use the literal ° and →
-> characters. No `$…$` math delimiters — they render as visible `$` signs in
-> every viewer in this toolchain, and a previous version of this file shipped
-> corrupted, tab-eaten LaTeX for months.
+> Plain Markdown, not KaTeX. Use the literal ° and → characters; no `$…$` math
+> delimiters. A previous version of this file shipped tab-corrupted LaTeX for
+> months because nobody re-read it rendered.
 
 ---
 
-## 1. Design Philosophy: "Sleek Dark Mode & Neon Precision"
+## 1. Design Philosophy: Apple materials, light
 
-Modern sports-science telemetry: dark, focused, high-contrast, distraction-free.
+Rehabibi uses Apple's system-material language: near-white grounds, translucent
+glass chrome and cards, SF typography, and motion that decelerates rather than
+bounces.
 
-This is a positioning bet, not a mood board. Clinical rehab software is sterile and faintly humiliating; Rehabibi's wager is that daily physical therapy performed alone at home feels better when it looks like **training** rather than **treatment**.
+This replaced a dark "neon precision" theme on 2026-08-21.
 
-**Polarity is DARK** — light text on `#070a13`. Until 2026-08-21 this file coexisted with a `tokens.css` inherited from velocare that declared the exact opposite ("dark ink on a cream ground"), and both loaded simultaneously, so the shipped polarity was decided by stylesheet import order rather than by design. That file is gone; `tokens.css` now holds the dark palette below and is the single source of token truth.
+### Why light, and it is not an aesthetic argument
+
+**The screen is a fill light.** The user stands one to two metres from a laptop
+with the webcam pointed at them, often in a dim bedroom early in the morning. A
+light interface throws real illumination onto their face and torso, and
+MediaPipe's landmark confidence rises with subject exposure. A dark UI in a dark
+room hands the pose tracker an underlit subject, and every downstream number —
+angle, cadence, compensation flag — degrades with it.
+
+The secondary reason is that glass reads as glass only when there is luminance
+behind it to refract. A dark theme can carry translucency, but a light one gives
+the material something to do.
+
+### The scene this is designed for
+
+Someone six weeks post rotator-cuff repair, standing in their bedroom at 7am in
+grey light, laptop on a dresser, arm already aching, on the third of ten reps.
+Calm, legible from two metres, nothing shouting, nothing grading them.
 
 ---
 
 ## 2. Design Tokens
 
-`src/styles/tokens.css` is the only place any of these is defined. A raw hex or px value in a component is a bug. This table and that file change together.
+`src/styles/tokens.css` is the only place any of these is defined, and this
+document changes with it. A raw hex or px value in a component is a defect.
 
-### Ground & surfaces
+**Every value below was verified numerically, in a live browser, against its
+real composite backdrop.** Not against the token the design intends — against
+what the pixel actually is once material, wash, and ambient field have composited.
+That distinction caught two failures a by-eye pass would have shipped.
+
+### Grounds
 
 | Token | Value | Role |
 |---|---|---|
-| `--rehab-bg` | `#070a13` | Deep void. Makes the camera overlay pop; minimizes eye strain. |
-| `--rehab-surface` | `#0f172a` | Primary card and modal ground |
-| `--rehab-surface-raised` | `#182238` | Raised card, control chrome |
-| `--rehab-surface-hover` | `#1e293b` | Hover state |
-| `--rehab-surface-glass` | `rgba(15, 23, 42, 0.7)` | Floating header and overlay panels |
-| `--rehab-scrim` | `rgba(2, 6, 23, 0.72)` | Behind anything painted over live video |
-| `--rehab-border` | `rgba(255, 255, 255, 0.08)` | Standard hairline |
-| `--rehab-border-light` | `rgba(255, 255, 255, 0.15)` | Emphasis hairline |
+| `--rehab-ground` | `#f3f5f7` | Page ground. Solid — the base of the material stack. |
+| `--rehab-ground-sunk` | `#eaedf1` | Track fills, inset wells |
+| `--rehab-surface` | `#ffffff` | Solid cards inside glass surfaces |
 
-### Semantic accents
+Cool near-white, deliberately **not** cream, sand, bone, or parchment. The
+warm-neutral band is the saturated default of the moment and reads as a
+template; the whisper of blue chroma ties the neutrals to the accent hue rather
+than tinting warm by reflex.
 
-These are a **language**, not a palette. Never use one decoratively; never add a fifth without retiring one.
+### Ink
 
-| Token | Value | Meaning |
+| Token | Value | On ground |
 |---|---|---|
-| `--rehab-cyan` | `#38bdf8` | Live tracking — skeleton overlay, goniometer arc in motion |
-| `--rehab-emerald` | `#10b981` | Target reached, clean rep, correct tempo |
-| `--rehab-amber` | `#f59e0b` | Hold countdown, inter-rep rest, streak |
-| `--rehab-rose` | `#f43f5e` | Form alert |
-| `--rehab-rose-soft` | `#fb7185` | Secondary alert text |
+| `--rehab-ink` | `#1a1d23` | 15.40:1 |
+| `--rehab-ink-secondary` | `#595e66` | 5.96:1 |
+| `--rehab-ink-tertiary` | `#6c7078` | 4.52:1 |
 
-Each has a matching `-glow` at 0.25 alpha.
+`--rehab-ink-tertiary` sits barely above the body-text floor because it was
+darkened twice — at its first two values it measured 3.32 and 4.24 and failed.
+**Do not lighten it for elegance.** Light grey body text on a tinted near-white
+is the single most common reason an interface is hard to read.
 
-**On rose.** velocare's inherited rule was that red must never describe a person's outcome — correct for an instrument read by a facilitator in front of a room of participants. Rehabibi has one user and no observer, and rose describes the user's own movement to themselves. The divergence is deliberate.
+### Semantic accents — two tiers, and the distinction is load-bearing
 
-**Contrast floor.** Overlay text and telemetry must clear 4.5:1 against the **worst-case video pixel**, not against `--rehab-bg`. They do not on their own: measured against a blown-out white frame, cyan is 2.14:1, amber 2.15:1, emerald 2.54:1. Against `#070a13` cyan is 9.8:1 — which is exactly why testing against the flat swatch hides the problem. Every element painted over `.training-camera` therefore sits on `--rehab-scrim` or carries a dark halo. Re-measure on a real frame after any accent change.
+Blue = live tracking. Green = target reached, clean reps. Orange = hold and rest
+intervals. Red = form alert. A language, not a palette: never use one
+decoratively, never add a fifth without retiring one.
+
+| Role | Plain (graphical only) | Deep (text, and fills carrying white text) |
+|---|---|---|
+| Blue | `#0b79ed` | `#005fc6` |
+| Green | `#299d50` | `#0a7e3a` |
+| Orange | `#d87400` | `#bb5d00` · on wash `#ae5000` |
+| Red | `#df2f36` | `#c01d27` |
+
+The **plain** tier is for arcs, rings, bars, and fills — graphical objects,
+verified ≥3:1. The **deep** tier is for anything that is text. This is not
+stylistic: white on plain blue measures 4.23 and white on plain green 3.15, both
+below the floor. Using a plain tier for text fails contrast.
+
+`--rehab-orange-on-wash` exists because `#bb5d00` clears 4.5 on **white** but
+measured **3.93** on its own orange wash once that wash sat over glass. The
+composite backdrop is lighter than the token the design intends. A live audit
+caught it; static palette maths had passed it.
+
+### Materials
+
+Apple's tiers. Material weight encodes hierarchy — thicker sits higher and
+separates more.
+
+| Token | Alpha | Blur | Used for |
+|---|---|---|---|
+| `--mat-thin` | 0.44 | 22px / sat 200% | Segmented control, small chips |
+| `--mat-regular` | 0.58 | 34px / sat 210% | Cards, panels |
+| `--mat-thick` | 0.72 | 44px / sat 200% | Header, bottom rail, sheets |
+
+Three things make a surface read as a material rather than a white box at
+reduced opacity, and all three are required:
+
+1. **The ambient field** (`body::before`) — four wide, faint radial washes in
+   blue, green, and orange. Not decoration: over a perfectly flat fill,
+   `backdrop-filter` has nothing to sample and every surface collapses flat.
+   The first build of this redesign looked flat for exactly this reason.
+2. **The specular sheen** (`--mat-sheen`) — a 160° gradient from 62% white at
+   the top-left falling to zero by half. Real glass catches light along one edge.
+3. **The bright top edge** (`--shadow-inset-edge`) plus a two-part shadow: a
+   tight contact shadow and a wide ambient one. A single large blur reads as fog.
+
+### The stacking rule
+
+**Never stack a light translucent surface on another.** The page ground is solid,
+cards are glass over it, chrome is glass over cards. Solid cards *inside* glass
+are fine and are how the spec pills, setting rows, and pacer are built. Glass
+inside glass is a defect: the blur has nothing true to sample and legibility
+collapses.
+
+This is enforced, not just documented — `audit.mjs` walks the DOM for a glass
+element with a glass ancestor and reports it as a violation.
+
+### Over-video material — dark, on purpose
+
+Everything painted over the camera feed uses `--mat-over-video`
+(`rgba(19,22,27,0.72)`) and is **dark in an otherwise light interface.**
+
+Measured against a blown-out white video frame, every accent fails: blue 4.23,
+green 3.15, orange 2.79. A light glass chip over live video becomes illegible
+the moment the user stands near a window. At 0.72 alpha the dark scrim gives
+white text **7.21:1 over a white frame and 19.06:1 over a black one** — the only
+tier tested that passes at both extremes. 0.55 alpha fails the white extreme at
+4.02.
 
 ### Type
 
-`--rehab-font` = `'Inter'`, `-apple-system`, `BlinkMacSystemFont`, `'Segoe UI'`, `'Noto Sans TC'`, `'PingFang TC'`, `'Heiti TC'`, `'Microsoft JhengHei'`, sans-serif.
+`--rehab-font` leads with `-apple-system` / SF, then falls to `Noto Sans TC`,
+`PingFang TC`, `Heiti TC`, `Microsoft JhengHei` for CJK. Latin faces precede the
+CJK faces so digits and Latin labels take SF while Chinese falls through. **The
+CJK entries are not optional** — the interface is zh-TW.
 
-Latin faces precede the CJK faces so digits and Latin labels take Inter while Chinese falls through to the TC faces. **The CJK entries are not optional** — the interface is zh-TW, and an earlier `--rehab-font` omitted them entirely, sending every Chinese glyph to an OS default. Noto Sans TC is bundled via `@fontsource` and loaded in `main.tsx`; nothing is fetched from a CDN, because invariant 1 forbids a remote request from a rehab surface.
+System font first is deliberate: SF already ships optical sizing, tracking
+tables, and legibility tuning no loaded web font would beat, and it costs zero
+bytes.
 
-Scale: `--t-display` 5rem · `--t-lead` 3rem · `--t-fac-xl` 1.75rem · `--t-fac-lg` 1.25rem · `--t-fac` 1.0625rem · `--t-fac-sm` 0.9375rem.
+Fixed rem scale, not `clamp()`. Product UI is read at consistent DPI, and a
+fluid heading that shrinks inside a panel looks worse rather than better.
 
-**Telemetry numerals are always tabular.** `base.css` sets `font-variant-numeric: tabular-nums` on `body`, and the `Digits` primitive gives each character a fixed 1ch cell as a second belt that survives a font fallback. A proportional figure in a readout that updates many times a second makes the whole panel jitter.
+`--t-hero` 4.25rem · `--t-display` 2.75rem · `--t-title` 1.75rem · `--t-lg`
+1.25rem · `--t-md` 1.0625rem · `--t-sm` 0.9375rem · `--t-xs` 0.8125rem
+
+**Tracking is size-specific.** A single letter-spacing value is wrong somewhere:
+large text reads too loose as it grows, small text too tight. `--track-hero`
+-0.03em through `--track-caption` +0.01em.
+
+**Telemetry numerals are always tabular.** `base.css` sets
+`font-variant-numeric: tabular-nums` on `body`, and the `Digits` primitive gives
+each character a fixed 1ch cell as a second belt that survives a font fallback.
 
 ### Motion
 
-`--dur-fast` 120ms · `--dur` 180ms · `--dur-slow` 260ms · `--ease-out` `cubic-bezier(0.22, 1, 0.36, 1)` (ease-out-quint, no bounce).
+`--dur-fast` 160ms · `--dur` 220ms · `--dur-slow` 320ms · `--dur-sheet` 420ms,
+all on `--ease-out` / `--ease-out-expo` (exponential deceleration).
 
-Every animated rule routes its timing through these tokens so that `prefers-reduced-motion` actually reaches it. A hardcoded `transition: 0.2s` is a defect precisely because it escapes that block.
+**There is no overshoot curve in this system, deliberately.** An earlier draft
+had one for the settings sheet. Overshoot belongs only to motion a gesture
+actually threw — a flick, a drag release — and this sheet opens from a button
+press. Nothing in this interface is draggable, so nothing bounces.
+
+Every animated rule routes its timing through these tokens, which is what lets
+`prefers-reduced-motion` reach all of it at once. A hardcoded duration is a
+defect precisely because it escapes that block.
 
 ---
 
 ## 3. Accessibility Floor
 
-Participant-facing surfaces. Not aspirational — these are acceptance criteria.
+Acceptance criteria, not aspirations. All five surfaces pass; `audit.mjs` runs
+the first three checks against a live browser.
 
-* **Contrast** — WCAG AA, measured against the live video frame per §2, not the background swatch.
-* **Targets** — every interactive element at least `--rehab-tap-min` (44px). The settings button was 38px until 2026-08-21.
-* **Focus** — `:focus-visible` draws a 3px cyan outline at 2px offset. There are no hover-only affordances anywhere, so focus-visible is the primary state, not an afterthought.
-* **Motion** — `prefers-reduced-motion: reduce` collapses all duration tokens to 1ms and clamps animation globally.
-* **Colour is never alone** — every state colour is paired with a shape, a position, or a word.
-
-### Known gaps
-
-* `rehab.css` contains **zero `@media` queries**. Section 6's responsive behavior is specified but not implemented. 🗓️
-* Raw hex and `rgba()` literals remain throughout `rehab.css` and should all become `var(--rehab-*)`. 🗓️
-* `telemetry.css` still consumes legacy unprefixed token names through an alias layer in `tokens.css`. See `CLAUDE.md` section 5. 🗓️
+* **Contrast** — WCAG AA against the real composite backdrop. Body text 4.5:1,
+  graphical objects and large text 3:1. Over-video content measured at both
+  frame extremes.
+* **Targets** — every interactive element at least 44×44 (`--tap-min`). The
+  settings button was 38px and the segmented items 40px before this pass. The
+  sound switch is 52×44 with a 52×32 visible track, using vertical padding plus
+  `background-clip: content-box` so the hit area exceeds the graphic without a
+  wrapper or a transform.
+* **Material stacking** — no glass inside glass.
+* **Focus** — `:focus-visible` draws a 3px blue ring at 2px offset. There are no
+  hover-only affordances anywhere, so focus-visible is the primary state.
+* **Motion** — `prefers-reduced-motion: reduce` collapses every duration token to
+  1ms and clamps animation globally.
+* **Transparency** — `prefers-reduced-transparency: reduce` makes every material
+  fully solid rather than merely less blurred. The over-video tiers go *more*
+  opaque, not less: the contrast problem they solve gets worse when translucency
+  is reduced, not better.
+* **Contrast preference** — `prefers-contrast: more` darkens the ink ramp and
+  strengthens every hairline.
+* **Colour is never alone** — every state colour is paired with a glyph, a
+  shape, or a word.
 
 ---
 
-## 4. Key UI Components
+## 4. Key Components
 
-### 4.1 Goniometer Angle Gauge (`AngleGauge.tsx`)
+### 4.1 Angle HUD (`AngleGauge.tsx`) — on the camera feed
 
-Circular SVG dial with a high-contrast degree readout.
+The joint-angle readout lives **on** the video, not beside it. A user watching
+their own arm should not have to shift gaze to a side panel to learn what that
+arm is doing. Only safe because the HUD is dark; see the over-video material above.
 
-**The accepted hold band is 80°–110°**, and the arc illuminates across it. This document previously said 85°–95°, which was wrong in both directions — the engine's `TARGET_HOLD_ENTER` is 80.0 and `TARGET_HOLD_MAX` is 110.0, so a rep peaking at 84° was being credited while the gauge showed the user outside the zone. The overlay must not lie about system state during the one moment feedback has to be trustworthy.
+**The lit band is 80°–110°, read from `CONFIG` rather than hardcoded.** It is the
+range the engine actually accepts (`TARGET_HOLD_ENTER` … `TARGET_HOLD_MAX`). The
+previous gauge drew a fixed 85°–95° band, which was wrong in both directions: a
+rep peaking at 84° was credited as clean while the gauge showed the user outside
+the zone. An overlay that misreports system state during the one moment feedback
+has to be trustworthy is worse than no overlay.
 
-A single high-contrast nominal tick sits at 90° (`TARGET_ANGLE_NOMINAL`) so the band does not imply that 81° and 109° are equally good.
+A single bright tick marks the 90° nominal, so a 30°-wide band does not imply
+that 81° and 109° are equally good.
 
-**Hysteresis is visible behaviour, not an implementation detail.** Descent releases the hold below 72° (`TARGET_HOLD_EXIT`), not at 80°. The gauge must render the band as still-lit through 72°–80° on the way down, or the 8° deadband reads as a bug.
+The arc shifts blue → green on entering the band.
 
-The arc shifts from cyan to emerald on entering the band.
+### 4.2 Cadence Pacer (`CadencePacer.tsx`) — the panel's single numeral
 
-### 4.2 Cadence Metronome & Hold Ring (`CadencePacer.tsx`)
+One value at hero scale, chosen by phase: cadence seconds while moving, hold
+countdown while holding, rest countdown while resting. Ring for the countdowns,
+bar for cadence.
 
-* **Ascent / descent pacer** — a 5.0 s animated fill bar, 0.0 s → 5.0 s.
-* **Pace badge** — the hero numeral carries the state; a short verdict sits beneath it at secondary scale. Keep the hero string within roughly four characters: 很好 / 快一點 / 慢一點. A nine-character sentence is unreadable at three metres mid-rep, and colour alone must not distinguish the three states — each needs its own glyph.
-* **Hold ring** — circular isometric countdown, counter-clockwise stroke depletion.
-* **Rest ring** — amber countdown across the 3.0 s post-rep interval.
+The pace verdict is **four characters at most** — 很好 / 快一點 / 慢一點 — each
+with its own glyph so colour is not the only differentiator. It replaced strings
+like 「⚠️ 速度過快（請放慢）」: nine characters, unreadable mid-rep by someone
+holding their arm up two metres from the screen.
 
-### 4.3 Real-Time Skeleton Overlay (`usePoseTracker.ts`)
+### 4.3 Skeleton overlay (`usePoseTracker.ts`)
 
-Glowing cyan lines drawn over the mirrored video feed, with the shoulder, elbow, and wrist highlighted. Drawn imperatively to the canvas — this loop must not drive a React re-render per frame.
+Drawn imperatively to the canvas over a mirrored feed. This loop must not drive
+a React re-render per frame.
 
-### 4.4 Post-Session Scorecard (`SessionSummary.tsx`)
+### 4.4 Session Summary (`SessionSummary.tsx`)
 
-Lead with a **count**, not a purity percentage: 達標次數 8/10. Quality detail belongs in the breakdown beneath, unscored. A "% 完美動作率" grades a healing shoulder against perfection and hands the user a number to carry around; that is the punitive framing invariant 1.6 exists to prevent.
-
-Summary cards: completed reps, average hold duration, peak angle. Then a rep-by-rep table: concentric tempo, hold duration, eccentric tempo, and the specific form flags raised.
+The hero is a **count**, not a percentage: reps that reached the target band over
+reps completed. It replaced a circular dial reading「% 完美動作率」— perfect-movement
+rate — which grades a healing shoulder against perfection and hands the user a
+number to carry around. When a session recorded nothing, the hero is suppressed
+entirely: "0 / 0" is not information, and a zero at display scale reads as a
+verdict on a session the person may have stopped for a good reason.
 
 ---
 
 ## 5. The One-Number Rule
 
-During a rep the user is holding their arm at 90° with a healing shoulder, three to six feet from a laptop, possibly in pain. They can read about four characters at a glance.
+During a rep the user is holding their arm at 90° with a healing shoulder, one to
+two metres from a laptop, in pain, counting seconds. They can read about four
+characters at a glance.
 
-**Exactly one numeral is at hero scale in the telemetry panel at any moment**, chosen by phase:
+**Exactly one numeral is at hero scale per region:**
 
-| Phase | Hero numeral |
+| Region | Its single number |
 |---|---|
-| ASCENDING / DESCENDING | Cadence seconds elapsed |
-| HOLDING | Hold countdown |
-| RESTING | Rest countdown |
+| Camera | Joint angle |
+| Telemetry panel | Cadence seconds / hold countdown / rest countdown, by phase |
 
-The gauge's degree readout is the camera region's single number. Everything else drops to secondary scale. Feedback the user cannot act on within the current rep is a scorecard item, not a live banner.
+Everything else drops to secondary scale and is read peripherally — fill level,
+arc sweep, colour — without focusing. Feedback the user cannot act on within the
+current rep is a scorecard item, not a live banner.
 
 ---
 
-## 6. Responsive Behavior
+## 6. Responsive
 
-**Specified, not yet implemented** — see section 3 Known gaps. 🗓️
+Structural, not fluid — breakpoints, not clamped type.
 
-* **Desktop / laptop** — two-column split. Left: mirrored camera feed. Right: goniometer, cadence bar, alerts.
-* **Mobile / tablet** — stacked vertical. Top: camera feed. Bottom: telemetry panel. Currently `.training-body` is an unconditional `1fr 1fr` grid, so on a phone the camera feed is a half-width sliver.
+| Width | Behaviour |
+|---|---|
+| ≥1024px | Training splits camera / telemetry side by side |
+| <1024px | Training stacks: camera on top at 48dvh, telemetry beneath |
+| <760px | Grids collapse; history and rep tables become labelled stacks |
+| <480px | Compact phone: nav subtitle and streak label drop, HUD shrinks |
+
+The history and rep logs become **labelled card stacks** on phones rather than
+scrolling tables. A horizontally scrolling five-column table is worse than a
+stack, because the user cannot see the row label and its value at the same time.
+
+Until this pass `rehab.css` contained **zero** `@media` queries, so the stacked
+mobile layout this document described had never existed and the camera feed
+rendered as a half-width sliver on a phone.

@@ -1,328 +1,433 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   Telemetry components — the goniometer, the cadence pacer, the form-alert
-   banner, and the rep pips.
+   Telemetry — the goniometer HUD, the cadence pacer, the form alert, the pips.
 
-   PROVENANCE: extracted verbatim from the deleted app.css during the velocare
-   removal (2026-08-21). These rules were the only part of velocare's 2607-line
-   layout sheet that shipping Rehabibi components depend on. Extracting them was
-   a precondition of deleting that file — see CLAUDE.md §5.
+   Rewritten 2026-08-21 onto --rehab-* tokens. This file used to be a verbatim
+   extraction from velocare's app.css running on a legacy alias layer; that
+   layer is gone and this file no longer references a single unprefixed token.
 
-   These rules still consume the legacy unprefixed token names (--ink, --surface,
-   --s-4, --t-display …). Those are kept alive as a DARK alias layer at the
-   bottom of tokens.css. Migrating this file to --rehab-* and deleting the alias
-   layer is brand-designer's standing task; do it as one change with a visual
-   diff, not opportunistically.
+   THE ONE-NUMBER RULE governs everything here. During a rep the user is holding
+   their arm at 90° with a healing shoulder, 1–2 m from a laptop, in pain,
+   counting seconds. They can read about four characters at a glance. So:
+
+     camera region  → exactly one numeral: the joint angle
+     telemetry panel → exactly one numeral: whichever the phase calls for
+                       (cadence seconds / hold countdown / rest countdown)
+
+   Everything else drops to secondary scale and is read peripherally — fill
+   level, arc sweep, colour — without focusing.
    ───────────────────────────────────────────────────────────────────────────── */
 
-/* ─── Pips ───────────────────────────────────────────────────────────────── */
+/* ═══ The angle HUD — over the camera feed ════════════════════════════════════
+   The angle readout lives ON the video, not beside it. A user watching their
+   own arm should not have to shift gaze to a side panel to learn what that arm
+   is doing; the number belongs where their eyes already are.
 
-.pips {
-  display: flex;
-  gap: var(--s-4);
-}
+   That is only safe because this surface is dark. See tokens.css: over a
+   blown-out video frame every light treatment fails the contrast floor, and
+   this scrim measures 7.21:1 for white text at the white extreme and 19.06:1 at
+   the black one. */
 
-/* The only 50% radius in the product. A pip is a circle because it is a circle,
-   not because rounded things are friendly. */
-.pip {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  border: 3px solid var(--line-strong);
-  background: transparent;
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
-}
-
-.pip--on {
-  background: var(--ink);
-  border-color: var(--ink);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pip {
-    transition: none;
-  }
-
-}
-
-/* Angle Gauge */
-.gauge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  padding: var(--s-4) var(--s-6);
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.gauge--target {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--blue-200);
-}
-
-.gauge__readout {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-1);
-}
-
-.gauge__num {
-  font-size: var(--t-display);
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1;
-}
-
-.gauge__unit {
-  font-size: var(--t-lead);
-  font-weight: 500;
-  color: var(--ink-secondary);
-}
-
-.gauge__track-wrap {
-  width: 100%;
-  margin-top: var(--s-3);
-}
-
-.gauge__track {
-  position: relative;
-  width: 100%;
-  height: 18px;
-  background: var(--surface);
-  border-radius: var(--r-sm);
-  overflow: visible;
-}
-
-.gauge__fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: var(--r-sm);
-  transition: width 0.1s linear;
-}
-
-.gauge__zone {
+.hud {
   position: absolute;
-  top: -4px;
-  bottom: -4px;
-  border-left: 2px dashed var(--accent);
-  border-right: 2px dashed var(--accent);
-  background: rgba(59, 130, 246, 0.15);
-  pointer-events: none;
+  left: 50%;
+  bottom: var(--s-6);
+  transform: translateX(-50%);
+  z-index: var(--z-hud);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  gap: var(--s-5);
+  padding: var(--s-4) var(--s-6);
+  background: var(--mat-over-video);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid var(--mat-over-video-edge);
+  border-radius: var(--r-xl);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.34);
+  color: #fff;
+}
+
+.hud__dial {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  flex: 0 0 auto;
+}
+
+.hud__svg {
+  width: 100%;
+  height: 100%;
+  /* -90deg puts 0 at the top; the sweep then reads clockwise like a dial. */
+  transform: rotate(-90deg);
+}
+
+.hud__track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+
+/* The accepted hold band, 80°–110°. Drawn as a lit segment of the track rather
+   than a tick pair, because a band is what the engine actually enforces. */
+.hud__band {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 9;
+  stroke-linecap: butt;
+}
+
+.hud__value {
+  fill: none;
+  stroke: var(--rehab-blue);
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset var(--dur-fast) linear,
+    stroke var(--dur) var(--ease-out);
+}
+
+.hud--target .hud__value {
+  stroke: #4ade80;
+}
+
+.hud--target .hud__band {
+  stroke: rgba(74, 222, 128, 0.4);
+}
+
+/* The 90° nominal tick. Without it a 30°-wide lit band tells the user that 81°
+   and 109° are equally good, which is not what the exercise prescribes. */
+.hud__nominal {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.hud__readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-.gauge__zone-label {
-  position: absolute;
-  top: -20px;
-  font-size: var(--t-fac-sm);
-  font-weight: 600;
-  color: var(--accent);
-  white-space: nowrap;
+.hud__num {
+  font-size: 2.5rem;
+  font-weight: 640;
+  letter-spacing: var(--track-display);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
-.gauge__bounds {
+.hud__unit {
+  /* Inline within .hud__num, so em sizing and vertical-align do the work — no
+     magic margin, and it stays attached at any dial size. */
+  font-size: 0.42em;
+  font-weight: 500;
+  vertical-align: super;
+  opacity: 0.72;
+  margin-left: 1px;
+}
+
+.hud__meta {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: var(--s-2);
-  font-size: var(--t-fac-sm);
-  color: var(--ink-secondary);
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 8.5rem;
 }
 
-/* Cadence Pacer */
+.hud__phase {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: var(--track-title);
+}
+
+.hud__hint {
+  font-size: var(--t-sm);
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.4;
+}
+
+/* ═══ Over-video chips ════════════════════════════════════════════════════════ */
+
+.vchip {
+  position: absolute;
+  z-index: var(--z-hud);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  background: var(--mat-over-video);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--mat-over-video-edge);
+  border-radius: var(--r-full);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.26);
+  color: #fff;
+  font-size: var(--t-sm);
+  font-weight: 560;
+}
+
+.vchip--mode {
+  top: var(--s-4);
+  left: var(--s-4);
+}
+
+.vchip__muted {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 400;
+}
+
+/* ═══ Form alert — over video ═════════════════════════════════════════════════
+   Corrective feedback belongs over the camera, next to the body part it is
+   about, and it must be actionable within the current rep. Anything the user
+   cannot act on right now is a scorecard item, not a live banner. */
+
+.form-alert {
+  position: absolute;
+  top: var(--s-4);
+  right: var(--s-4);
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  max-width: min(20rem, 60%);
+}
+
+.form-alert__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-3) var(--s-4);
+  background: var(--mat-over-video-strong);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  /* Full border, never a side stripe. The tint carries the semantic. */
+  border: 1px solid rgba(255, 138, 143, 0.5);
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+  animation: alert-in var(--dur) var(--ease-out-expo) both;
+}
+
+.form-alert__title {
+  font-size: var(--t-md);
+  font-weight: 640;
+  /* Light rose, not the base red: over a dark scrim the base red is too dim.
+     Colour is not carrying the meaning alone — the words do that. */
+  color: #ff9ba0;
+  letter-spacing: var(--track-body);
+}
+
+.form-alert__hint {
+  font-size: var(--t-sm);
+  color: rgba(255, 255, 255, 0.86);
+  line-height: 1.45;
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ═══ Cadence pacer — the telemetry panel's single numeral ════════════════════ */
+
 .pacer {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--s-4);
-  background: var(--surface-raised);
-  border: 1px solid var(--line);
+  gap: var(--s-4);
+  padding: var(--s-6);
   border-radius: var(--r-lg);
+  background: var(--rehab-surface);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur) var(--ease-out);
 }
 
-.pacer--idle .pacer__hint {
-  font-size: var(--t-fac);
-  color: var(--ink-secondary);
+.pacer--hold {
+  border-color: rgba(41, 157, 80, 0.34);
+}
+
+.pacer--rest {
+  border-color: rgba(216, 116, 0, 0.34);
+}
+
+/* The hero numeral. This is the one thing in the panel at display scale. */
+.pacer__hero {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: var(--t-hero);
+  font-weight: 660;
+  letter-spacing: var(--track-hero);
+  line-height: var(--lead-tight);
+  color: var(--rehab-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pacer__hero-unit {
+  font-size: var(--t-lg);
+  font-weight: 500;
+  color: var(--rehab-ink-tertiary);
+  letter-spacing: var(--track-body);
+}
+
+.pacer--hold .pacer__hero {
+  color: var(--rehab-green-deep);
+}
+
+.pacer--rest .pacer__hero {
+  color: var(--rehab-orange-deep);
+}
+
+.pacer__caption {
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  letter-spacing: var(--track-caption);
   text-align: center;
 }
 
-.pacer__header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: var(--s-2);
-  font-size: var(--t-fac);
-  font-weight: 600;
-  color: var(--ink);
+/* Pace verdict. Four characters at most, because it is read mid-rep from
+   across a room. Each state gets a glyph as well as a colour: colour never
+   carries meaning on its own. */
+.pacer__verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-full);
+  font-size: var(--t-md);
+  font-weight: 620;
+}
+
+.pacer__verdict--ontrack {
+  background: var(--rehab-green-wash);
+  color: var(--rehab-green-deep);
+}
+
+.pacer__verdict--fast {
+  background: var(--rehab-red-wash);
+  color: var(--rehab-red-deep);
+}
+
+.pacer__verdict--slow {
+  background: var(--rehab-orange-wash);
+  color: var(--rehab-orange-on-wash);
 }
 
 .pacer__bar {
+  position: relative;
   width: 100%;
-  height: 12px;
-  background: var(--surface);
-  border-radius: var(--r-xs);
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--rehab-ground-sunk);
   overflow: hidden;
 }
 
 .pacer__bar-fill {
   height: 100%;
-  transition: width 0.1s linear;
+  border-radius: var(--r-full);
+  background: var(--rehab-blue);
+  transition:
+    width var(--dur-fast) linear,
+    background-color var(--dur) var(--ease-out);
 }
 
-.pacer__bar-fill--up {
-  background: var(--accent);
+.pacer__bar-fill--fast {
+  background: var(--rehab-red);
 }
 
-.pacer__bar-fill--down {
-  background: var(--blue-500);
+.pacer__bar-fill--slow {
+  background: var(--rehab-orange);
 }
 
-/* Hold Countdown Ring */
-.pacer__hold-ring {
+/* Hold and rest countdown ring. */
+.pacer__ring {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 168px;
+  height: 168px;
 }
 
-.pacer__svg {
-  transform: rotate(-90deg);
+.pacer__ring-svg {
   width: 100%;
   height: 100%;
+  transform: rotate(-90deg);
 }
 
 .pacer__ring-bg {
   fill: none;
-  stroke: var(--surface);
-  stroke-width: 8;
+  stroke: var(--rehab-ground-sunk);
+  stroke-width: 10;
 }
 
 .pacer__ring-fill {
   fill: none;
-  stroke: var(--accent);
-  stroke-width: 8;
+  stroke-width: 10;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.1s linear;
+  transition: stroke-dashoffset var(--dur-fast) linear;
 }
 
-.pacer__hold-text {
+.pacer--hold .pacer__ring-fill {
+  stroke: var(--rehab-green);
+}
+
+.pacer--rest .pacer__ring-fill {
+  stroke: var(--rehab-orange);
+}
+
+.pacer__ring-center {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
-.pacer__hold-num {
-  font-size: var(--t-display);
-  font-weight: 700;
-  color: var(--ink);
+.pacer:has(.pacer__idle) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
-.pacer__hold-unit {
-  font-size: var(--t-fac);
-  color: var(--ink-secondary);
-  margin-left: 2px;
+.pacer__idle {
+  font-size: var(--t-md);
+  color: var(--rehab-ink-secondary);
+  text-align: center;
+  line-height: var(--lead-body);
+  max-width: 22rem;
 }
 
-.pacer__label {
-  margin-top: var(--s-2);
-  font-size: var(--t-fac-lg);
-  font-weight: 600;
-  color: var(--accent);
-}
+/* ═══ Rep pips ════════════════════════════════════════════════════════════════
+   Shape-first: a filled pip differs from an empty one by fill AND by a ring, so
+   it reads without colour and at distance. This is also the user's feedback
+   channel if they cannot hear the chime. */
 
-/* Form Alert Banner */
-.form-alert {
+.pips {
   display: flex;
-  flex-direction: column;
   gap: var(--s-2);
-  width: 100%;
+  flex-wrap: wrap;
 }
 
-.form-alert__item {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  background: oklch(0.92 0.05 60);
-  border: 1px solid oklch(0.70 0.12 60);
-  border-radius: var(--r-sm);
-  color: var(--ink);
-  font-size: var(--t-fac);
+.pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--mat-hairline-strong);
+  background: transparent;
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
 }
 
-.form-alert__badge {
-  background: oklch(0.45 0.18 27);
-  color: white;
-  padding: 2px 6px;
-  border-radius: var(--r-xs);
-  font-size: var(--t-fac-sm);
-  font-weight: 700;
-}
-
-.form-alert__title {
-  font-weight: 700;
-}
-
-.form-alert__hint {
-  color: var(--ink-secondary);
-}
-
-/* ─── Rep-phase colour overrides ──────────────────────────────────────────────
-   Moved here from rehab.css during the extraction. They previously used
-   !important to reach across files into app.css; now that the base rules and
-   these overrides live in one sheet, ordinary cascade order is enough.
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.pacer__bar-fill--fast {
-  background: var(--rehab-rose);
-  box-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
-}
-
-.pacer--rest {
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
-}
-
-/* ─── Previously-undefined classes ────────────────────────────────────────────
-   These five classNames are emitted by AngleGauge.tsx and CadencePacer.tsx but
-   were defined in no stylesheet — they rendered unstyled. Two of them are
-   load-bearing: .pacer__elapsed is the cadence numeral and .pacer__phase-name
-   is its label, i.e. the hero element of the training panel and its caption.
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.gauge__mid {
-  fill: none;
-  stroke: var(--rehab-border-light);
-  stroke-width: 1;
-}
-
-.pacer__phase-name {
-  font-size: var(--t-fac-sm);
-  color: var(--rehab-text-muted);
-  letter-spacing: 0.08em;
-}
-
-.pacer__elapsed {
-  font-size: var(--t-display);
-  font-weight: 700;
-  color: var(--rehab-text-main);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.pacer--active {
-  border-color: rgba(56, 189, 248, 0.4);
-}
-
-.pacer--hold {
-  border-color: rgba(16, 185, 129, 0.4);
+.pip--on {
+  background: var(--rehab-green);
+  border-color: var(--rehab-green);
+  transform: scale(1.08);
 }

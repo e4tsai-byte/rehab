@@ -43,14 +43,15 @@ export const CONFIG = {
   // time in the state, so no arm angle parked in a dead band can defeat them. PLACEHOLDER
   // values pending footage validation; deliberately generous so they never clip a slow-but-
   // -valid rep (see the non-regression sequence in the fix PR's before/after run).
-  ASCENDING_TIMEOUT_S: 15.0,   // 3x concentric target: never reaching hold-enter in 15s => rep not completing
-  HOLDING_TIMEOUT_S: 12.0,     // >2x hold target: resolves a hold parked below the accumulate zone
-  DESCENDING_TIMEOUT_S: 12.0,  // >2x eccentric target: resolves an arm parked above the lowered threshold
+  ASCENDING_TIMEOUT_S: 7.0,    // Target 5.0s + 2.0s timeout
+  HOLDING_TIMEOUT_BUFFER_S: 2.0, // n + 2.0s, where n is user selected hold time
+  DESCENDING_TIMEOUT_S: 7.0,   // Target 5.0s + 2.0s timeout
 
-  COMPENSATION_ELBOW_MIN_DEG: 155.0,
-  COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.08,
-  COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.12,
-  COMPENSATION_TORSO_LEAN_DEG: 14.0,
+  COMPENSATION_ELBOW_MIN_DEG: 115.0, // Obvious inward bend (< 115°)
+  COMPENSATION_ELBOW_REACH_RATIO: 0.78, // Inward arm collapse ratio
+  COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.18,
+  COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.22,
+  COMPENSATION_TORSO_LEAN_DEG: 16.0,
 }
 
 function dot(a: number[], b: number[]): number {
@@ -124,6 +125,13 @@ export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated 
 // landmark must never manufacture a compensation warning. (The prior 2D version fell
 // through to angleBetweenVectorsDeg, which returns 0° on a zero-norm input, fabricating a
 // spurious bend.)
+// Elbow extension angle at the RIGHT elbow:
+// Biomechanical reality: The human elbow is a uniaxial hinge that cannot bend backwards/outwards.
+// Any outward angle variation is monocular camera depth foreshortening on a locked-out arm.
+// A genuine compensation is strictly an INWARD curl towards the chest/shoulder (bicep fold),
+// which collapses the direct reach ratio: dist(shoulder, wrist) / (upperArm + forearm).
+// If reachRatio >= 0.78, the arm is fully extended forward -> returns 180° ("locked straight").
+// If reachRatio < 0.78 AND interior angle < 115°, it reflects an obvious, true bicep fold cheat.
 export function computeElbowExtensionDeg(
   worldLandmarks: Landmark3D[],
   landmarks2D: Landmark3D[],
@@ -136,6 +144,20 @@ export function computeElbowExtensionDeg(
   const elbow2D = landmarks2D[LANDMARKS.RIGHT_ELBOW]
   const wrist2D = landmarks2D[LANDMARKS.RIGHT_WRIST]
   if ((elbow2D?.visibility ?? 1) < 0.4 || (wrist2D?.visibility ?? 1) < 0.4) return 180
+
+  const upperArmLen = Math.hypot(elbow.x - shoulder.x, elbow.y - shoulder.y, (elbow.z ?? 0) - (shoulder.z ?? 0))
+  const forearmLen = Math.hypot(wrist.x - elbow.x, wrist.y - elbow.y, (wrist.z ?? 0) - (elbow.z ?? 0))
+  const directReach = Math.hypot(wrist.x - shoulder.x, wrist.y - shoulder.y, (wrist.z ?? 0) - (shoulder.z ?? 0))
+  const totalArmLen = upperArmLen + forearmLen
+
+  if (totalArmLen < 1e-6) return 180
+
+  const reachRatio = directReach / totalArmLen
+
+  // If arm reach is extended forward (>= 0.78), the arm is structurally locked out.
+  if (reachRatio >= CONFIG.COMPENSATION_ELBOW_REACH_RATIO) {
+    return 180
+  }
 
   const v1 = [shoulder.x - elbow.x, shoulder.y - elbow.y, (shoulder.z ?? 0) - (elbow.z ?? 0)]
   const v2 = [wrist.x - elbow.x, wrist.y - elbow.y, (wrist.z ?? 0) - (elbow.z ?? 0)]
@@ -189,7 +211,8 @@ export class ClientShoulderFlexionTracker {
   private nextRepIndex = 1
   private targetReps: number
   private isSeated: boolean
-  
+  private targetHoldDurationS: number
+
   private concentricStartT = 0
   private concentricDurationS = 0
   private holdEnterT = 0
@@ -199,18 +222,27 @@ export class ClientShoulderFlexionTracker {
   private restStartT = 0
   private accumulatedHoldS = 0
   private lastTimestampS = 0
-  
-  private repFlags = new Set<FormFlag>()
+
+  private flagDurations: Record<string, number> = {}
   private peakAngleDeg = 0
   private smoothedBuffer: number[] = []
 
-  constructor(targetReps = 10, isSeated = false) {
+  constructor(targetReps = 10, isSeated = false, targetHoldDurationS = 5.0) {
     this.targetReps = targetReps
     this.isSeated = isSeated
+    this.targetHoldDurationS = targetHoldDurationS
   }
 
   public setSeatedMode(seated: boolean): void {
     this.isSeated = seated
+  }
+
+  public setHoldDuration(durationS: number): void {
+    this.targetHoldDurationS = durationS
+  }
+
+  public setTargetReps(reps: number): void {
+    this.targetReps = reps
   }
 
   private getSmoothedAngle(rawAngle: number): number {
@@ -224,7 +256,7 @@ export class ClientShoulderFlexionTracker {
   public process(
     worldLandmarks: Landmark3D[] | null,
     landmarks2D: Landmark3D[] | null,
-    timestampS: number
+    timestampS: number,
   ): { rep: RehabRepRecord | null; live: RehabLiveState } {
     if (!worldLandmarks || !landmarks2D) {
       return {
@@ -268,8 +300,13 @@ export class ClientShoulderFlexionTracker {
       activeFlags.push('TORSO_LEAN')
     }
 
+    const dt = this.lastTimestampS > 0 ? Math.max(0, Math.min(0.2, timestampS - this.lastTimestampS)) : 0.033
+
+    // Accumulate durations of compensations during active movement
     if (this.phase !== 'RESTING') {
-      for (const f of activeFlags) this.repFlags.add(f)
+      for (const f of activeFlags) {
+        this.flagDurations[f] = (this.flagDurations[f] ?? 0) + dt
+      }
       if (angle > this.peakAngleDeg) this.peakAngleDeg = angle
     }
 
@@ -298,45 +335,38 @@ export class ClientShoulderFlexionTracker {
         this.concentricStartT = timestampS
         this.restStartT = 0
         this.accumulatedHoldS = 0
-        this.repFlags.clear()
+        this.flagDurations = {}
         this.peakAngleDeg = angle
       }
     } else if (this.phase === 'ASCENDING') {
       concentricElapsed = Math.max(0, timestampS - this.concentricStartT)
-      
+
       // Dynamic expected angle along strict 5.0-second curve
       const progress = Math.min(1.0, concentricElapsed / CONFIG.CADENCE_CONCENTRIC_TARGET_S)
       expectedAngle = restingEnter + progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
 
-      // Pacing evaluation (Too Fast vs Too Slow)
+      // Live coaching pacing status (visual feedback only)
       if (concentricElapsed >= 0.8) {
         const delta = angle - expectedAngle
-        if (delta > 16.0) {
+        if (delta > 18.0) {
           paceStatus = 'TOO_FAST'
           activeFlags.push('PACING_TOO_FAST')
-          this.repFlags.add('PACING_TOO_FAST')
-        } else if (delta < -16.0 && concentricElapsed > 1.5) {
+        } else if (delta < -18.0 && concentricElapsed > 1.5) {
           paceStatus = 'TOO_SLOW'
           activeFlags.push('PACING_TOO_SLOW')
-          this.repFlags.add('PACING_TOO_SLOW')
         } else {
           paceStatus = 'ON_TRACK'
         }
       }
 
-      // Check if user raised to 90° early
-      if (angle >= CONFIG.TARGET_HOLD_ENTER && concentricElapsed < CONFIG.CADENCE_CONCENTRIC_TARGET_S) {
-        this.repFlags.add('RUSHED_CONCENTRIC')
-      }
-
-      // STRICT PACING: Only advance to HOLDING once the full 5.0s concentric duration has elapsed AND arm is at target angle
+      // STRICT PACING: Advance to HOLDING once full 5.0s concentric duration has elapsed AND arm reached target angle
       if (concentricElapsed >= CONFIG.CADENCE_CONCENTRIC_TARGET_S) {
         if (angle >= CONFIG.TARGET_HOLD_ENTER) {
           this.concentricDurationS = concentricElapsed
           this.phase = 'HOLDING'
           this.holdEnterT = timestampS
           this.accumulatedHoldS = 0
-          holdRemaining = CONFIG.CADENCE_HOLD_TARGET_S
+          holdRemaining = this.targetHoldDurationS
         } else {
           // Reached 5.0s but arm not yet elevated high enough
           paceStatus = 'TOO_SLOW'
@@ -344,12 +374,7 @@ export class ClientShoulderFlexionTracker {
         }
       }
 
-      // Unstickable exit: abort if the arm dropped back to rest during ascent, OR time out
-      // a stalled ascent parked below the hold-enter angle (Invariant 1.3). Either way the
-      // arm never reached target (peak < TARGET_HOLD_ENTER), so this is NOT a valid rep:
-      // discard it and return cleanly to the idle rest state — no broken rep recorded, no
-      // frozen screen (Invariant 1.6). The clean reset (restStartT/repFlags/peakAngleDeg)
-      // also fixes the former abort, which left the machine re-arming every frame.
+      // Safety timeout / abort if arm dropped completely during early ascent
       if (
         this.phase === 'ASCENDING' &&
         ((angle < restingEnter && concentricElapsed > 2.0) ||
@@ -357,11 +382,10 @@ export class ClientShoulderFlexionTracker {
       ) {
         this.phase = 'RESTING'
         this.restStartT = timestampS
-        this.repFlags.clear()
+        this.flagDurations = {}
         this.peakAngleDeg = 0
       }
     } else if (this.phase === 'HOLDING') {
-      const dt = this.lastTimestampS > 0 ? Math.max(0, Math.min(0.2, timestampS - this.lastTimestampS)) : 0.033
       concentricElapsed = this.concentricDurationS
       expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL
 
@@ -375,25 +399,23 @@ export class ClientShoulderFlexionTracker {
         paceStatus = 'TOO_SLOW'
       }
 
-      holdRemaining = Math.max(0, CONFIG.CADENCE_HOLD_TARGET_S - this.accumulatedHoldS)
+      const targetHold = this.targetHoldDurationS
+      const holdTimeout = targetHold + CONFIG.HOLDING_TIMEOUT_BUFFER_S // n + 2 seconds
 
-      // Only transition to DESCENDING once full 5.0s of actual isometric hold is accumulated
-      if (this.accumulatedHoldS >= CONFIG.CADENCE_HOLD_TARGET_S) {
+      holdRemaining = Math.max(0, targetHold - this.accumulatedHoldS)
+
+      // Transition to DESCENDING once target hold duration is accumulated
+      if (this.accumulatedHoldS >= targetHold) {
         this.holdDurationS = this.accumulatedHoldS
         this.phase = 'DESCENDING'
         this.eccentricStartT = timestampS
         holdRemaining = 0
       } else if (
         angle < CONFIG.TARGET_HOLD_ABORT_THRESHOLD ||
-        timestampS - this.holdEnterT >= CONFIG.HOLDING_TIMEOUT_S
+        timestampS - this.holdEnterT >= holdTimeout
       ) {
-        // Unstickable exit (Invariant 1.3): the arm dropped below the abort threshold, OR
-        // the hold timed out while parked between the abort threshold and the accumulate
-        // zone (where the timer neither accrues nor aborts). The arm DID reach target to
-        // enter HOLDING (peak >= TARGET_HOLD_ENTER), so this is a legitimate rep with a
-        // short hold — finalize into descent carrying INCOMPLETE_HOLD, not discarded.
+        // Timed out or dropped below 52°
         this.holdDurationS = this.accumulatedHoldS
-        this.repFlags.add('INCOMPLETE_HOLD')
         this.phase = 'DESCENDING'
         this.eccentricStartT = timestampS
         holdRemaining = 0
@@ -406,46 +428,63 @@ export class ClientShoulderFlexionTracker {
       const progress = Math.min(1.0, eccentricElapsed / CONFIG.CADENCE_ECCENTRIC_TARGET_S)
       expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL - progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
 
-      // Lowering pacing evaluation
+      // Lowering pacing evaluation (visual cues only)
       if (eccentricElapsed >= 0.8) {
-        if (angle < expectedAngle - 16.0) {
+        if (angle < expectedAngle - 18.0) {
           paceStatus = 'TOO_FAST'
           activeFlags.push('PACING_TOO_FAST')
-          this.repFlags.add('PACING_TOO_FAST')
-        } else if (angle > expectedAngle + 16.0 && eccentricElapsed > 1.5) {
+        } else if (angle > expectedAngle + 18.0 && eccentricElapsed > 1.5) {
           paceStatus = 'TOO_SLOW'
           activeFlags.push('PACING_TOO_SLOW')
-          this.repFlags.add('PACING_TOO_SLOW')
         } else {
           paceStatus = 'ON_TRACK'
         }
       }
 
-      // Check if user dropped hand down too fast
-      if (angle <= restingEnter && eccentricElapsed < CONFIG.CADENCE_ECCENTRIC_TARGET_S) {
-        this.repFlags.add('RUSHED_ECCENTRIC')
-      }
-
-      // STRICT PACING: Only finalize rep once the full 5.0s descent duration has elapsed AND arm has lowered.
-      // Unstickable exit (Invariant 1.3): also finalize on timeout if the arm is parked above the lowered
-      // threshold after DESCENDING_TIMEOUT_S — the concentric and hold already happened, and not returning
-      // fully to rest is not a form fault worth hanging the machine on.
+      // Finalize rep once 5.0s has elapsed and arm is lowered
       const isTimeComplete = eccentricElapsed >= CONFIG.CADENCE_ECCENTRIC_TARGET_S
-      const isArmLowered = angle <= (restingEnter + 8.0)
+      const isArmLowered = angle <= (restingEnter + 10.0)
       const isTimedOut = eccentricElapsed >= CONFIG.DESCENDING_TIMEOUT_S
 
-      if ((isTimeComplete && isArmLowered) || isTimedOut) {
+      if ((isTimeComplete && isArmLowered) || isTimedOut || (isTimeComplete && eccentricElapsed >= 5.3)) {
         this.eccentricDurationS = eccentricElapsed
 
         if (this.peakAngleDeg >= CONFIG.TARGET_HOLD_ENTER) {
+          // Sustained compensation defect filtering (Clinical PM&R standard)
+          const permanentFlags: FormFlag[] = []
+
+          // Physical compensations: only penalize if sustained for >= 0.8s
+          if ((this.flagDurations['SHOULDER_HIKE'] ?? 0) >= 0.8) {
+            permanentFlags.push('SHOULDER_HIKE')
+          }
+          if ((this.flagDurations['TORSO_LEAN'] ?? 0) >= 0.8) {
+            permanentFlags.push('TORSO_LEAN')
+          }
+          if ((this.flagDurations['ELBOW_BENT'] ?? 0) >= 0.8) {
+            permanentFlags.push('ELBOW_BENT')
+          }
+
+          // Isometric Hold check: incomplete only if user held for < 75% of target
+          if (this.holdDurationS < this.targetHoldDurationS * 0.75) {
+            permanentFlags.push('INCOMPLETE_HOLD')
+          }
+
+          // Gross rushing checks (only if entire phase was done in < 2.5s)
+          if (this.concentricDurationS < CONFIG.CADENCE_CONCENTRIC_MIN_S) {
+            permanentFlags.push('RUSHED_CONCENTRIC')
+          }
+          if (this.eccentricDurationS < CONFIG.CADENCE_ECCENTRIC_MIN_S) {
+            permanentFlags.push('RUSHED_ECCENTRIC')
+          }
+
           completedRep = {
             index: this.nextRepIndex++,
             concentricDuration: Math.round(this.concentricDurationS * 10) / 10,
             holdDuration: Math.round(this.holdDurationS * 10) / 10,
             eccentricDuration: Math.round(this.eccentricDurationS * 10) / 10,
             peakElevation: Math.round(this.peakAngleDeg),
-            flags: Array.from(this.repFlags),
-            isClean: this.repFlags.size === 0,
+            flags: permanentFlags,
+            isClean: permanentFlags.length === 0,
           }
           this.repCount++
         }
@@ -453,7 +492,7 @@ export class ClientShoulderFlexionTracker {
         // Start 3-second post-rep recovery rest period
         this.phase = 'RESTING'
         this.restStartT = timestampS
-        this.repFlags.clear()
+        this.flagDurations = {}
         this.peakAngleDeg = 0
       }
     }

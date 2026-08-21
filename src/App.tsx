@@ -58,6 +58,10 @@ export function App() {
           settings={settings}
           history={history}
           onStartExercise={handleStartExercise}
+          onSelectSession={(session) => {
+            setActiveSession(session)
+            setView('summary')
+          }}
           onOpenSettings={() => setSettingsOpen(true)}
         />
       )}
