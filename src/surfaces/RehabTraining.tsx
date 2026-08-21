@@ -4,6 +4,7 @@ import { CadencePacer } from '../components/CadencePacer'
 import { FormAlertBanner } from '../components/FormAlertBanner'
 import { RepPips } from '../components/RepPips'
 import { EXERCISE_CATALOG, localizeExercise } from '../domain/exerciseCatalog'
+import { CONFIG } from '../pose/shoulderKinematics'
 import type { CompletedSession, RehabPhase, RehabRepRecord, UserSettings } from '../domain/rehabTypes'
 import { useChime } from '../hooks/useChime'
 import { usePoseTracker } from '../hooks/usePoseTracker'
@@ -45,14 +46,22 @@ export function RehabTraining({
   const exercise = EXERCISE_CATALOG.find((e) => e.id === exerciseId) ?? EXERCISE_CATALOG[0]!
   const ex = localizeExercise(exercise, locale)
   const isSeated = exercise.posture === 'seated'
+  const isIsometric = exercise.trackingModel === 'isometricHold'
+
+  // Dose scoping (§9 D4). The isometric hold is a FIXED prescription read from the
+  // exercise itself (5 holds × 20s); the global Settings sliders (target angle /
+  // hold / reps) do NOT apply to it. The paced exercises keep reading the settings
+  // sliders exactly as before, so their behavior is byte-identical.
+  const doseReps = isIsometric ? exercise.targetReps : settings.targetReps
+  const doseHoldS = isIsometric ? exercise.holdDurationS : settings.holdDurationS
 
   const { isLoaded, liveState, videoRef, canvasRef } = usePoseTracker({
     posture: exercise.posture,
-    // Both of these are optional on the hook, so omitting them is a silent
-    // fallback to 5.0s / 10 reps rather than a type error — the user's settings
-    // would simply never reach the tracker.
-    holdDurationS: settings.holdDurationS,
-    targetReps: settings.targetReps,
+    trackingModel: exercise.trackingModel,
+    // For the isometric hold these are the fixed prescription; for paced exercises
+    // they are the user's Settings sliders (unchanged from before).
+    holdDurationS: doseHoldS,
+    targetReps: doseReps,
     onRep: (rep) => {
       if (settings.soundEnabled) chime()
       setCompletedReps((prev) => [...prev, rep])
@@ -95,7 +104,7 @@ export function RehabTraining({
       completedReps.length > 0 ? Math.round((cleanCount / completedReps.length) * 100) : 100
     const totalHold = completedReps.reduce((acc, r) => acc + r.holdDuration, 0)
     const avgHold =
-      completedReps.length > 0 ? totalHold / completedReps.length : settings.holdDurationS
+      completedReps.length > 0 ? totalHold / completedReps.length : doseHoldS
     const peakDeg = completedReps.reduce((max, r) => Math.max(max, r.peakElevation), 0)
 
     onFinishSession({
@@ -106,18 +115,18 @@ export function RehabTraining({
       exerciseNameZh: exercise.nameZh,
       timestamp: Date.now(),
       completedReps: completedReps.length,
-      targetReps: settings.targetReps,
+      targetReps: doseReps,
       cleanRepsCount: cleanCount,
       formQualityScorePct: qualityScore,
       averageHoldDurationS: Math.round(avgHold * 10) / 10,
       peakElevationDeg: peakDeg,
       reps: completedReps,
     })
-  }, [completedReps, exercise, settings, onFinishSession])
+  }, [completedReps, exercise, settings, doseReps, doseHoldS, onFinishSession])
 
   useEffect(() => {
-    if (isStarted && completedReps.length >= settings.targetReps) handleComplete()
-  }, [completedReps.length, settings.targetReps, isStarted, handleComplete])
+    if (isStarted && completedReps.length >= doseReps) handleComplete()
+  }, [completedReps.length, doseReps, isStarted, handleComplete])
 
   function handleStart() {
     armAudio()
@@ -147,6 +156,19 @@ export function RehabTraining({
               isTargetZone={liveState.isTargetZone}
               phaseLabel={phaseLabel}
               hint={liveState.isTargetZone ? t('gauge.holdHere') : undefined}
+              // The isometric hold lives at a low 10–15° band. On the paced 0–90°
+              // dial a correct 12° hold would read as near-failure, so the gauge
+              // switches to a 0–30° scale with the green band centred on 12°. Paced
+              // exercises pass nothing and keep the default 0–120° / accepted-band
+              // rendering byte-identical.
+              {...(isIsometric
+                ? {
+                    maxAngle: 30,
+                    bandMinDeg: CONFIG.HOLD_GOOD_BAND_MIN_DEG,
+                    bandMaxDeg: CONFIG.HOLD_GOOD_BAND_MAX_DEG,
+                    targetDeg: CONFIG.HOLD_TARGET_ANGLE_DEG,
+                  }
+                : {})}
             />
           )}
 
@@ -167,23 +189,30 @@ export function RehabTraining({
               <h2 className="training-intro__name">{ex.name}</h2>
               <p className="training-intro__body">{ex.framingHint}</p>
 
-              <div className="training-intro__steps">
-                <span className="training-step">
-                  <span className="training-step__n">1</span>
-                  <span>{t('train.step1', { cadence: settings.concentricCadenceS, angle: settings.targetAngleDeg })}</span>
-                </span>
-                <span className="training-step">
-                  <span className="training-step__n">2</span>
-                  <span>{t('train.step2', { hold: settings.holdDurationS })}</span>
-                </span>
-                <span className="training-step">
-                  <span className="training-step__n">3</span>
-                  <span>{t('train.step3', { cadence: settings.eccentricCadenceS })}</span>
-                </span>
-              </div>
+              {/* The three numbered steps describe the paced 5-second raise / hold /
+                  lower tempo. That tempo does not exist for the isometric hold, so
+                  showing them would misdescribe the movement — the isometric user is
+                  guided by the framing hint and description above instead. (Isometric
+                  step copy is a copywriter concern; not invented here.) */}
+              {!isIsometric && (
+                <div className="training-intro__steps">
+                  <span className="training-step">
+                    <span className="training-step__n">1</span>
+                    <span>{t('train.step1', { cadence: settings.concentricCadenceS, angle: settings.targetAngleDeg })}</span>
+                  </span>
+                  <span className="training-step">
+                    <span className="training-step__n">2</span>
+                    <span>{t('train.step2', { hold: settings.holdDurationS })}</span>
+                  </span>
+                  <span className="training-step">
+                    <span className="training-step__n">3</span>
+                    <span>{t('train.step3', { cadence: settings.eccentricCadenceS })}</span>
+                  </span>
+                </div>
+              )}
 
               <button className="btn btn--primary btn--lg" onClick={handleStart}>
-                {t('train.startSet', { reps: settings.targetReps })}
+                {t('train.startSet', { reps: doseReps })}
               </button>
             </div>
           ) : (
@@ -195,17 +224,17 @@ export function RehabTraining({
                 concentricElapsed={liveState.concentricElapsed}
                 eccentricElapsed={liveState.eccentricElapsed}
                 paceStatus={liveState.paceStatus}
-                targetDuration={settings.holdDurationS}
+                targetDuration={doseHoldS}
               />
 
               <div className="training-progress">
                 <div className="training-progress__head">
                   <span className="training-progress__count">
                     {completedReps.length}
-                    <span className="training-progress__of"> {t('train.repsOf', { total: settings.targetReps })}</span>
+                    <span className="training-progress__of"> {t('train.repsOf', { total: doseReps })}</span>
                   </span>
                 </div>
-                <RepPips done={completedReps.length} total={settings.targetReps} />
+                <RepPips done={completedReps.length} total={doseReps} />
               </div>
             </>
           )}

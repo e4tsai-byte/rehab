@@ -1,5 +1,19 @@
 import type { CompletedSession } from './rehabTypes'
 import type { Locale } from '../i18n/locale'
+import { EXERCISE_CATALOG } from './exerciseCatalog'
+
+/**
+ * True when a recorded session belongs to an isometric-hold exercise (the
+ * side-lying supraspinatus hold). Resolved from the catalog by id — sessions
+ * store only `exerciseId`, not the tracking model. Physiatrist §6: a low 10–15°
+ * hold must never be pooled into the Phase-2 "higher elevation = better"
+ * aggregates, where its peak angle would read as regression. Unknown ids (an
+ * exercise later removed) resolve to false and stay in the general stats.
+ */
+function isIsometricSession(session: CompletedSession): boolean {
+  const ex = EXERCISE_CATALOG.find((e) => e.id === session.exerciseId)
+  return ex?.trackingModel === 'isometricHold'
+}
 
 export interface RecoveryPhase {
   id: string
@@ -112,15 +126,23 @@ export interface RecoveryProgress {
 export function calculateRecoveryProgress(history: CompletedSession[]): RecoveryProgress {
   const currentPhase = RECOVERY_PHASES[1]! // Phase 2 is the active phase
   const targetSetsForPhase = 20
-  const completedSetsInPhase = history.length
 
-  const totalReps = history.reduce((acc, s) => acc + s.completedReps, 0)
-  const totalClean = history.reduce((acc, s) => acc + s.cleanRepsCount, 0)
+  /* This whole computation is the Phase-2 progress track (sets toward 90°,
+     clean-movement rate, average elevation). Isometric-hold sessions are a
+     Phase-1 activation item and must never feed it (physiatrist §6): counting
+     them would both inflate the Phase-2 set total and drag the elevation
+     average down toward their prescribed 12°, reading as regression. They are
+     surfaced separately via calculateHoldAdherence. */
+  const pacedHistory = history.filter((s) => !isIsometricSession(s))
+  const completedSetsInPhase = pacedHistory.length
+
+  const totalReps = pacedHistory.reduce((acc, s) => acc + s.completedReps, 0)
+  const totalClean = pacedHistory.reduce((acc, s) => acc + s.cleanRepsCount, 0)
   const cleanMovementRatePct = totalReps > 0 ? Math.round((totalClean / totalReps) * 100) : 0
 
   const avgElevationDeg =
-    history.length > 0
-      ? Math.round(history.reduce((acc, s) => acc + s.peakElevationDeg, 0) / history.length)
+    pacedHistory.length > 0
+      ? Math.round(pacedHistory.reduce((acc, s) => acc + s.peakElevationDeg, 0) / pacedHistory.length)
       : 0
 
   const progressPct = Math.min(100, Math.round((completedSetsInPhase / targetSetsForPhase) * 100))
@@ -352,10 +374,16 @@ export function calculateRecentStats(
   const cleanReps = recentSessions.reduce((acc, s) => acc + s.cleanRepsCount, 0)
   const cleanMovementRatePct = totalReps > 0 ? Math.round((cleanReps / totalReps) * 100) : 0
 
+  /* Elevation average excludes isometric-hold sessions (physiatrist §6): a
+     prescribed 12° hold is not a lower peak on the same scale as a 90° flexion
+     rep, and averaging them together misreports both. Hold sessions still count
+     toward totalSets/totalReps/hold-duration/active-days below — they are real
+     training, just not an elevation achievement. */
+  const pacedRecent = recentSessions.filter((s) => !isIsometricSession(s))
   const avgPeakElevationDeg =
-    recentSessions.length > 0
+    pacedRecent.length > 0
       ? Math.round(
-          (recentSessions.reduce((acc, s) => acc + s.peakElevationDeg, 0) / recentSessions.length) * 10
+          (pacedRecent.reduce((acc, s) => acc + s.peakElevationDeg, 0) / pacedRecent.length) * 10
         ) / 10
       : 0
 
@@ -381,5 +409,48 @@ export function calculateRecentStats(
     avgPeakElevationDeg,
     avgHoldDurationS,
     daysActiveInPeriod: uniqueDays,
+  }
+}
+
+export interface HoldAdherence {
+  /** Sessions of this exercise completed on `viewDate` (default today). */
+  sessionsToday: number
+  /** The exercise's prescribed sessions-per-day (dailySessionTarget), or 0 if none. */
+  dailyTarget: number
+  /** Holds (sets) completed across today's sessions of this exercise. */
+  holdsToday: number
+  /** True once sessionsToday has reached the daily target (target > 0). */
+  targetMet: boolean
+}
+
+/**
+ * Adherence for a sessions-per-day exercise (the side-lying supraspinatus hold):
+ * how many sessions of `exerciseId` were done today versus its `dailySessionTarget`.
+ * This is the surface this exercise is tracked by INSTEAD of the Phase-2 elevation
+ * metrics (physiatrist §6) — a low hold is scored by how faithfully it is repeated,
+ * not by how high the arm went. Computed from existing history grouped by local day
+ * (invariant 1: no new persisted state).
+ */
+export function calculateHoldAdherence(
+  history: CompletedSession[],
+  exerciseId: string,
+  viewDate: Date = new Date()
+): HoldAdherence {
+  const ex = EXERCISE_CATALOG.find((e) => e.id === exerciseId)
+  const dailyTarget = ex?.dailySessionTarget ?? 0
+
+  const dayKey = toLocalDateKey(viewDate)
+  const todaysSessions = history.filter(
+    (s) => s.exerciseId === exerciseId && toLocalDateKey(new Date(s.timestamp)) === dayKey
+  )
+
+  const sessionsToday = todaysSessions.length
+  const holdsToday = todaysSessions.reduce((acc, s) => acc + s.completedReps, 0)
+
+  return {
+    sessionsToday,
+    dailyTarget,
+    holdsToday,
+    targetMet: dailyTarget > 0 && sessionsToday >= dailyTarget,
   }
 }

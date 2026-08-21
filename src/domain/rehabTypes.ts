@@ -9,6 +9,10 @@ export type FormFlag =
   | 'INCOMPLETE_HOLD'
   | 'PACING_TOO_FAST'
   | 'PACING_TOO_SLOW'
+  // Side-lying isometric-hold fault: the arm rises ABOVE the supraspinatus band
+  // (the target is a CEILING, not a floor — §9 D1). Emitted only by the
+  // side-lying hold tracker; the paced flexion tracker never raises it.
+  | 'OVER_ELEVATION'
 
 export type PaceStatus = 'ON_TRACK' | 'TOO_FAST' | 'TOO_SLOW' | 'IDLE'
 

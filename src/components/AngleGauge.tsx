@@ -7,6 +7,14 @@ interface AngleGaugeProps {
   phaseLabel: string
   hint?: string | undefined
   maxAngle?: number
+  /* The lit band and nominal marker default to the paced machine's accepted
+     hold range (invariant 3's pacedElevation model). The isometric-hold model
+     lives at a low 10–15° band on a 0–30° dial, so it overrides all three; a
+     value passed here is a degree on the same scale as maxAngle. Paced callers
+     pass none and render byte-identical to before these props existed. */
+  bandMinDeg?: number
+  bandMaxDeg?: number
+  targetDeg?: number
 }
 
 const R = 52
@@ -37,16 +45,19 @@ export function AngleGauge({
   phaseLabel,
   hint,
   maxAngle = 120,
+  bandMinDeg = CONFIG.TARGET_HOLD_ENTER,
+  bandMaxDeg = CONFIG.TARGET_HOLD_MAX,
+  targetDeg = CONFIG.TARGET_ANGLE_NOMINAL,
 }: AngleGaugeProps) {
   const { t } = useT()
   const clamped = Math.max(0, Math.min(maxAngle, currentAngle))
   const valueFraction = clamped / maxAngle
 
-  const bandStart = CONFIG.TARGET_HOLD_ENTER / maxAngle
-  const bandEnd = Math.min(1, CONFIG.TARGET_HOLD_MAX / maxAngle)
+  const bandStart = bandMinDeg / maxAngle
+  const bandEnd = Math.min(1, bandMaxDeg / maxAngle)
   const bandLength = Math.max(0, bandEnd - bandStart)
-  const nominal = pointAt(CONFIG.TARGET_ANGLE_NOMINAL / maxAngle, R)
-  const nominalInner = pointAt(CONFIG.TARGET_ANGLE_NOMINAL / maxAngle, R - 8)
+  const nominal = pointAt(targetDeg / maxAngle, R)
+  const nominalInner = pointAt(targetDeg / maxAngle, R - 8)
 
   return (
     <div className={`hud ${isTargetZone ? 'hud--target' : ''}`}>

@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
 import type { RehabLiveState, RehabRepRecord } from '../domain/rehabTypes'
-import { ClientShoulderFlexionTracker, type Landmark3D, type Posture } from '../pose/shoulderKinematics'
+import {
+  ClientShoulderFlexionTracker,
+  ClientSideLyingHoldTracker,
+  type Landmark3D,
+  type Posture,
+} from '../pose/shoulderKinematics'
+
+type TrackingModel = 'pacedElevation' | 'isometricHold'
+type HoldTracker = ClientShoulderFlexionTracker | ClientSideLyingHoldTracker
 
 export function usePoseTracker({
   posture = 'standing',
+  trackingModel = 'pacedElevation',
   holdDurationS = 5.0,
   targetReps = 10,
   onRep,
   onPhaseChange,
 }: {
   posture?: Posture
+  trackingModel?: TrackingModel
   holdDurationS?: number
   targetReps?: number
   onRep?: (rep: RehabRepRecord) => void
@@ -35,12 +45,42 @@ export function usePoseTracker({
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const landmarkerRef = useRef<PoseLandmarker | null>(null)
-  const trackerRef = useRef<ClientShoulderFlexionTracker>(new ClientShoulderFlexionTracker(10))
+  // The active tracker. Selected by trackingModel: the paced elevation machine or
+  // the side-lying isometric-hold machine (§9 D2). Both expose the same
+  // process(worldLandmarks, landmarks2D, timestampS) => { rep, live } contract and
+  // the setHoldDuration / setTargetReps setters. Lazy-initialised with the correct
+  // class so the very first detection frame already has the right machine.
+  const trackerRef = useRef<HoldTracker | null>(null)
+  function makeTracker(model: TrackingModel): HoldTracker {
+    return model === 'isometricHold'
+      ? new ClientSideLyingHoldTracker(targetReps, holdDurationS)
+      : new ClientShoulderFlexionTracker(targetReps, posture, holdDurationS)
+  }
+  if (trackerRef.current === null) {
+    trackerRef.current = makeTracker(trackingModel)
+  }
   const animIdRef = useRef<number | null>(null)
+
+  // Rebuild ONLY when the model itself changes (a genuinely different state
+  // machine). A settings change (posture / hold / reps) must NOT reset the machine
+  // — it flows through the setters below, exactly as the paced path did before.
+  const prevModelRef = useRef<TrackingModel>(trackingModel)
   useEffect(() => {
-    trackerRef.current.setPosture(posture)
-    trackerRef.current.setHoldDuration(holdDurationS)
-    trackerRef.current.setTargetReps(targetReps)
+    if (prevModelRef.current !== trackingModel) {
+      prevModelRef.current = trackingModel
+      trackerRef.current = makeTracker(trackingModel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackingModel])
+
+  useEffect(() => {
+    const tr = trackerRef.current
+    if (!tr) return
+    // setPosture exists on the paced tracker only; the isometric tracker is
+    // side-lying by construction and has no posture to set.
+    if (tr instanceof ClientShoulderFlexionTracker) tr.setPosture(posture)
+    tr.setHoldDuration(holdDurationS)
+    tr.setTargetReps(targetReps)
   }, [posture, holdDurationS, targetReps])
   const prevPhaseRef = useRef<string>('RESTING')
 
@@ -140,7 +180,12 @@ export function usePoseTracker({
           drawSkeleton(ctx, lms2d, canvas.width, canvas.height)
         }
 
-        const { rep, live } = trackerRef.current.process(lms3d, lms2d, nowS)
+        const tracker = trackerRef.current
+        if (!tracker) {
+          animIdRef.current = requestAnimationFrame(runDetection)
+          return
+        }
+        const { rep, live } = tracker.process(lms3d, lms2d, nowS)
         setLiveState(live)
 
         if (prevPhaseRef.current !== live.phase) {

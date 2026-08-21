@@ -1,5 +1,6 @@
 import type { FormFlag } from './rehabTypes'
 import type { Locale } from '../i18n/locale'
+import type { Posture } from '../pose/shoulderKinematics'
 
 export interface ExerciseDefinition {
   id: string
@@ -9,12 +10,21 @@ export interface ExerciseDefinition {
   categoryEn: string
   targetLimb: string
   targetLimbEn: string
-  posture: 'standing' | 'seated'
+  posture: Posture
+  // Which state machine drives this exercise (§9 D2): the paced RESTING→ASCENDING
+  // →HOLDING→DESCENDING elevation ramp, or the side-lying isometric READY→HOLDING
+  // hold. Selected in usePoseTracker; the target is a FLOOR for paced and a
+  // CEILING for the hold.
+  trackingModel: 'pacedElevation' | 'isometricHold'
   targetAngleDeg: number
   holdDurationS: number
   concentricCadenceS: number
   eccentricCadenceS: number
   targetReps: number
+  // Prescribed sessions per day (§9 D4). Optional: absent = no daily-frequency
+  // goal (today's behavior for the paced entries). Adherence is COMPUTED from
+  // CompletedSession history — no new persisted state (invariant 1).
+  dailySessionTarget?: number
   descriptionZh: string
   descriptionEn: string
   framingHintZh: string
@@ -86,6 +96,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     concentricCadenceS: 5.0,
     eccentricCadenceS: 5.0,
     targetReps: 10,
+    trackingModel: 'pacedElevation',
     descriptionZh: '手臂自然垂放身側，以 5 秒緩慢平舉至 90° 水平位置，維持穩定停頓 5 秒，再以 5 秒緩慢控制下放。',
     descriptionEn:
       'With the arm resting at your side, raise it slowly to the 90° horizontal position over 5 seconds, hold steady for 5 seconds, then lower under control over 5 seconds.',
@@ -102,6 +113,10 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       'Keep the elbow straight and move smoothly and slowly.',
     ],
     commonErrorsZh: {
+      // OVER_ELEVATION is dead-but-typed for the paced exercises: their target is a
+      // FLOOR the arm climbs to, not a low ceiling, so the flag never fires here.
+      // Present only to satisfy Record<FormFlag, string>; copywriter to revisit.
+      OVER_ELEVATION: '此動作不涉及低角度上限',
       SHOULDER_HIKE: '右肩聳起（斜方肌代償）',
       TORSO_LEAN: '軀幹後仰或側傾借力',
       ELBOW_BENT: '手肘彎曲縮短力臂',
@@ -112,6 +127,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
     },
     commonErrorsEn: {
+      // Dead-but-typed for the paced exercises (target is a floor, not a low
+      // ceiling); present only for Record<FormFlag, string> completeness.
+      OVER_ELEVATION: 'Not applicable to this movement',
       SHOULDER_HIKE: 'Right shoulder shrugs (trapezius compensation)',
       TORSO_LEAN: 'Torso leans back or sideways for leverage',
       ELBOW_BENT: 'Elbow bends and shortens the lever arm',
@@ -139,6 +157,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     concentricCadenceS: 5.0,
     eccentricCadenceS: 5.0,
     targetReps: 10,
+    trackingModel: 'pacedElevation',
     descriptionZh: '坐在書桌前，手臂垂放於大腿或椅側，以 5 秒平舉至 90° 水平位置，頂點穩定停頓 5 秒，再以 5 秒緩慢下放。',
     descriptionEn:
       'Seated at a desk with the arm resting on your thigh or beside the chair, raise it to the 90° horizontal position over 5 seconds, hold steady at the top for 5 seconds, then lower slowly over 5 seconds.',
@@ -156,6 +175,10 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       'Fully straighten the elbow and keep the raise horizontal.',
     ],
     commonErrorsZh: {
+      // OVER_ELEVATION is dead-but-typed for the paced exercises: their target is a
+      // FLOOR the arm climbs to, not a low ceiling, so the flag never fires here.
+      // Present only to satisfy Record<FormFlag, string>; copywriter to revisit.
+      OVER_ELEVATION: '此動作不涉及低角度上限',
       SHOULDER_HIKE: '右肩聳起（斜方肌代償）',
       TORSO_LEAN: '軀幹後仰或側傾借力',
       ELBOW_BENT: '手肘彎曲縮短力臂',
@@ -166,6 +189,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
     },
     commonErrorsEn: {
+      // Dead-but-typed for the paced exercises (target is a floor, not a low
+      // ceiling); present only for Record<FormFlag, string> completeness.
+      OVER_ELEVATION: 'Not applicable to this movement',
       SHOULDER_HIKE: 'Right shoulder shrugs (trapezius compensation)',
       TORSO_LEAN: 'Torso leans back or sideways for leverage',
       ELBOW_BENT: 'Elbow bends and shortens the lever arm',
@@ -193,6 +219,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     concentricCadenceS: 5.0,
     eccentricCadenceS: 5.0,
     targetReps: 10,
+    trackingModel: 'pacedElevation',
     descriptionZh: '手臂由身體兩側緩慢向外平舉至 90° 水平位置，維持 5 秒停頓後緩慢下放，強化中三角肌與棘上肌動態穩定。',
     descriptionEn:
       'Raise the arm slowly out to the side to the 90° horizontal position, hold for 5 seconds, then lower slowly — strengthening dynamic stability of the middle deltoid and supraspinatus.',
@@ -207,6 +234,10 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       "Keep both shoulders down; don't shrug to drive the arm.",
     ],
     commonErrorsZh: {
+      // OVER_ELEVATION is dead-but-typed for the paced exercises: their target is a
+      // FLOOR the arm climbs to, not a low ceiling, so the flag never fires here.
+      // Present only to satisfy Record<FormFlag, string>; copywriter to revisit.
+      OVER_ELEVATION: '此動作不涉及低角度上限',
       SHOULDER_HIKE: '肩關節聳起代償',
       TORSO_LEAN: '軀幹側傾借力',
       ELBOW_BENT: '手肘微彎',
@@ -217,6 +248,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: '速度過慢',
     },
     commonErrorsEn: {
+      // Dead-but-typed for the paced exercises (target is a floor, not a low
+      // ceiling); present only for Record<FormFlag, string> completeness.
+      OVER_ELEVATION: 'Not applicable to this movement',
       SHOULDER_HIKE: 'Shoulder shrugs in compensation',
       TORSO_LEAN: 'Torso leans sideways for leverage',
       ELBOW_BENT: 'Elbow slightly bent',
@@ -244,6 +278,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     concentricCadenceS: 5.0,
     eccentricCadenceS: 5.0,
     targetReps: 10,
+    trackingModel: 'pacedElevation',
     descriptionZh: '手臂沿肩胛骨平面（前方約 30° 夾角）平舉至 90°，在最低關節囊壓力下精準啟動旋轉肌袖。',
     descriptionEn:
       'Raise the arm along the scapular plane (about 30° forward of the side) to 90°, precisely activating the rotator cuff under minimal capsular pressure.',
@@ -258,6 +293,10 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       'Keep the scapula against the ribcage and raise and lower smoothly.',
     ],
     commonErrorsZh: {
+      // OVER_ELEVATION is dead-but-typed for the paced exercises: their target is a
+      // FLOOR the arm climbs to, not a low ceiling, so the flag never fires here.
+      // Present only to satisfy Record<FormFlag, string>; copywriter to revisit.
+      OVER_ELEVATION: '此動作不涉及低角度上限',
       SHOULDER_HIKE: '肩部聳起代償',
       TORSO_LEAN: '後仰借力',
       ELBOW_BENT: '手臂彎曲',
@@ -268,6 +307,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: '節奏過慢',
     },
     commonErrorsEn: {
+      // Dead-but-typed for the paced exercises (target is a floor, not a low
+      // ceiling); present only for Record<FormFlag, string> completeness.
+      OVER_ELEVATION: 'Not applicable to this movement',
       SHOULDER_HIKE: 'Shoulder shrugs in compensation',
       TORSO_LEAN: 'Leaning back for leverage',
       ELBOW_BENT: 'Arm bends',
@@ -295,6 +337,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     concentricCadenceS: 5.0,
     eccentricCadenceS: 5.0,
     targetReps: 10,
+    trackingModel: 'pacedElevation',
     descriptionZh: '手肘彎曲 90° 貼緊身體或置於桌面，前臂向外側水平旋轉，強化肩關節後側旋轉肌群。',
     descriptionEn:
       'With the elbow bent 90° against your side or on the desk, rotate the forearm outward horizontally, strengthening the posterior rotator muscles of the shoulder.',
@@ -309,6 +352,10 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       "Keep the wrist straight; don't flick it to compensate.",
     ],
     commonErrorsZh: {
+      // OVER_ELEVATION is dead-but-typed for the paced exercises: their target is a
+      // FLOOR the arm climbs to, not a low ceiling, so the flag never fires here.
+      // Present only to satisfy Record<FormFlag, string>; copywriter to revisit.
+      OVER_ELEVATION: '此動作不涉及低角度上限',
       SHOULDER_HIKE: '聳肩代償',
       TORSO_LEAN: '軀幹旋轉借力',
       ELBOW_BENT: '手肘角度改變',
@@ -319,6 +366,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: '速度過慢',
     },
     commonErrorsEn: {
+      // Dead-but-typed for the paced exercises (target is a floor, not a low
+      // ceiling); present only for Record<FormFlag, string> completeness.
+      OVER_ELEVATION: 'Not applicable to this movement',
       SHOULDER_HIKE: 'Shrug compensation',
       TORSO_LEAN: 'Torso rotates for leverage',
       ELBOW_BENT: 'Elbow angle changes',
@@ -331,5 +381,76 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     thumbnailUrl: 'images/thumb-external-rotation.jpg',
     diagramUrl: 'images/seated-desk-flexion-guide.jpg',
     status: 'upcoming',
+  },
+  {
+    // §9 — the first exercise on the isometric-hold model. Side-lying, right (top)
+    // arm, low 10–15° abduction CEILING held ~20s. Cadence fields are INERT here
+    // (no concentric/eccentric tempo); kept only so the shape matches the paced
+    // entries. Dose is a FIXED prescription (targetReps=5, holdDurationS=20) and
+    // does NOT read the global Settings sliders — see RehabTraining.
+    id: 'right-arm-side-lying-abduction-hold',
+    name: 'Side-Lying Right Arm Low Abduction Hold (10–15°)',
+    nameZh: '側臥右臂低角度外展等長支撐',
+    category: '棘上肌低角度等長肌耐力',
+    categoryEn: 'Low-angle supraspinatus isometric endurance',
+    targetLimb: '右手',
+    targetLimbEn: 'Right arm',
+    posture: 'sideLying',
+    trackingModel: 'isometricHold',
+    targetAngleDeg: 12,
+    holdDurationS: 20,
+    concentricCadenceS: 2.0, // INERT — no tempo on the isometric model
+    eccentricCadenceS: 2.0, // INERT — no tempo on the isometric model
+    targetReps: 5,
+    dailySessionTarget: 2,
+    descriptionZh:
+      '向左側躺，右手臂伸直、掌心朝向大腿，將手臂由身側向上抬起約 10–15°，維持在這個低位等長支撐 20 秒（可漸進至 30 秒）。重點在於低角度啟動棘上肌，不追求抬高。每回合 5 次，每日至少 2 回合。',
+    descriptionEn:
+      'Lie on your left side with the right arm straight and palm facing your thigh. Lift the arm about 10–15° away from your side and hold that low position for 20 seconds (progress toward 30). The point is to activate the supraspinatus at a low angle — do not lift higher. Five holds per session, at least two sessions a day.',
+    framingHintZh:
+      '向左側躺，面向裝置。將裝置放在胸前約一手臂距離的地面上，螢幕直立、鏡頭與肩同高，讓肩、肘、腕與髖都在畫面內。上方的右手是訓練側。',
+    framingHintEn:
+      "Lie on your left side facing the device. Set it on the floor about one arm's length in front of your chest, screen upright and the lens level with your shoulder. Keep your shoulder, elbow, wrist, and hip all in frame. Your top (right) arm is the working arm.",
+    tipsZh: [
+      '掌心朝向大腿（中立位），避免大拇指朝下內旋',
+      '肩膀放鬆下沉，遠離耳朵，不要聳肩出力',
+      '手肘保持伸直',
+      '低就是目標，不要越抬越高',
+    ],
+    tipsEn: [
+      'Palm faces the thigh (neutral); avoid rotating the thumb down.',
+      'Let the shoulder relax and drop away from the ear; do not shrug.',
+      'Keep the elbow straight.',
+      'Low is the goal — do not lift higher.',
+    ],
+    commonErrorsZh: {
+      OVER_ELEVATION: '手臂抬得過高（超過 15°），改由中三角肌與上斜方肌出力',
+      SHOULDER_HIKE: '肩膀朝耳朵方向聳起，以上斜方肌上提手臂',
+      TORSO_LEAN: '軀幹向後翻滾借力',
+      ELBOW_BENT: '手肘彎曲，縮短力臂並改變施力肌群',
+      INCOMPLETE_HOLD: '手臂在完成秒數前即落下，低於低位下限',
+      RUSHED_CONCENTRIC: '此動作為等長支撐，無節奏節拍',
+      RUSHED_ECCENTRIC: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_FAST: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_SLOW: '此動作為等長支撐，無節奏節拍',
+    },
+    commonErrorsEn: {
+      OVER_ELEVATION:
+        'Arm lifted too high (past 15°), shifting the work to the middle deltoid and upper trapezius',
+      SHOULDER_HIKE: 'Shoulder hikes toward the ear, hoisting the arm with the upper trapezius',
+      TORSO_LEAN: 'Trunk rolls backward to offload the arm',
+      ELBOW_BENT: 'Elbow bends, shortening the lever and shifting the load',
+      INCOMPLETE_HOLD: 'Arm drops below the low band before the hold time is met',
+      RUSHED_CONCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      RUSHED_ECCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_FAST: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_SLOW: 'This is an isometric hold; there is no tempo to pace',
+    },
+    // TODO: no side-lying asset exists yet — reusing the lateral-abduction thumb and
+    // the standing guide diagram as the least-wrong placeholders. Needs a dedicated
+    // side-lying thumbnail + motion diagram (design).
+    thumbnailUrl: 'images/thumb-lateral-abduction.jpg',
+    diagramUrl: 'images/standing-arm-flexion-guide.jpg',
+    status: 'prescribed',
   },
 ]

@@ -115,6 +115,62 @@ export const CONFIG = {
   COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.18, // of torso length
   COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.22,   // of shoulder width
   COMPENSATION_TORSO_LEAN_DEG: 16.0,
+
+  /* ══ Side-lying supraspinatus ISOMETRIC HOLD (posture: 'sideLying') ═════════
+     A SECOND, self-contained block for the second tracking model (§9 D2,
+     invariant 1.3 amended). Consumed ONLY by ClientSideLyingHoldTracker. It does
+     NOT reuse, and MUST NOT be tuned against, the paced flexion constants above:
+     that machine reads a ~90° flexion FLOOR the arm climbs to; this one reads a
+     low 10–15° abduction CEILING the arm must stay UNDER (§9 D1). Same geometry,
+     opposite reference — conflating the two is a defect.
+
+     PROVENANCE, split by author so the next reader knows what is clinical and
+     what is tunable:
+       • (PHYSIATRIST) — clinical values set by the physiatrist: the elevation
+         band, the 20s target, the 30s stretch goal, 5 sets, the >18°/≈2s
+         over-elevation invalidation default, and the straight-arm requirement.
+       • (ME) — debounce / hysteresis / settle / rest / timeout numbers chosen by
+         the measurement-engineer to keep a camera-noise signal from chattering
+         the state machine. The physiatrist named 18°/≈2s as a clinician-tunable
+         default and left the exact debounce to this layer.
+     ALL are n = 1 and UNVALIDATED: there is no fixture corpus yet (§3 KNOWN GAP).
+     Because these are NEW constants, the "no paced constant changes without a
+     manual before/after" rule is satisfied by not touching anything above; these
+     still get the corpus before anyone calls them validated.
+
+     Cadence is INERT for this exercise: there is no concentric/eccentric tempo,
+     so the tracker never emits RUSHED_* or PACING_* and there are no cadence
+     constants here by design. Per invariant 4, any value that would differ by
+     view is a named pair; nothing here does — this exercise ships side-lying
+     only, so every constant is single-view and labelled sideLying. */
+
+  HOLD_TARGET_ANGLE_DEG: 12.0,        // (PHYSIATRIST) abduction target; 0° = arm alongside trunk
+  HOLD_TARGET_S: 20.0,                // (PHYSIATRIST) a set is COMPLETE at 20s accumulated in-band (loaded)
+  HOLD_STRETCH_GOAL_S: 30.0,          // (PHYSIATRIST) pain-free stretch goal — NEVER a failure line; display only, gates nothing (invariant 1.6)
+
+  HOLD_FLOOR_DEG: 5.0,                // (PHYSIATRIST) below this the arm is resting/unloaded: accumulation pauses; the observable "arm lowered mid-hold" is INCOMPLETE_HOLD
+  HOLD_FLOOR_EXIT_DEG: 7.0,           // (ME) hysteresis exit for the floor — re-load only above 7° so a tremor at the 5° edge cannot flap the timer / INCOMPLETE cue (pair with HOLD_FLOOR_DEG)
+  HOLD_GOOD_BAND_MIN_DEG: 10.0,       // (PHYSIATRIST) good-band lower edge (gauge display / isTargetZone)
+  HOLD_GOOD_BAND_MAX_DEG: 15.0,       // (PHYSIATRIST) good-band upper edge
+
+  HOLD_SETTLE_MIN_DEG: 5.0,           // (ME) band-settle lower edge = floor: the arm must be loaded to arm a set
+  HOLD_SETTLE_MAX_DEG: 15.0,          // (ME) band-settle upper edge = over-elevation cue: do not arm a set already over-elevated
+  HOLD_SETTLE_S: 0.7,                 // (ME) angle must dwell continuously in [settle_min, settle_max] this long before the hold clock starts, so a hand sweeping through 12° on the way up does not start a hold
+
+  OVER_ELEVATION_CUE_DEG: 15.0,        // (PHYSIATRIST) gentle LIVE nudge above 15° — does NOT stop the timer or fail the set on its own
+  OVER_ELEVATION_CUE_EXIT_DEG: 13.0,   // (ME) hysteresis exit for the live nudge so a tremor around 15° does not flap OVER_ELEVATION on/off (pair with OVER_ELEVATION_CUE_DEG)
+  OVER_ELEVATION_INVALIDATE_ENTER_DEG: 18.0, // (PHYSIATRIST default) continuous elevation above this arms the set-invalidation timer
+  OVER_ELEVATION_INVALIDATE_EXIT_DEG: 15.0,  // (PHYSIATRIST) re-arm/reset that timer only when back below 15° — hysteresis pair with the 18° enter, so chatter at 18° cannot repeatedly re-trigger
+  OVER_ELEVATION_INVALIDATE_SUSTAIN_S: 2.0,  // (PHYSIATRIST default ≈2s) continuous seconds above 18° before the set is INVALIDATED (records OVER_ELEVATION)
+
+  HOLD_ELBOW_MIN_DEG: 160.0,          // (PHYSIATRIST) a straight arm is required; elbow angle below this = ELBOW_BENT. SEPARATE constant from the paced COMPENSATION_ELBOW_MIN_DEG (115) — different exercise, do not conflate
+
+  HOLD_FLAG_PERSIST_S: 0.8,           // (ME) a live fault must persist this long before it is RECORDED into the set (matches the paced machine) — single-frame landmark jitter must never record a fault
+  HOLD_ABANDON_S: 4.0,                // (ME) arm held below the floor (unloaded) continuously this long = the user let go → end the set and record what accumulated
+  HOLD_POSE_LOST_TIMEOUT_S: 6.0,      // (ME) SIDE_LYING_NO_TRUNK_AXIS / no-detection sustained this long → end the set. NO fabricated flag: a lost landmark must never manufacture a fault (invariant 1.2)
+  HOLD_WALLCLOCK_TIMEOUT_S: 90.0,     // (ME) absolute unstickability backstop (invariant 1.3): no legitimate single set (30s stretch goal + pauses) approaches this; force-end regardless of angle
+  HOLD_MIN_VALID_S: 3.0,              // (ME) a set that accumulated less than this is a blip, not an effort — discard, record no set. A short-but-real hold (≥3s, e.g. 15s) is still recorded and credited (invariant 1.6)
+  HOLD_REST_BETWEEN_SETS_S: 5.0,      // (ME) enforced recovery between isometric sets before a new set can arm. Clinician-tunable; NOT the paced REST_BETWEEN_REPS_S
 }
 
 function dot(a: number[], b: number[]): number {
@@ -677,6 +733,351 @@ export class ClientShoulderFlexionTracker {
         repsCompleted: this.repCount,
         targetReps: this.targetReps,
       },
+    }
+  }
+}
+
+/**
+ * Second tracking model (§9 D2): the side-lying supraspinatus ISOMETRIC HOLD.
+ *
+ * This is NOT the paced flexion machine with different numbers — it is a
+ * different state machine for a different movement. There is no concentric or
+ * eccentric phase and no tempo: the user lifts the arm a low 10–15° off the
+ * (horizontal) trunk and simply HOLDS it there for an accumulated 20s. The
+ * target is a CEILING, not a floor (§9 D1) — going ABOVE the band is the fault,
+ * not going below it.
+ *
+ * Architect's state names READY → HOLDING → READY map onto the existing
+ * RehabPhase values with no widening of the union: READY = 'RESTING' (the phase
+ * already means "between efforts / waiting"), HOLDING = 'HOLDING'. 'ASCENDING'
+ * and 'DESCENDING' are simply never entered by this machine — there is no ramp.
+ *
+ * MEASURABLE FLAGS (kinematicist's binding verdict): this tracker emits ONLY
+ * OVER_ELEVATION, INCOMPLETE_HOLD, ELBOW_BENT. SHOULDER_HIKE and TORSO_LEAN are
+ * not reliably measurable side-lying (their helpers return 0 for sideLying) and
+ * are never computed here. RUSHED_* / PACING_* belong to a paced tempo this
+ * exercise does not have and are never emitted. paceStatus is pinned 'IDLE'.
+ *
+ * UNMEASURABLE POSE: computeShoulderFlexion3D returns SIDE_LYING_NO_TRUNK_AXIS
+ * (-1) when no horizontal trunk axis can be formed. On -1 (and on total
+ * detection loss) the machine PAUSES: it does not accumulate hold time, does not
+ * raise OVER_ELEVATION, and does not raise INCOMPLETE_HOLD off the -1 — a lost
+ * landmark must never manufacture a fault (invariant 1.2). A sustained -1 ends
+ * the set via HOLD_POSE_LOST_TIMEOUT_S with no fabricated flag.
+ *
+ * UNSTICKABILITY (invariant 1.3), proven per state:
+ *   RESTING (READY): exits when the arm settles in-band (HOLD_SETTLE_S dwell)
+ *     AND the between-sets rest has elapsed. It needs no forced timeout: it only
+ *     WAITS for the user and runs no accumulator that can trap it; the bounded
+ *     HOLD_REST_BETWEEN_SETS_S countdown always completes, after which arming is
+ *     purely user-driven. (This mirrors the paced machine's RESTING.)
+ *   HOLDING: exits on ANY of — 20s accumulated (complete); OVER_ELEVATION
+ *     sustained (invalidate); arm unloaded HOLD_ABANDON_S (abandon); pose lost
+ *     HOLD_POSE_LOST_TIMEOUT_S; or the absolute HOLD_WALLCLOCK_TIMEOUT_S backstop.
+ *     PROOF it cannot freeze: every frame advances exactly one of
+ *     {accumulatedHoldS (loaded), belowFloorElapsedS (unloaded),
+ *     poseLostElapsedS (unmeasurable)} by dt, and the wall clock advances
+ *     unconditionally — so a terminating condition is always approaching no
+ *     matter where in the band the arm parks or how the pose degrades.
+ */
+export class ClientSideLyingHoldTracker {
+  private phase: RehabPhase = 'RESTING' // READY = 'RESTING', HOLDING = 'HOLDING'
+  private repCount = 0
+  private nextRepIndex = 1
+  private targetReps: number
+  // Fixed by construction: this tracker is side-lying only. Kept explicit so the
+  // geometry calls read the same `posture` argument the paced machine does.
+  private readonly posture: Posture = 'sideLying'
+  private targetHoldDurationS: number
+
+  private smoothedBuffer: number[] = []
+  private lastTimestampS = 0
+
+  // READY (settle + between-sets rest)
+  private settleElapsedS = 0
+  private restStartT = 0
+
+  // HOLDING
+  private holdEnterT = 0
+  private accumulatedHoldS = 0
+  private peakAngleDeg = 0
+
+  // Per-hold fault timers / hysteresis latches
+  private belowFloor = false
+  private belowFloorElapsedS = 0
+  private overElevatingCue = false
+  private overSustainedS = 0
+  private elbowBentElapsedS = 0
+  private poseLostElapsedS = 0
+  private setFlags: Set<FormFlag> = new Set()
+
+  constructor(targetReps = 5, targetHoldDurationS = CONFIG.HOLD_TARGET_S) {
+    this.targetReps = targetReps
+    this.targetHoldDurationS = targetHoldDurationS
+  }
+
+  public setHoldDuration(durationS: number): void {
+    this.targetHoldDurationS = durationS
+  }
+
+  public setTargetReps(reps: number): void {
+    this.targetReps = reps
+  }
+
+  // 5-sample median, identical to the paced machine. Safe here: this tracker
+  // only THRESHOLDS and integrates elapsed time — it never DIFFERENTIATES the
+  // angle framewise, so the median filter's stepwise output raises no spurious
+  // velocity (the standing lesson in autoregulation/velocity.py does not apply).
+  private getSmoothedAngle(rawAngle: number): number {
+    this.smoothedBuffer.push(rawAngle)
+    if (this.smoothedBuffer.length > 5) this.smoothedBuffer.shift()
+    const sorted = [...this.smoothedBuffer].sort((a, b) => a - b)
+    const mid = Math.floor(sorted.length / 2)
+    return sorted[mid] ?? rawAngle
+  }
+
+  private resetHoldState(): void {
+    this.accumulatedHoldS = 0
+    this.peakAngleDeg = 0
+    this.belowFloor = false
+    this.belowFloorElapsedS = 0
+    this.overElevatingCue = false
+    this.overSustainedS = 0
+    this.elbowBentElapsedS = 0
+    this.poseLostElapsedS = 0
+    this.setFlags = new Set()
+  }
+
+  // Build the paused/idle live state shared by RESTING-idle and pose-loss frames.
+  private pausedLive(
+    elevation: number,
+    holdRemaining: number,
+    restRemaining: number,
+    isTargetZone: boolean,
+    flags: FormFlag[],
+  ): RehabLiveState {
+    return {
+      elevation,
+      phase: this.phase,
+      holdRemaining: Math.round(holdRemaining * 10) / 10,
+      restRemaining: Math.round(restRemaining * 10) / 10,
+      concentricElapsed: 0,
+      eccentricElapsed: 0,
+      paceStatus: 'IDLE',
+      expectedAngle: Math.round(CONFIG.HOLD_TARGET_ANGLE_DEG),
+      isTargetZone,
+      flags,
+      repsCompleted: this.repCount,
+      targetReps: this.targetReps,
+    }
+  }
+
+  // Finalize the current set into a RehabRepRecord, or discard it if it never
+  // accumulated a meaningful hold. Always returns the machine to RESTING and
+  // starts the between-sets rest. holdDuration = accumulated IN-BAND seconds;
+  // concentric/eccentric = 0 (no such phases). isClean = no recorded faults.
+  private finalizeSet(timestampS: number): RehabRepRecord | null {
+    const accumulated = this.accumulatedHoldS
+    const peak = this.peakAngleDeg
+    const flags = [...this.setFlags]
+
+    // Record the set if it was a genuine attempt; discard only faultless blips.
+    // A "blip" is a set that armed then ended with negligible time AND no recorded
+    // fault — in practice a pose-loss/tracking glitch, not the user's doing, so
+    // manufacturing a record from it would violate invariant 1.2. But a set that
+    // carries a recorded fault (OVER_ELEVATION / INCOMPLETE_HOLD) is an informative
+    // attempt even if brief — the fault IS the outcome worth showing — so it is
+    // recorded regardless of duration. A short-but-clean hold (>= HOLD_MIN_VALID_S,
+    // e.g. 15s) is likewise a valid credited outcome, never a failure (invariant 1.6).
+    const isAttempt = accumulated >= CONFIG.HOLD_MIN_VALID_S || flags.length > 0
+
+    let rep: RehabRepRecord | null = null
+    if (isAttempt) {
+      rep = {
+        index: this.nextRepIndex++,
+        concentricDuration: 0,
+        holdDuration: Math.round(accumulated * 10) / 10,
+        eccentricDuration: 0,
+        peakElevation: Math.round(peak),
+        flags,
+        isClean: flags.length === 0,
+      }
+      this.repCount++
+    }
+
+    this.phase = 'RESTING'
+    this.restStartT = timestampS
+    this.settleElapsedS = 0
+    this.resetHoldState()
+    return rep
+  }
+
+  public process(
+    worldLandmarks: Landmark3D[] | null,
+    landmarks2D: Landmark3D[] | null,
+    timestampS: number,
+  ): { rep: RehabRepRecord | null; live: RehabLiveState } {
+    const dt = this.lastTimestampS > 0 ? Math.max(0, Math.min(0.2, timestampS - this.lastTimestampS)) : 0.033
+    this.lastTimestampS = timestampS
+
+    const noPose = !worldLandmarks || !landmarks2D
+    const rawAngle = noPose ? SIDE_LYING_NO_TRUNK_AXIS : computeShoulderFlexion3D(worldLandmarks!, this.posture)
+    // The sentinel must NOT be median-smoothed with real angles (it would corrupt
+    // the buffer with -1). Treat any unmeasurable frame as a hard "no reading".
+    const measurable = rawAngle !== SIDE_LYING_NO_TRUNK_AXIS
+    const angle = measurable ? this.getSmoothedAngle(rawAngle) : SIDE_LYING_NO_TRUNK_AXIS
+
+    // ── RESTING (READY): wait out the between-sets rest, then settle to arm ──────
+    if (this.phase === 'RESTING') {
+      let restRemaining = 0
+      if (this.restStartT > 0) {
+        const restElapsed = Math.max(0, timestampS - this.restStartT)
+        restRemaining = Math.max(0, CONFIG.HOLD_REST_BETWEEN_SETS_S - restElapsed)
+      }
+
+      if (!measurable) {
+        this.settleElapsedS = 0
+        return { rep: null, live: this.pausedLive(0, 0, restRemaining, false, []) }
+      }
+
+      const inSettleBand = angle >= CONFIG.HOLD_SETTLE_MIN_DEG && angle <= CONFIG.HOLD_SETTLE_MAX_DEG
+      const isTargetZone = angle >= CONFIG.HOLD_GOOD_BAND_MIN_DEG && angle <= CONFIG.HOLD_GOOD_BAND_MAX_DEG
+
+      // Band-settle only counts once the rest has elapsed. The continuous-dwell
+      // requirement (not just "is in band") is what stops a hand sweeping up
+      // through 12° from arming a set — it is only momentarily in-band.
+      if (restRemaining <= 0 && inSettleBand) {
+        this.settleElapsedS += dt
+      } else {
+        this.settleElapsedS = 0
+      }
+
+      if (this.settleElapsedS >= CONFIG.HOLD_SETTLE_S) {
+        this.phase = 'HOLDING'
+        this.holdEnterT = timestampS
+        this.restStartT = 0
+        this.settleElapsedS = 0
+        this.resetHoldState()
+        this.peakAngleDeg = angle
+      }
+
+      return {
+        rep: null,
+        live: this.pausedLive(
+          Math.round(angle),
+          CONFIG.HOLD_TARGET_S,
+          restRemaining,
+          isTargetZone,
+          [],
+        ),
+      }
+    }
+
+    // ── HOLDING ─────────────────────────────────────────────────────────────────
+    const wallElapsed = timestampS - this.holdEnterT
+
+    // Unmeasurable frame (sentinel or no detection): PAUSE everything. Advance
+    // only the pose-lost timer (and the wall clock, implicitly). Never accumulate,
+    // never flag — the -1 is "waiting for a valid pose", not a fault.
+    if (!measurable) {
+      this.poseLostElapsedS += dt
+      if (
+        this.poseLostElapsedS >= CONFIG.HOLD_POSE_LOST_TIMEOUT_S ||
+        wallElapsed >= CONFIG.HOLD_WALLCLOCK_TIMEOUT_S
+      ) {
+        const rep = this.finalizeSet(timestampS)
+        return { rep, live: this.pausedLive(0, 0, 0, false, []) }
+      }
+      const holdRemaining = Math.max(0, this.targetHoldDurationS - this.accumulatedHoldS)
+      return { rep: null, live: this.pausedLive(0, holdRemaining, 0, false, []) }
+    }
+
+    this.poseLostElapsedS = 0
+    if (angle > this.peakAngleDeg) this.peakAngleDeg = angle
+
+    const liveFlags: FormFlag[] = []
+
+    // Floor detection with hysteresis (5° enter / 7° exit) drives BOTH the
+    // accumulation gate and INCOMPLETE_HOLD.
+    if (angle < CONFIG.HOLD_FLOOR_DEG) this.belowFloor = true
+    else if (angle > CONFIG.HOLD_FLOOR_EXIT_DEG) this.belowFloor = false
+
+    if (this.belowFloor) {
+      // Arm lowered toward the resting floor mid-hold: pause the clock and nudge.
+      this.belowFloorElapsedS += dt
+      liveFlags.push('INCOMPLETE_HOLD')
+      if (this.belowFloorElapsedS >= CONFIG.HOLD_FLAG_PERSIST_S) {
+        this.setFlags.add('INCOMPLETE_HOLD')
+      }
+    } else {
+      // Loaded (>= floor): this is the in-band accumulation the 20s target counts.
+      // Over-elevation is a quality flag layered on top; it does NOT stop the clock.
+      this.belowFloorElapsedS = 0
+      this.accumulatedHoldS += dt
+    }
+
+    // Over-elevation LIVE cue with hysteresis (15° enter / 13° exit): a gentle
+    // nudge that neither stops the clock nor fails the set on its own.
+    if (angle > CONFIG.OVER_ELEVATION_CUE_DEG) this.overElevatingCue = true
+    else if (angle < CONFIG.OVER_ELEVATION_CUE_EXIT_DEG) this.overElevatingCue = false
+    if (this.overElevatingCue) liveFlags.push('OVER_ELEVATION')
+
+    // Over-elevation INVALIDATION timer with hysteresis (18° enter / 15° reset):
+    // continuous seconds above 18° accrue; dropping below 15° re-arms (resets);
+    // the 15–18° band freezes the timer so chatter at 18° cannot re-trigger.
+    if (angle > CONFIG.OVER_ELEVATION_INVALIDATE_ENTER_DEG) {
+      this.overSustainedS += dt
+    } else if (angle < CONFIG.OVER_ELEVATION_INVALIDATE_EXIT_DEG) {
+      this.overSustainedS = 0
+    }
+
+    // Elbow-straight requirement: ELBOW_BENT below HOLD_ELBOW_MIN_DEG (160°),
+    // recorded only once persisted. computeElbowExtensionDeg is posture-independent.
+    const elbowAngle = computeElbowExtensionDeg(worldLandmarks!, landmarks2D!)
+    if (elbowAngle < CONFIG.HOLD_ELBOW_MIN_DEG) {
+      liveFlags.push('ELBOW_BENT')
+      this.elbowBentElapsedS += dt
+      if (this.elbowBentElapsedS >= CONFIG.HOLD_FLAG_PERSIST_S) {
+        this.setFlags.add('ELBOW_BENT')
+      }
+    } else {
+      this.elbowBentElapsedS = 0
+    }
+
+    // ── Exit conditions ─────────────────────────────────────────────────────────
+    let rep: RehabRepRecord | null = null
+    let ended = false
+
+    if (this.accumulatedHoldS >= this.targetHoldDurationS) {
+      // Complete.
+      ended = true
+    } else if (this.overSustainedS >= CONFIG.OVER_ELEVATION_INVALIDATE_SUSTAIN_S) {
+      // Sustained over-elevation invalidates the set — record the fault, still
+      // credit the effort by recording the set.
+      this.setFlags.add('OVER_ELEVATION')
+      ended = true
+    } else if (this.belowFloorElapsedS >= CONFIG.HOLD_ABANDON_S) {
+      // Arm set down: the user let go. INCOMPLETE_HOLD is already recorded.
+      ended = true
+    } else if (wallElapsed >= CONFIG.HOLD_WALLCLOCK_TIMEOUT_S) {
+      // Absolute unstickability backstop.
+      ended = true
+    }
+
+    const holdRemaining = Math.max(0, this.targetHoldDurationS - this.accumulatedHoldS)
+    const isTargetZone = angle >= CONFIG.HOLD_GOOD_BAND_MIN_DEG && angle <= CONFIG.HOLD_GOOD_BAND_MAX_DEG
+
+    if (ended) {
+      rep = this.finalizeSet(timestampS)
+      return {
+        rep,
+        live: this.pausedLive(Math.round(angle), 0, 0, false, []),
+      }
+    }
+
+    return {
+      rep: null,
+      live: this.pausedLive(Math.round(angle), holdRemaining, 0, isTargetZone, liveFlags),
     }
   }
 }
