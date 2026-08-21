@@ -1,131 +1,73 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   VeloCare design tokens. Source of truth is DESIGN.md.
+   Rehabibi design tokens. DESIGN.md is the source of truth for every value here,
+   and the two files change together. A token that is not in DESIGN.md does not
+   exist; a value in a component that is not a token is a defect.
 
-   POSITIVE POLARITY: dark ink on a cream ground. Single theme, no toggle.
+   POLARITY: DARK. Light text on a near-black ground (#070a13).
 
-   This is an ACUITY decision, not a mood one, and the distinction matters when
-   picking values. A bright field constricts the pupil, which increases depth of
-   field and reduces the effect of optical aberration and lens opacity — all of
-   which generally helps a 75-90 year old reader. That reasoning only holds if
-   the ground is bright; it says nothing about it being pretty. So the cream is
-   chosen for luminance first: high L, low chroma, and NOT white, because a pure
-   white field under overhead fluorescent light produces veiling glare that costs
-   back everything the pupil constriction won.
-
-   The chromatic range is a light-to-dark BLUE ramp. Blue rather than the old
-   olive seed because on a warm cream ground a cool hue separates cleanly at
-   every lightness, and because the ramp has to carry both the darkest ink and a
-   mid-tone accent without either reading as a different colour family.
+   This replaced velocare's tokens.css, which declared the opposite polarity
+   ("dark ink on a cream ground") and loaded simultaneously with rehab.css —
+   so the app's polarity was decided by stylesheet import order rather than by
+   design. Removed 2026-08-21 with the rest of velocare.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Blue ramp ── the primary chromatic range, light to dark ────────────
-     Semantic tokens below map onto these. Never use a step directly in a
-     component; go through a semantic token so the mapping stays in one place. */
-  --blue-50: oklch(0.968 0.016 250);
-  --blue-100: oklch(0.928 0.034 250);
-  --blue-200: oklch(0.868 0.058 250);
-  --blue-300: oklch(0.782 0.088 250);
-  --blue-400: oklch(0.676 0.118 250);
-  --blue-500: oklch(0.560 0.148 250);
-  --blue-600: oklch(0.492 0.152 250);
-  --blue-700: oklch(0.424 0.140 250);
-  --blue-800: oklch(0.340 0.108 250);
-  --blue-900: oklch(0.262 0.070 250);
+  /* ── Ground & surfaces ───────────────────────────────────────────────── */
+  --rehab-bg: #070a13;
+  --rehab-surface: #0f172a;
+  --rehab-surface-raised: #182238;
+  --rehab-surface-hover: #1e293b;
+  --rehab-border: rgba(255, 255, 255, 0.08);
+  --rehab-border-light: rgba(255, 255, 255, 0.15);
 
-  /* ── Surfaces ── cream. Chroma stays under 0.02: enough to read as warm
-     paper rather than as grey, little enough that it never reads as a colour.
-     The participant field is the BRIGHTEST surface, which is the whole point of
-     the polarity flip; the rail is darker so it still reads as a separate
-     device panel by material rather than by font size. ─────────────────────── */
-  --bg: oklch(0.955 0.014 88); /* room-facing participant field    */
-  --surface: oklch(0.911 0.018 88); /* facilitator rail                 */
-  --surface-raised: oklch(0.981 0.008 88); /* rows, controls — sit up from rail */
-  --line: oklch(0.848 0.021 88); /* hairlines                        */
-  --line-strong: oklch(0.560 0.070 250); /* focus ring, active borders       */
+  /* Floating glass — header and overlay panels. One alpha, used everywhere.
+     DESIGN.md previously documented 0.82 while the only real usage was 0.7;
+     0.7 wins because it is what shipped and what the contrast was judged on. */
+  --rehab-surface-glass: rgba(15, 23, 42, 0.7);
 
-  /* ── Ink ── near-black, carrying a slight blue cast so text belongs to the
-     same family as the ramp rather than reading as a neutral pasted on top. */
-  --ink: oklch(0.250 0.028 255); /* hero readout, participant text   */
-  --ink-secondary: oklch(0.397 0.032 255); /* participant-safe secondary       */
-  --ink-muted: oklch(0.468 0.028 255); /* facilitator-read text only       */
+  /* Scrim behind anything painted over the live camera feed. Overlay accents
+     measure ~2:1 against a blown-out video pixel, so they cannot be trusted to
+     carry contrast alone. See DESIGN.md, Contrast floor. */
+  --rehab-scrim: rgba(2, 6, 23, 0.72);
 
-  /* MEASURED contrast, not calculated. Every ratio below was read back by
-     painting the token to a canvas and computing WCAG relative luminance in the
-     browser; hand-computed numbers have been wrong here in both directions
-     twice. OKLCH lightness is not a proxy for contrast ratio. Re-measure after
-     any token change rather than reasoning about the L value.
+  /* ── Semantic accents ────────────────────────────────────────────────────
+     These are a language, not a palette. Cyan = live tracking. Emerald =
+     target reached / clean. Amber = hold and rest intervals. Rose = form
+     alert. Never use one decoratively; never add a fifth without retiring
+     one. NOTE: rose describes the user's own movement here, deliberately —
+     velocare's inherited rule that red must never describe a person does not
+     apply to a single-user coaching surface with no observer. */
+  --rehab-cyan: #38bdf8;
+  --rehab-cyan-glow: rgba(56, 189, 248, 0.25);
+  --rehab-emerald: #10b981;
+  --rehab-emerald-glow: rgba(16, 185, 129, 0.25);
+  --rehab-amber: #f59e0b;
+  --rehab-amber-glow: rgba(245, 158, 11, 0.25);
+  --rehab-rose: #f43f5e;
+  --rehab-rose-soft: #fb7185;
+  --rehab-rose-glow: rgba(244, 63, 94, 0.25);
 
-                        --bg    --surface  --surface-raised
-       --ink            14.10     12.29       15.24
-       --ink-secondary   8.19      7.14        8.85
-       --ink-muted       6.06      5.28        6.55
-       --accent          7.21      6.29        7.80
-       --alert           7.14      6.22        7.72
-       --st-measured     7.88      6.87        8.52
-       --st-partial      7.69      6.70        8.31
-       --st-protocol     7.97      6.95        8.62
-       --st-unable       8.09      7.05        8.74
-       --st-discarded    6.06      5.28        6.55
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --rehab-text-main: #f8fafc;
+  --rehab-text-muted: #94a3b8;
+  --rehab-text-dim: #64748b;
 
-     --ink and --ink-secondary clear the 7:1 participant floor on --bg, which is
-     the participant field's surface. --ink-muted does not, and is therefore
-     confined to facilitator-read text: the rail, roster metadata, dialog
-     legends. It never appears inside `.field--locked`, which is verified rather
-     than asserted. */
+  /* ── Type ────────────────────────────────────────────────────────────────
+     Latin faces precede the CJK faces so digits and Latin labels take Inter
+     while Chinese falls through to the TC faces. The CJK entries are NOT
+     optional: the interface is zh-TW and dropping them (as the pre-cleanup
+     --rehab-font did) sends every Chinese glyph to an OS default. */
+  --rehab-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
 
-  /* ── State ── THE MACHINE. functional only, never decoration ───────────── */
-  --accent: var(--blue-700); /* tracking live                    */
-  --alert: oklch(0.451 0.185 27); /* tracking LOST — the only alarm   */
+  --t-display: 5rem;      /* 80px · cadence elapsed, hero numeral */
+  --t-lead: 3rem;         /* 48px · state words */
+  --t-fac-xl: 1.75rem;    /* 28px · emphasis */
+  --t-fac-lg: 1.25rem;    /* 20px · row primary, dialog titles */
+  --t-fac: 1.0625rem;     /* 17px · controls, body, labels */
+  --t-fac-sm: 0.9375rem;  /* 15px · metadata floor */
 
-  /* ── Status channel ── A PERSON'S OUTCOME. Facilitator surfaces only ──────
-     Unchanged in logic from the dark build; only the values moved to survive
-     the polarity flip. The three rules that make this safe still hold:
-
-     1. HUE IS CATEGORY, NOT QUALITY. The four chromatic tones are tuned to
-        equal MEASURED LUMINANCE, not to equal OKLCH lightness — those are not
-        the same thing, which is why each hue carries a slightly different L.
-        They land at 7.69-8.09:1 on --bg, a spread of 0.40 of a ratio point, so
-        no row pops as an alarm relative to its neighbours. The set reads as a
-        patch panel, not a traffic light.
-     2. RED IS NOT AMONG THEM. `--alert` stays reserved for the MACHINE failing.
-        It never describes a person's outcome. A participant who needed their
-        hands did not malfunction, and a red row would tell them they did.
-     3. NEVER INSIDE `.field--locked`. These render on the roster, the result
-        surface and the rail. The locked participant field carries no chip. */
-  --st-measured: oklch(0.403 0.145 250); /* recorded        · blue    */
-  --st-partial: oklch(0.390 0.095 195); /* fewer than five · teal    */
-  --st-protocol: oklch(0.410 0.105 65); /* hand support    · amber   */
-  --st-unable: oklch(0.416 0.135 310); /* not attempted   · violet  */
-  --st-discarded: var(--ink-muted); /* voided — an absence       */
-
-  /* ── Type ─────────────────────────────────────────────────────────────── */
-  --font: 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei',
-    sans-serif;
-
-  /* Participant band · 2rem floor per invariant 4. Fixed rem, never fluid:
-     the monitor is a known device at a known distance, and a clamp() that
-     shrinks the readout would shrink the one thing that must not shrink. */
-  --t-hero: 12rem; /* 192px · rep count            */
-  --t-display: 5rem; /*  80px · elapsed time         */
-  --t-lead: 3rem; /*  48px · state words, 完成     */
-  --t-part: 2rem; /*  32px · participant floor    */
-
-  /* Facilitator band · NOT the participant band. Read at roughly 0.6 m by a
-     standing operator looking at the machine, not from 3 m by someone
-     mid-effort. Ordinary working-UI sizes; the 2rem floor does not apply here
-     and applying it cost the roster nine of its twelve rows.
-
-     Nothing in `.field--locked` uses these tokens — the locked field is built
-     from --t-hero / --t-display / --t-part only. That is what makes the
-     participant floor mechanical rather than a matter of vigilance. */
-  --t-fac-xl: 1.75rem; /* 28px · facilitator emphasis            */
-  --t-fac-lg: 1.25rem; /* 20px · row primary, dialog titles      */
-  --t-fac: 1.0625rem; /* 17px · controls, body, labels          */
-  --t-fac-sm: 0.9375rem; /* 15px · metadata floor                  */
-
-  /* ── Spacing ── rail is dense, field is sparse. The density contrast is
-     itself the signal that the zones belong to different readers. ───────── */
+  /* ── Spacing ─────────────────────────────────────────────────────────── */
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
@@ -133,48 +75,75 @@
   --s-6: 1.5rem;
   --s-8: 2rem;
   --s-12: 3rem;
-  --s-16: 4rem;
-  --s-24: 6rem;
 
-  /* ── Radii ── a real scale, used consistently. Softened from the original
-     2/4/6px, which read as machined metal and, at twelve roster rows, as
-     twelve hard rectangles stacked. Rounder is calmer to scan.
+  /* ── Radius ──────────────────────────────────────────────────────────── */
+  --rehab-radius-sm: 8px;
+  --rehab-radius-md: 14px;
+  --rehab-radius-lg: 20px;
+  --rehab-radius-full: 9999px;
 
-     RESTRAINT IS PART OF THE SCALE. The ceiling is 20px and it applies to large
-     containers only. Nothing is pill-shaped: a fully rounded control reads as a
-     consumer app badge, which the anti-references rule out. The only 50% radius
-     in the product is the rep pip, which is a circle because it is a circle. */
-  --r-xs: 3px; /* status marks, chips, hairline insets   */
-  --r-sm: 6px; /* inputs, small controls, badges         */
-  --r: 10px; /* buttons, roster rows, form options     */
-  --r-lg: 14px; /* panels, dialogs, video surfaces        */
-  --r-xl: 20px; /* large containers only                  */
-
-  /* ── z-index ── semantic, never arbitrary ─────────────────────────────── */
-  --z-base: 0;
-  --z-rail: 10;
-  --z-header: 15;
-  --z-overlay: 20;
-  --z-scenario: 30;
-
-  /* ── Motion ── functional only. Exactly four animations exist. ────────── */
+  /* ── Motion ──────────────────────────────────────────────────────────── */
   --dur-fast: 120ms;
   --dur: 180ms;
   --dur-slow: 260ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint. no bounce. */
 
-  /* ── Layout ───────────────────────────────────────────────────────────── */
-  --rail-h-min: 112px;
-  --tap: 64px; /* facilitator minimum tap target */
-
-  /* The self-view has no size token: it fills whatever half of the split the
-     layout gives it. See the `.field--split` rules in app.css. */
+  /* ── Minimum interactive target ──────────────────────────────────────── */
+  --rehab-tap-min: 44px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LEGACY ALIAS LAYER — scheduled for removal.
+
+   telemetry.css was extracted verbatim from velocare's app.css and still refers
+   to the unprefixed token names below. Rather than hand-rewrite 230 lines of
+   working goniometer and pacer rules during a deletion (and risk a silent
+   visual regression in the one surface the user reads mid-rep), the names are
+   kept alive here — remapped onto the DARK palette above.
+
+   Migrating telemetry.css to --rehab-* and deleting this block is
+   brand-designer's standing task. Do it as one change, with a visual diff of
+   the training surface. Do not add new usages of these names.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --bg: var(--rehab-bg);
+  --surface: var(--rehab-surface);
+  --surface-raised: var(--rehab-surface-raised);
+  --ink: var(--rehab-text-main);
+  --ink-secondary: var(--rehab-text-muted);
+  --ink-muted: var(--rehab-text-dim);
+  --line: var(--rehab-border);
+  --line-strong: var(--rehab-border-light);
+  --accent: var(--rehab-cyan);
+  --blue-200: rgba(56, 189, 248, 0.2);
+  --blue-500: var(--rehab-cyan);
+  --font: var(--rehab-font);
+  --r-xs: 3px;
+  --r-sm: var(--rehab-radius-sm);
+  --r-lg: var(--rehab-radius-md);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Reduced motion. Collapsing the duration tokens is the mechanism; every
+   animated rule in this product must route its timing through --dur-*, so that
+   a user who asks for less motion actually gets it. A hardcoded transition is
+   a defect precisely because it escapes this block.
+   ───────────────────────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-fast: 1ms;
     --dur: 1ms;
     --dur-slow: 1ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,0 +1,328 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Telemetry components — the goniometer, the cadence pacer, the form-alert
+   banner, and the rep pips.
+
+   PROVENANCE: extracted verbatim from the deleted app.css during the velocare
+   removal (2026-08-21). These rules were the only part of velocare's 2607-line
+   layout sheet that shipping Rehabibi components depend on. Extracting them was
+   a precondition of deleting that file — see CLAUDE.md §5.
+
+   These rules still consume the legacy unprefixed token names (--ink, --surface,
+   --s-4, --t-display …). Those are kept alive as a DARK alias layer at the
+   bottom of tokens.css. Migrating this file to --rehab-* and deleting the alias
+   layer is brand-designer's standing task; do it as one change with a visual
+   diff, not opportunistically.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ─── Pips ───────────────────────────────────────────────────────────────── */
+
+.pips {
+  display: flex;
+  gap: var(--s-4);
+}
+
+/* The only 50% radius in the product. A pip is a circle because it is a circle,
+   not because rounded things are friendly. */
+.pip {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 3px solid var(--line-strong);
+  background: transparent;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.pip--on {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip {
+    transition: none;
+  }
+
+}
+
+/* Angle Gauge */
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: var(--s-4) var(--s-6);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gauge--target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--blue-200);
+}
+
+.gauge__readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-1);
+}
+
+.gauge__num {
+  font-size: var(--t-display);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.gauge__unit {
+  font-size: var(--t-lead);
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.gauge__track-wrap {
+  width: 100%;
+  margin-top: var(--s-3);
+}
+
+.gauge__track {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  overflow: visible;
+}
+
+.gauge__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--r-sm);
+  transition: width 0.1s linear;
+}
+
+.gauge__zone {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  border-left: 2px dashed var(--accent);
+  border-right: 2px dashed var(--accent);
+  background: rgba(59, 130, 246, 0.15);
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gauge__zone-label {
+  position: absolute;
+  top: -20px;
+  font-size: var(--t-fac-sm);
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.gauge__bounds {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: var(--s-2);
+  font-size: var(--t-fac-sm);
+  color: var(--ink-secondary);
+}
+
+/* Cadence Pacer */
+.pacer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--s-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.pacer--idle .pacer__hint {
+  font-size: var(--t-fac);
+  color: var(--ink-secondary);
+  text-align: center;
+}
+
+.pacer__header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: var(--s-2);
+  font-size: var(--t-fac);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pacer__bar {
+  width: 100%;
+  height: 12px;
+  background: var(--surface);
+  border-radius: var(--r-xs);
+  overflow: hidden;
+}
+
+.pacer__bar-fill {
+  height: 100%;
+  transition: width 0.1s linear;
+}
+
+.pacer__bar-fill--up {
+  background: var(--accent);
+}
+
+.pacer__bar-fill--down {
+  background: var(--blue-500);
+}
+
+/* Hold Countdown Ring */
+.pacer__hold-ring {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+
+.pacer__svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+
+.pacer__ring-bg {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 8;
+}
+
+.pacer__ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.pacer__hold-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.pacer__hold-num {
+  font-size: var(--t-display);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.pacer__hold-unit {
+  font-size: var(--t-fac);
+  color: var(--ink-secondary);
+  margin-left: 2px;
+}
+
+.pacer__label {
+  margin-top: var(--s-2);
+  font-size: var(--t-fac-lg);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Form Alert Banner */
+.form-alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: 100%;
+}
+
+.form-alert__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  background: oklch(0.92 0.05 60);
+  border: 1px solid oklch(0.70 0.12 60);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-size: var(--t-fac);
+}
+
+.form-alert__badge {
+  background: oklch(0.45 0.18 27);
+  color: white;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  font-size: var(--t-fac-sm);
+  font-weight: 700;
+}
+
+.form-alert__title {
+  font-weight: 700;
+}
+
+.form-alert__hint {
+  color: var(--ink-secondary);
+}
+
+/* ─── Rep-phase colour overrides ──────────────────────────────────────────────
+   Moved here from rehab.css during the extraction. They previously used
+   !important to reach across files into app.css; now that the base rules and
+   these overrides live in one sheet, ordinary cascade order is enough.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.pacer__bar-fill--fast {
+  background: var(--rehab-rose);
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
+}
+
+.pacer--rest {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+}
+
+/* ─── Previously-undefined classes ────────────────────────────────────────────
+   These five classNames are emitted by AngleGauge.tsx and CadencePacer.tsx but
+   were defined in no stylesheet — they rendered unstyled. Two of them are
+   load-bearing: .pacer__elapsed is the cadence numeral and .pacer__phase-name
+   is its label, i.e. the hero element of the training panel and its caption.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.gauge__mid {
+  fill: none;
+  stroke: var(--rehab-border-light);
+  stroke-width: 1;
+}
+
+.pacer__phase-name {
+  font-size: var(--t-fac-sm);
+  color: var(--rehab-text-muted);
+  letter-spacing: 0.08em;
+}
+
+.pacer__elapsed {
+  font-size: var(--t-display);
+  font-weight: 700;
+  color: var(--rehab-text-main);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pacer--active {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.pacer--hold {
+  border-color: rgba(16, 185, 129, 0.4);
+}

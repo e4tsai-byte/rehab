@@ -1,7 +1,15 @@
 import type { CompletedSession, UserSettings } from '../domain/rehabTypes'
 
-const SETTINGS_KEY = 'velocare_rehab_user_settings'
-const HISTORY_KEY = 'velocare_rehab_session_history'
+/* Local storage only. Invariant #1: what persists is rep records and settings,
+   on this device, in this browser. No frames, no landmark arrays, no identity.
+
+   Renamed from the `velocare_rehab_*` keys on 2026-08-21. LEGACY_* is read once
+   on a cold start so an existing install keeps its streak and history rather
+   than silently resetting to zero; drop the fallback after the next release. */
+const SETTINGS_KEY = 'rehabibi_user_settings'
+const HISTORY_KEY = 'rehabibi_session_history'
+const LEGACY_SETTINGS_KEY = 'velocare_rehab_user_settings'
+const LEGACY_HISTORY_KEY = 'velocare_rehab_session_history'
 
 export const DEFAULT_SETTINGS: UserSettings = {
   targetAngleDeg: 90,
@@ -14,7 +22,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 
 export function loadSettings(): UserSettings {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
+    const raw = localStorage.getItem(SETTINGS_KEY) ?? localStorage.getItem(LEGACY_SETTINGS_KEY)
     if (!raw) return DEFAULT_SETTINGS
     return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
   } catch {
@@ -32,7 +40,7 @@ export function saveSettings(settings: UserSettings): void {
 
 export function loadHistory(): CompletedSession[] {
   try {
-    const raw = localStorage.getItem(HISTORY_KEY)
+    const raw = localStorage.getItem(HISTORY_KEY) ?? localStorage.getItem(LEGACY_HISTORY_KEY)
     if (!raw) return []
     return JSON.parse(raw)
   } catch {

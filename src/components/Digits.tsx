@@ -14,7 +14,7 @@ const SEPARATORS = new Set(['.', ':', ',', '/'])
 
 /* Full cells. An arithmetic sign is as wide as a digit, not a hairline: in the
    0.42ch separator cell these collided with the figure after them, which was
-   visible on every signed 差值 on the sheet and on the participant detail. */
+   visible on every signed value in the post-session scorecard. */
 const SIGNS = new Set(['−', '-', '+', '±'])
 
 export function Digits({

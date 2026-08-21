@@ -1,4 +1,6 @@
-/* ─── Reset ──────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────────
+   Reset, focus, and the Digits primitive. Consumes tokens.css; defines none.
+   ───────────────────────────────────────────────────────────────────────────── */
 
 *,
 *::before,
@@ -18,14 +20,14 @@ body,
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font);
+  background: var(--rehab-bg);
+  color: var(--rehab-text-main);
+  font-family: var(--rehab-font);
   font-size: var(--t-fac);
   line-height: 1.5;
   font-weight: 400;
@@ -33,7 +35,9 @@ body {
   text-rendering: optimizeLegibility;
 
   /* Tabular figures everywhere, belt one of two. The Digits primitive is
-     belt two and survives a fallback face, which this alone does not. */
+     belt two and survives a fallback face, which this alone does not.
+     Non-negotiable: telemetry updates many times a second and proportional
+     figures make the readout jitter as its value changes. */
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
@@ -53,13 +57,13 @@ ol {
 }
 
 /* ─── Focus ──────────────────────────────────────────────────────────────── */
-/* Visible on both surface lightnesses. No hover-only affordances anywhere,
-   so focus-visible is the primary state, not an afterthought. */
+/* No hover-only affordances anywhere, so focus-visible is the primary state,
+   not an afterthought. Cyan reads against every surface in the dark palette. */
 
 :focus-visible {
-  outline: 3px solid var(--line-strong);
+  outline: 3px solid var(--rehab-cyan);
   outline-offset: 2px;
-  border-radius: var(--r-sm);
+  border-radius: var(--rehab-radius-sm);
 }
 
 :focus:not(:focus-visible) {
@@ -78,7 +82,7 @@ h3 {
 
 /* ─── Digits primitive ───────────────────────────────────────────────────── */
 /* Each character occupies a fixed 1ch cell. Font-independent: a digit cannot
-   change width as its value changes even if Noto Sans TC fails to load. */
+   change width as its value changes even if the CJK face fails to load. */
 
 .digits {
   display: inline-flex;

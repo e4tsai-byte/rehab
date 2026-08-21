@@ -24,10 +24,11 @@ export const CONFIG = {
   RESTING_ENTER_SEATED: 38.0,
   RESTING_EXIT_STANDING: 40.0,
   RESTING_EXIT_SEATED: 48.0,
-  TARGET_HOLD_ENTER: 80.0,
-  TARGET_HOLD_EXIT: 72.0,
+  TARGET_HOLD_ENTER: 78.0,          // deg, angle to trigger hold
+  TARGET_HOLD_ZONE_MIN: 68.0,       // deg, active hold accumulation zone (forgiving of micro-tremors)
+  TARGET_HOLD_ABORT_THRESHOLD: 52.0,// deg, only drop out if arm falls past 52°
   TARGET_ANGLE_NOMINAL: 90.0,
-  TARGET_HOLD_MAX: 110.0,
+  TARGET_HOLD_MAX: 115.0,
   
   CADENCE_CONCENTRIC_TARGET_S: 5.0,
   CADENCE_CONCENTRIC_MIN_S: 2.5,
@@ -159,11 +160,12 @@ export class ClientShoulderFlexionTracker {
   
   private concentricStartT = 0
   private concentricDurationS = 0
-  private holdStartT = 0
   private holdDurationS = 0
   private eccentricStartT = 0
   private eccentricDurationS = 0
   private restStartT = 0
+  private accumulatedHoldS = 0
+  private lastTimestampS = 0
   
   private repFlags = new Set<FormFlag>()
   private peakAngleDeg = 0
@@ -262,13 +264,14 @@ export class ClientShoulderFlexionTracker {
         this.phase = 'ASCENDING'
         this.concentricStartT = timestampS
         this.restStartT = 0
+        this.accumulatedHoldS = 0
         this.repFlags.clear()
         this.peakAngleDeg = angle
       }
     } else if (this.phase === 'ASCENDING') {
       concentricElapsed = Math.max(0, timestampS - this.concentricStartT)
       
-      // Calculate dynamic expected angle along 5s curve
+      // Dynamic expected angle along strict 5.0-second curve
       const progress = Math.min(1.0, concentricElapsed / CONFIG.CADENCE_CONCENTRIC_TARGET_S)
       expectedAngle = restingEnter + progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
 
@@ -288,34 +291,54 @@ export class ClientShoulderFlexionTracker {
         }
       }
 
-      if (angle >= CONFIG.TARGET_HOLD_ENTER) {
-        this.concentricDurationS = concentricElapsed
-        if (this.concentricDurationS < CONFIG.CADENCE_CONCENTRIC_MIN_S) {
-          this.repFlags.add('RUSHED_CONCENTRIC')
+      // Check if user raised to 90° early
+      if (angle >= CONFIG.TARGET_HOLD_ENTER && concentricElapsed < CONFIG.CADENCE_CONCENTRIC_TARGET_S) {
+        this.repFlags.add('RUSHED_CONCENTRIC')
+      }
+
+      // STRICT PACING: Only advance to HOLDING once the full 5.0s concentric duration has elapsed AND arm is at target angle
+      if (concentricElapsed >= CONFIG.CADENCE_CONCENTRIC_TARGET_S) {
+        if (angle >= CONFIG.TARGET_HOLD_ENTER) {
+          this.concentricDurationS = concentricElapsed
+          this.phase = 'HOLDING'
+          this.accumulatedHoldS = 0
+          holdRemaining = CONFIG.CADENCE_HOLD_TARGET_S
+        } else {
+          // Reached 5.0s but arm not yet elevated high enough
+          paceStatus = 'TOO_SLOW'
+          activeFlags.push('PACING_TOO_SLOW')
         }
-        this.phase = 'HOLDING'
-        this.holdStartT = timestampS
-        holdRemaining = CONFIG.CADENCE_HOLD_TARGET_S
-      } else if (angle < restingEnter) {
+      } else if (angle < restingEnter && concentricElapsed > 2.0) {
+        // Abort if user dropped arm completely during ascent
         this.phase = 'RESTING'
       }
     } else if (this.phase === 'HOLDING') {
-      const holdElapsed = Math.max(0, timestampS - this.holdStartT)
-      holdRemaining = Math.max(0, CONFIG.CADENCE_HOLD_TARGET_S - holdElapsed)
+      const dt = this.lastTimestampS > 0 ? Math.max(0, Math.min(0.2, timestampS - this.lastTimestampS)) : 0.033
       concentricElapsed = this.concentricDurationS
       expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL
-      paceStatus = 'ON_TRACK'
 
-      if (holdElapsed >= CONFIG.CADENCE_HOLD_TARGET_S) {
-        this.holdDurationS = holdElapsed
+      // Accumulate hold time whenever arm is in the active elevation zone (>= 68°)
+      if (angle >= CONFIG.TARGET_HOLD_ZONE_MIN) {
+        this.accumulatedHoldS += dt
+        paceStatus = 'ON_TRACK'
+      } else {
+        // Arm dipped slightly below 68° but still above abort threshold (52°) -> pause timer and alert
+        activeFlags.push('INCOMPLETE_HOLD')
+        paceStatus = 'TOO_SLOW'
+      }
+
+      holdRemaining = Math.max(0, CONFIG.CADENCE_HOLD_TARGET_S - this.accumulatedHoldS)
+
+      // Only transition to DESCENDING once full 5.0s of actual isometric hold is accumulated
+      if (this.accumulatedHoldS >= CONFIG.CADENCE_HOLD_TARGET_S) {
+        this.holdDurationS = this.accumulatedHoldS
         this.phase = 'DESCENDING'
         this.eccentricStartT = timestampS
         holdRemaining = 0
-      } else if (angle < CONFIG.TARGET_HOLD_EXIT) {
-        this.holdDurationS = holdElapsed
-        if (holdElapsed < CONFIG.CADENCE_HOLD_MIN_S) {
-          this.repFlags.add('INCOMPLETE_HOLD')
-        }
+      } else if (angle < CONFIG.TARGET_HOLD_ABORT_THRESHOLD) {
+        // Arm dropped significantly below 52° -> abort hold into descent
+        this.holdDurationS = this.accumulatedHoldS
+        this.repFlags.add('INCOMPLETE_HOLD')
         this.phase = 'DESCENDING'
         this.eccentricStartT = timestampS
         holdRemaining = 0
@@ -324,7 +347,7 @@ export class ClientShoulderFlexionTracker {
       eccentricElapsed = Math.max(0, timestampS - this.eccentricStartT)
       concentricElapsed = this.concentricDurationS
 
-      // Calculate dynamic expected angle along lowering curve
+      // Dynamic expected angle along strict 5.0-second lowering curve
       const progress = Math.min(1.0, eccentricElapsed / CONFIG.CADENCE_ECCENTRIC_TARGET_S)
       expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL - progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
 
@@ -343,14 +366,17 @@ export class ClientShoulderFlexionTracker {
         }
       }
 
-      const isRestingAngle = angle <= restingEnter
-      const isSlowDescentStabilized = eccentricElapsed >= 4.0 && angle <= (restingEnter + 8.0)
+      // Check if user dropped hand down too fast
+      if (angle <= restingEnter && eccentricElapsed < CONFIG.CADENCE_ECCENTRIC_TARGET_S) {
+        this.repFlags.add('RUSHED_ECCENTRIC')
+      }
 
-      if (isRestingAngle || isSlowDescentStabilized) {
+      // STRICT PACING: Only finalize rep once the full 5.0s descent duration has elapsed AND arm has lowered
+      const isTimeComplete = eccentricElapsed >= CONFIG.CADENCE_ECCENTRIC_TARGET_S
+      const isArmLowered = angle <= (restingEnter + 8.0)
+
+      if (isTimeComplete && isArmLowered) {
         this.eccentricDurationS = eccentricElapsed
-        if (this.eccentricDurationS < CONFIG.CADENCE_ECCENTRIC_MIN_S) {
-          this.repFlags.add('RUSHED_ECCENTRIC')
-        }
 
         if (this.peakAngleDeg >= CONFIG.TARGET_HOLD_ENTER) {
           completedRep = {
@@ -365,13 +391,15 @@ export class ClientShoulderFlexionTracker {
           this.repCount++
         }
 
-        // Start 3-second post-rep rest period
+        // Start 3-second post-rep recovery rest period
         this.phase = 'RESTING'
         this.restStartT = timestampS
         this.repFlags.clear()
         this.peakAngleDeg = 0
       }
     }
+
+    this.lastTimestampS = timestampS
 
     return {
       rep: completedRep,

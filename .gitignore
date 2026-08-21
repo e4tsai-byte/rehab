@@ -4,3 +4,8 @@ dist/
 *.local
 .claude/skills/gstack/
 .gstack/
+
+# Staging area for the velocare removal (2026-08-21). The full legacy tree is
+# recoverable from the `velocare-archive` branch and the `velocare-final-state`
+# tag; this directory is safe to delete outright:  rm -rf _to_delete
+_to_delete/

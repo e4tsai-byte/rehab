@@ -3,16 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
+    <!-- Dark, matching tokens.css. With this set to "light" the UA painted white
+         scrollbars and form controls, and flashed white before CSS landed, on a
+         #070a13 app. -->
+    <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="VeloCare Tier 1 UI prototype — automated 5x sit-to-stand assessment for Taiwanese community elder-care centres. Simulated data."
+      content="Rehabibi — 居家肩部復健教練。姿態偵測完全在瀏覽器內執行，影像不上傳、不儲存。"
     />
-    <!-- Inline data URI, not a file: the appliance has no network and the
-         build must stay self-contained. Also stops the deployed demo 404ing
-         /favicon.ico on every load. Mark matches Logo.tsx. -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22%23f4efe2%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%231b2430%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2017h8%22%2F%3E%3Cpath%20d%3D%22M9%2017V9l6-4%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E" />
-    <title>Rehabibi — 五次起立坐下量測</title>
+    <!-- Inline data URI, not a file: invariant #1 forbids a remote request from a
+         rehab surface, and this also stops a /favicon.ico 404 on every load.
+         Ground #070a13, mark #38bdf8 — a raised arm. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%225%22%20fill%3D%22%23070a13%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2338bdf8%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2017h8%22%2F%3E%3Cpath%20d%3D%22M9%2017V9l6-4%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E" />
+    <title>Rehabibi — 肩部復健教練</title>
   </head>
   <body>
     <div id="root"></div>

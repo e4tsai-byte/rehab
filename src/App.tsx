@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import './styles/app.css'
-import './styles/rehab.css'
 import { RehabHeader } from './components/RehabHeader'
 import { SettingsModal } from './components/SettingsModal'
 import {

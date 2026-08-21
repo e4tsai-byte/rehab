@@ -1,33 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   SLEEK DARK MODE REHAB COACH DESIGN SYSTEM
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ──────────────────────────────────────────────────────────────────────────────
+   Rehabibi component styling. Consumes tokens.css; defines no tokens.
 
-:root {
-  --rehab-bg: #070a13;
-  --rehab-surface: #0f172a;
-  --rehab-surface-raised: #182238;
-  --rehab-surface-hover: #1e293b;
-  --rehab-border: rgba(255, 255, 255, 0.08);
-  --rehab-border-light: rgba(255, 255, 255, 0.15);
-  
-  --rehab-cyan: #38bdf8;
-  --rehab-cyan-glow: rgba(56, 189, 248, 0.25);
-  --rehab-emerald: #10b981;
-  --rehab-emerald-glow: rgba(16, 185, 129, 0.25);
-  --rehab-amber: #f59e0b;
-  --rehab-amber-glow: rgba(245, 158, 11, 0.25);
-  --rehab-rose: #f43f5e;
-  
-  --rehab-text-main: #f8fafc;
-  --rehab-text-muted: #94a3b8;
-  --rehab-text-dim: #64748b;
-  
-  --rehab-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --rehab-radius-sm: 8px;
-  --rehab-radius-md: 14px;
-  --rehab-radius-lg: 20px;
-  --rehab-radius-full: 9999px;
-}
+   Tokens moved to tokens.css on 2026-08-21 so that one file owns the palette.
+   Raw hex and rgba() literals still remain throughout this file and are a known
+   defect — every one of them should become a var(--rehab-*). brand-designer owns
+   closing that gap.
+   ────────────────────────────────────────────────────────────────────────────── */
 
 body {
   margin: 0;
@@ -117,14 +95,16 @@ body {
   background: var(--rehab-surface-raised);
   border: 1px solid var(--rehab-border);
   color: var(--rehab-text-muted);
-  width: 38px;
-  height: 38px;
+  /* 44px is the accessibility floor for an interactive target, and this is the
+     settings entry point. It was 38px. */
+  width: var(--rehab-tap-min);
+  height: var(--rehab-tap-min);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--dur) var(--ease-out);
 }
 
 .rehab-btn-icon:hover {
@@ -262,7 +242,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 24px var(--rehab-cyan-glow);
-  transition: all 0.2s ease;
+  transition: all var(--dur) var(--ease-out);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -601,12 +581,4 @@ body {
   accent-color: #38bdf8;
 }
 
-.pacer__bar-fill--fast {
-  background: #ef4444 !important;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
-}
 
-.pacer--rest {
-  border-color: rgba(245, 158, 11, 0.4) !important;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1) !important;
-}
