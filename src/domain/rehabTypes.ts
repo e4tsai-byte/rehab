@@ -29,3 +29,26 @@ export interface RehabRepRecord {
   readonly flags: readonly FormFlag[]
   readonly isClean: boolean
 }
+
+export interface UserSettings {
+  targetAngleDeg: number
+  holdDurationS: number
+  concentricCadenceS: number
+  eccentricCadenceS: number
+  targetReps: number
+  soundEnabled: boolean
+}
+
+export interface CompletedSession {
+  id: string
+  exerciseId: string
+  exerciseNameZh: string
+  timestamp: number
+  completedReps: number
+  targetReps: number
+  cleanRepsCount: number
+  formQualityScorePct: number
+  averageHoldDurationS: number
+  peakElevationDeg: number
+  reps: readonly RehabRepRecord[]
+}
