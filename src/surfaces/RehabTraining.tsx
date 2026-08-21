@@ -47,7 +47,7 @@ export function RehabTraining({
   const isSeated = exercise.posture === 'seated'
 
   const { isLoaded, liveState, videoRef, canvasRef } = usePoseTracker({
-    isSeated,
+    posture: exercise.posture,
     // Both of these are optional on the hook, so omitting them is a silent
     // fallback to 5.0s / 10 reps rather than a type error — the user's settings
     // would simply never reach the tracker.

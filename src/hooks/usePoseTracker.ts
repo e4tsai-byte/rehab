@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
 import type { RehabLiveState, RehabRepRecord } from '../domain/rehabTypes'
-import { ClientShoulderFlexionTracker, type Landmark3D } from '../pose/shoulderKinematics'
+import { ClientShoulderFlexionTracker, type Landmark3D, type Posture } from '../pose/shoulderKinematics'
 
 export function usePoseTracker({
-  isSeated = false,
+  posture = 'standing',
   holdDurationS = 5.0,
   targetReps = 10,
   onRep,
   onPhaseChange,
 }: {
-  isSeated?: boolean
+  posture?: Posture
   holdDurationS?: number
   targetReps?: number
   onRep?: (rep: RehabRepRecord) => void
@@ -38,10 +38,10 @@ export function usePoseTracker({
   const trackerRef = useRef<ClientShoulderFlexionTracker>(new ClientShoulderFlexionTracker(10))
   const animIdRef = useRef<number | null>(null)
   useEffect(() => {
-    trackerRef.current.setSeatedMode(isSeated)
+    trackerRef.current.setPosture(posture)
     trackerRef.current.setHoldDuration(holdDurationS)
     trackerRef.current.setTargetReps(targetReps)
-  }, [isSeated, holdDurationS, targetReps])
+  }, [posture, holdDurationS, targetReps])
   const prevPhaseRef = useRef<string>('RESTING')
 
   useEffect(() => {

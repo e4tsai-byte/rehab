@@ -7,6 +7,31 @@ export interface Landmark3D {
   visibility?: number
 }
 
+/**
+ * Body orientation relative to gravity and the camera. Replaces the retired
+ * `isSeated: boolean` (a boolean cannot carry three orientations — invariant 4,
+ * §9 D1). Reference-frame meaning per value:
+ *   - standing:  trunk vertical, subject faces the camera. Hip-referenced trunk
+ *                vector when hips are visible, else a nose/gravity vertical fallback.
+ *   - seated:    trunk vertical but hips are typically occluded by a desk, so the
+ *                vertical (nose/gravity) fallback is the PRIMARY path, not a backup.
+ *   - sideLying: trunk HORIZONTAL. The vertical fallbacks are geometrically wrong
+ *                here and are barred; every angle is taken against the trunk long
+ *                axis (shoulder->hip) directly, in the metric world frame.
+ */
+export type Posture = 'standing' | 'seated' | 'sideLying'
+
+/**
+ * Sentinel for the side-lying abduction path when no valid horizontal trunk axis
+ * can be formed (both hips below the visibility gate, or a degenerate zero-norm
+ * axis). It is deliberately OUTSIDE the physical 0–180° range so a caller can
+ * detect "unmeasurable" and neither accumulate an isometric hold nor raise
+ * OVER_ELEVATION from it — a lost landmark must never manufacture a fault
+ * (invariant 1.2). The upright angle paths keep their existing 0 return on
+ * missing landmarks; this sentinel is side-lying only.
+ */
+export const SIDE_LYING_NO_TRUNK_AXIS = -1
+
 export const LANDMARKS = {
   NOSE: 0,
   LEFT_SHOULDER: 11,
@@ -114,10 +139,42 @@ export function angleBetweenVectorsDeg(v1: number[], v2: number[]): number {
   return (Math.acos(cosTheta) * 180.0) / Math.PI
 }
 
-export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated = false): number {
+// Angle definition — RIGHT-arm elevation of the humerus off the trunk long axis,
+// in MediaPipe metric WORLD space (hip-centred, gravity-independent).
+//
+//   vArm       = rShoulder -> rElbow   (the humerus)
+//   vTorsoDown = rShoulder -> rHip     (trunk long axis, pointing toward the pelvis)
+//   returns angleBetweenVectorsDeg(vTorsoDown, vArm)
+//
+// Both vectors are anchored at the shoulder and expressed in the SAME metric world
+// frame, so the result is the true 3D angle between humerus and trunk and does NOT
+// depend on which way is up. On a human body:
+//   0°  = arm lying alongside the trunk (down by the side / palm to thigh)
+//   90° = arm held straight out, perpendicular to the trunk
+//  180° = arm in line with the trunk past the head
+//
+// The one quantity is read differently per posture (why the catalog carries
+// `posture` and each tracker interprets the number in its own frame):
+//   - standing / seated: forward FLEXION toward a ~90° target — the target is a
+//     FLOOR the user climbs to.
+//   - sideLying:         ABDUCTION away from the body toward the ceiling. Because
+//     the trunk long axis is roughly horizontal in side-lying and the arm lifts
+//     off it, this SAME shoulder-to-hip computation is the abduction angle — see
+//     §9 D1. The supraspinatus band is a low 10–15° and ABOVE it is the fault; the
+//     target is a CEILING. The geometry is identical; only the reference differs.
+//
+// Degeneracies (invariant 1.2):
+//   - Missing shoulder/elbow -> 0 (arm cannot be over-elevated; safe in every view).
+//   - A genuine small angle (the 10–15° band) has non-zero vArm and vTorsoDown at a
+//     small mutual angle — it is reported accurately because angleBetweenVectorsDeg
+//     clamps the acos domain to [-1,1], so near-collinear arm/trunk does not yield NaN.
+//   - side-lying with no usable trunk axis -> SIDE_LYING_NO_TRUNK_AXIS (never the
+//     upright vertical fallback; never a fabricated in-band or over-band angle).
+export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], posture: Posture = 'standing'): number {
   const rShoulder = worldLandmarks[LANDMARKS.RIGHT_SHOULDER]
   const lShoulder = worldLandmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = worldLandmarks[LANDMARKS.RIGHT_HIP]
+  const lHip = worldLandmarks[LANDMARKS.LEFT_HIP]
   const rElbow = worldLandmarks[LANDMARKS.RIGHT_ELBOW]
   const nose = worldLandmarks[LANDMARKS.NOSE]
   if (!rShoulder || !rElbow) return 0
@@ -125,11 +182,33 @@ export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated 
   const vArm = [rElbow.x - rShoulder.x, rElbow.y - rShoulder.y, rElbow.z - rShoulder.z]
 
   const hipsVisible = rHip && (rHip.visibility ?? 1) > 0.4
-  if (!isSeated && hipsVisible) {
+
+  // ── SIDE-LYING (additive; barred from the vertical fallbacks below) ──────────
+  // The trunk is horizontal, so the nose/gravity fallbacks — which assume a
+  // vertical trunk — are geometrically WRONG and never run for this posture.
+  // Abduction is the angle of the humerus off the trunk long axis, exactly the
+  // shoulder->hip computation used by the upright hips-visible branch. If the
+  // up-side (right) hip drops below the visibility gate, fall back to the
+  // down-side (left) hip: shoulder->left-hip still yields a shoulder->pelvis axis
+  // in the SAME horizontal-trunk frame — never the vertical assumption. With no
+  // usable hip (or a zero-norm axis) there is no trunk reference, so return the
+  // sentinel rather than fabricate an angle.
+  if (posture === 'sideLying') {
+    const lHipVisible = lHip && (lHip.visibility ?? 1) > 0.4
+    const hip = hipsVisible ? rHip : lHipVisible ? lHip : null
+    if (!hip) return SIDE_LYING_NO_TRUNK_AXIS
+    const vTorsoDown = [hip.x - rShoulder.x, hip.y - rShoulder.y, hip.z - rShoulder.z]
+    if (norm(vTorsoDown) < 1e-6) return SIDE_LYING_NO_TRUNK_AXIS
+    return angleBetweenVectorsDeg(vTorsoDown, vArm)
+  }
+
+  // ── STANDING (hip-referenced trunk vector; behaviour preserved) ─────────────
+  if (posture === 'standing' && hipsVisible) {
     const vTorsoDown = [rHip.x - rShoulder.x, rHip.y - rShoulder.y, rHip.z - rShoulder.z]
     return angleBetweenVectorsDeg(vTorsoDown, vArm)
   }
 
+  // ── STANDING (hips occluded) / SEATED: vertical nose-spine fallback ─────────
   if (lShoulder && nose) {
     const midShoulder = [
       (rShoulder.x + lShoulder.x) / 2,
@@ -203,13 +282,32 @@ export function computeElbowExtensionDeg(
   return angleBetweenVectorsDeg(v1, v2)
 }
 
-export function computeShoulderHikeRatio(landmarks: Landmark3D[], isSeated = false): number {
+// Shoulder-hike (upper-trapezius shrug) magnitude. Definition holds only for an
+// UPRIGHT subject: it is the RIGHT-vs-LEFT shoulder image-height difference
+// (lShoulder.y - rShoulder.y), normalised by torso length (standing) or shoulder
+// width (seated). 0 = level shoulders; positive = the right (working) shoulder
+// riding up toward the ear. Image coordinates are used deliberately — a shrug is a
+// small image-plane vertical migration and the world frame's hip-centring cancels
+// much of it; the cost is that this only means anything while the shoulder line is
+// roughly level, i.e. the subject is upright.
+//
+// SIDE-LYING (invariant 1.2 / §9 D3, honest verdict): return 0 (no hike). Lying on
+// the side stacks the shoulders vertically, so (lShoulder.y - rShoulder.y) encodes
+// how the body is rotated on the mat, NOT a trapezius shrug — it is meaningless
+// here. A true up-side shrug (shoulder migrating toward the ear) is not separable
+// from this single side view without a per-user rest baseline the pipeline does not
+// capture. Returning 0 guarantees no false SHOULDER_HIKE; the side-lying tracker
+// should not emit SHOULDER_HIKE at all (see design note). Barred from the upright
+// branches below, which assume a level shoulder line.
+export function computeShoulderHikeRatio(landmarks: Landmark3D[], posture: Posture = 'standing'): number {
   const rShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER]
   const lShoulder = landmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = landmarks[LANDMARKS.RIGHT_HIP]
   if (!rShoulder || !lShoulder) return 0
 
-  if (isSeated || !rHip || (rHip.visibility ?? 1) <= 0.4) {
+  if (posture === 'sideLying') return 0
+
+  if (posture === 'seated' || !rHip || (rHip.visibility ?? 1) <= 0.4) {
     const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y)
     if (shoulderWidth < 1e-6) return 0
     return (lShoulder.y - rShoulder.y) / shoulderWidth
@@ -220,7 +318,22 @@ export function computeShoulderHikeRatio(landmarks: Landmark3D[], isSeated = fal
   return (lShoulder.y - rShoulder.y) / torsoLen
 }
 
-export function computeTorsoTiltDeg(landmarks: Landmark3D[], isSeated = false): number {
+// Torso lean away from IMAGE-VERTICAL, in degrees. Definition assumes an UPRIGHT
+// subject: the trunk vector (hip-midpoint -> shoulder-midpoint, or the nose->
+// shoulder head vector when hips are occluded) is compared against image-up [0,-1].
+// 0 = trunk plumb vertical; larger = leaning. Image coordinates are intentional —
+// "lean" is defined relative to the room's vertical, which only the image frame
+// carries.
+//
+// SIDE-LYING (invariant 1.2 / §9 D3, honest verdict): return 0 (no lean). A
+// side-lying trunk is horizontal, so its tilt from image-vertical is ~90° every
+// frame — this metric would raise TORSO_LEAN continuously and means nothing here. A
+// genuine side-lying trunk fault (rolling forward/back off true side-lying, or
+// piking at the hip) is largely a depth-axis motion that a single side camera
+// cannot see reliably. Returning 0 guarantees no false TORSO_LEAN; the side-lying
+// tracker should not emit TORSO_LEAN (see design note). Barred from the
+// vertical-reference branches below.
+export function computeTorsoTiltDeg(landmarks: Landmark3D[], posture: Posture = 'standing'): number {
   const rShoulder = landmarks[LANDMARKS.RIGHT_SHOULDER]
   const lShoulder = landmarks[LANDMARKS.LEFT_SHOULDER]
   const rHip = landmarks[LANDMARKS.RIGHT_HIP]
@@ -228,9 +341,11 @@ export function computeTorsoTiltDeg(landmarks: Landmark3D[], isSeated = false): 
   const nose = landmarks[LANDMARKS.NOSE]
   if (!rShoulder || !lShoulder) return 0
 
+  if (posture === 'sideLying') return 0
+
   const shoulderMid = [(rShoulder.x + lShoulder.x) / 2, (rShoulder.y + lShoulder.y) / 2]
 
-  if (isSeated || !rHip || !lHip || (rHip.visibility ?? 1) <= 0.4) {
+  if (posture === 'seated' || !rHip || !lHip || (rHip.visibility ?? 1) <= 0.4) {
     if (nose) {
       const headVec = [(nose.x - shoulderMid[0]!), (nose.y - shoulderMid[1]!)]
       return angleBetweenVectorsDeg(headVec, [0, -1])
@@ -248,7 +363,12 @@ export class ClientShoulderFlexionTracker {
   private repCount = 0
   private nextRepIndex = 1
   private targetReps: number
-  private isSeated: boolean
+  // Paced-elevation tracker: only ever driven with 'standing' | 'seated' (the
+  // side-lying isometric hold gets its own tracker class — §9 D2, added by
+  // measurement-engineer). Kept as the full Posture union so the seam is honest
+  // and the compiler forbids anyone silently coercing a third orientation onto
+  // the seated branch.
+  private posture: Posture
   private targetHoldDurationS: number
 
   private concentricStartT = 0
@@ -265,14 +385,14 @@ export class ClientShoulderFlexionTracker {
   private peakAngleDeg = 0
   private smoothedBuffer: number[] = []
 
-  constructor(targetReps = 10, isSeated = false, targetHoldDurationS = 5.0) {
+  constructor(targetReps = 10, posture: Posture = 'standing', targetHoldDurationS = 5.0) {
     this.targetReps = targetReps
-    this.isSeated = isSeated
+    this.posture = posture
     this.targetHoldDurationS = targetHoldDurationS
   }
 
-  public setSeatedMode(seated: boolean): void {
-    this.isSeated = seated
+  public setPosture(posture: Posture): void {
+    this.posture = posture
   }
 
   public setHoldDuration(durationS: number): void {
@@ -316,7 +436,7 @@ export class ClientShoulderFlexionTracker {
       }
     }
 
-    const rawAngle = computeShoulderFlexion3D(worldLandmarks, this.isSeated)
+    const rawAngle = computeShoulderFlexion3D(worldLandmarks, this.posture)
     const angle = this.getSmoothedAngle(rawAngle)
 
     const activeFlags: FormFlag[] = []
@@ -325,15 +445,15 @@ export class ClientShoulderFlexionTracker {
       activeFlags.push('ELBOW_BENT')
     }
 
-    const hikeRatio = computeShoulderHikeRatio(landmarks2D, this.isSeated)
-    const hikeThreshold = this.isSeated
+    const hikeRatio = computeShoulderHikeRatio(landmarks2D, this.posture)
+    const hikeThreshold = this.posture === 'seated'
       ? CONFIG.COMPENSATION_SHOULDER_HIKE_RATIO_SEATED
       : CONFIG.COMPENSATION_SHOULDER_HIKE_RATIO_STANDING
     if (hikeRatio > hikeThreshold) {
       activeFlags.push('SHOULDER_HIKE')
     }
 
-    const torsoTilt = computeTorsoTiltDeg(landmarks2D, this.isSeated)
+    const torsoTilt = computeTorsoTiltDeg(landmarks2D, this.posture)
     if (torsoTilt > CONFIG.COMPENSATION_TORSO_LEAN_DEG) {
       activeFlags.push('TORSO_LEAN')
     }
@@ -357,8 +477,8 @@ export class ClientShoulderFlexionTracker {
     let paceStatus: PaceStatus = 'IDLE'
     let expectedAngle = 0
 
-    const restingEnter = this.isSeated ? CONFIG.RESTING_ENTER_SEATED : CONFIG.RESTING_ENTER_STANDING
-    const restingExit = this.isSeated ? CONFIG.RESTING_EXIT_SEATED : CONFIG.RESTING_EXIT_STANDING
+    const restingEnter = this.posture === 'seated' ? CONFIG.RESTING_ENTER_SEATED : CONFIG.RESTING_ENTER_STANDING
+    const restingExit = this.posture === 'seated' ? CONFIG.RESTING_EXIT_SEATED : CONFIG.RESTING_EXIT_STANDING
 
     if (this.phase === 'RESTING') {
       // 3-Second Post-Rep Rest Countdown
