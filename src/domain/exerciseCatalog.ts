@@ -16,6 +16,7 @@ export interface ExerciseDefinition {
   framingHintZh: string
   tipsZh: string[]
   commonErrorsZh: Record<FormFlag, string>
+  diagramUrl?: string
   status: 'prescribed' | 'upcoming'
 }
 
@@ -49,6 +50,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_FAST: '動作平舉/下放速度過快',
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
     },
+    diagramUrl: '/images/standing-arm-flexion-guide.jpg',
     status: 'prescribed',
   },
   {
@@ -80,6 +82,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_FAST: '動作平舉/下放速度過快',
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
     },
+    diagramUrl: '/images/seated-desk-flexion-guide.jpg',
     status: 'prescribed',
   },
 ]

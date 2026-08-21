@@ -210,10 +210,9 @@
 .routine-card {
   position: relative;
   isolation: isolate;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: var(--s-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
   padding: var(--s-8);
   border-radius: var(--r-xl);
   background: var(--mat-regular);
@@ -245,7 +244,7 @@
 }
 
 .routine-card__specs {
-  margin-top: var(--s-6);
+  margin-top: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--s-2);
@@ -1196,4 +1195,110 @@
   background: rgba(56, 189, 248, 0.08) !important;
   border-color: rgba(56, 189, 248, 0.3) !important;
   transform: translateX(4px);
+}
+
+.routine-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.routine-card__diagram-wrapper {
+  margin-top: var(--s-4);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--mat-hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-3);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.routine-card__diagram-img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  display: block;
+  object-fit: contain;
+}
+
+.routine-card__diagram-caption {
+  margin: var(--s-2) 0 0 0;
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.routine-card__info {
+  flex: 1;
+  min-width: 280px;
+}
+
+.routine-card__diagram-wrapper {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--mat-hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-2);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: center;
+}
+
+.routine-card__diagram-img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  display: block;
+  object-fit: contain;
+}
+
+.routine-card__reminders {
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--mat-hairline);
+  border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+}
+
+.routine-card__reminders-title {
+  font-size: var(--t-sm);
+  font-weight: 650;
+  color: var(--rehab-blue-deep);
+  margin: 0 0 var(--s-3) 0;
+}
+
+.routine-card__reminders-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.routine-card__reminders-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-secondary);
+  line-height: 1.5;
+}
+
+.routine-card__reminders-dot {
+  color: var(--rehab-blue-deep);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.routine-card__reminders-item--warn {
+  color: #f59e0b;
+  font-weight: 500;
+  margin-top: var(--s-1);
+  padding-top: var(--s-2);
+  border-top: 1px dashed rgba(245, 158, 11, 0.2);
 }
