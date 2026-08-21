@@ -15,6 +15,8 @@ import { RoutineVideoCard } from '../components/RoutineVideoCard'
 import { ExerciseDetailModal } from '../components/ExerciseDetailModal'
 import { RoutineDetailModal } from '../components/RoutineDetailModal'
 import { CustomRoutineBuilderModal } from '../components/CustomRoutineBuilderModal'
+import { useT } from '../i18n/LocaleContext'
+import type { StringKey } from '../i18n/uiStrings'
 
 interface ExerciseLibraryProps {
   settings: UserSettings
@@ -24,12 +26,12 @@ interface ExerciseLibraryProps {
 
 type FilterCategory = 'all' | 'routines' | 'standing' | 'seated' | 'upcoming'
 
-const CATEGORY_CHIPS: Array<{ id: FilterCategory; label: string; icon?: string }> = [
-  { id: 'all', label: '全部項目' },
-  { id: 'routines', label: '處方課表 (含自訂)', icon: '📑' },
-  { id: 'standing', label: '站姿動作', icon: '🧍' },
-  { id: 'seated', label: '坐姿桌前', icon: '🪑' },
-  { id: 'upcoming', label: '進階規劃 (Roadmap)', icon: '🔒' },
+const CATEGORY_CHIPS: Array<{ id: FilterCategory; labelKey: StringKey; icon?: string }> = [
+  { id: 'all', labelKey: 'lib.catAll' },
+  { id: 'routines', labelKey: 'lib.catRoutines', icon: '📑' },
+  { id: 'standing', labelKey: 'lib.catStanding', icon: '🧍' },
+  { id: 'seated', labelKey: 'lib.catSeated', icon: '🪑' },
+  { id: 'upcoming', labelKey: 'lib.catUpcoming', icon: '🔒' },
 ]
 
 export function ExerciseLibrary({
@@ -37,6 +39,7 @@ export function ExerciseLibrary({
   onStartExercise,
   onStartRoutine,
 }: ExerciseLibraryProps) {
+  const { t } = useT()
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all')
   const [customRoutines, setCustomRoutines] = useState<RehabRoutine[]>(loadCustomRoutines)
   const [hiddenRoutineIds, setHiddenRoutineIds] = useState<string[]>(loadHiddenRoutineIds)
@@ -97,17 +100,15 @@ export function ExerciseLibrary({
         <div>
           <span className="section-tag" style={{ marginBottom: '4px' }}>
             <span className="section-tag__dot" aria-hidden="true" />
-            <span>臨床復健運動庫</span>
+            <span>{t('lib.tag')}</span>
           </span>
-          <h1 className="library-hero__title">訓練動作與處方課表</h1>
-          <p className="library-hero__sub">
-            探索適合不同復健階段的單項動作與連續課表。點擊任一項目即可查看標準分解圖與動作要點。
-          </p>
+          <h1 className="library-hero__title">{t('lib.heroTitle')}</h1>
+          <p className="library-hero__sub">{t('lib.heroSub')}</p>
         </div>
       </div>
 
       {/* Category Filter Chips Bar */}
-      <div className="library-filters" role="tablist" aria-label="動作分類篩選">
+      <div className="library-filters" role="tablist" aria-label={t('lib.filtersAria')}>
         {CATEGORY_CHIPS.map((chip) => (
           <button
             key={chip.id}
@@ -117,20 +118,18 @@ export function ExerciseLibrary({
             onClick={() => setActiveFilter(chip.id)}
           >
             {chip.icon && <span aria-hidden="true">{chip.icon}</span>}
-            <span>{chip.label}</span>
+            <span>{t(chip.labelKey)}</span>
           </button>
         ))}
       </div>
 
       {/* 1. Multi-Exercise Routines Section (if visible) */}
       {showRoutines && (
-        <section className="library-section" aria-label="推薦處方課表">
+        <section className="library-section" aria-label={t('lib.routinesAria')}>
           <div className="library-section__head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--s-3)' }}>
             <div>
-              <h2 className="library-section__title">📑 處方連續訓練課表</h2>
-              <p className="library-section__sub">
-                多站式連續訓練菜單，結合全身動力鏈與局部關節控制，含中場主動肌腱修復休息。
-              </p>
+              <h2 className="library-section__title">{t('lib.routinesTitle')}</h2>
+              <p className="library-section__sub">{t('lib.routinesSub')}</p>
             </div>
             <div style={{ display: 'flex', gap: 'var(--s-2)', flexWrap: 'wrap' }}>
               {hiddenRoutineIds.length > 0 && (
@@ -138,9 +137,9 @@ export function ExerciseLibrary({
                   type="button"
                   className="btn btn--quiet btn--sm"
                   onClick={handleRestoreDefaultRoutines}
-                  title="恢復被隱藏的原廠預設課表"
+                  title={t('lib.restoreDefaultsTitle')}
                 >
-                  恢復預設課表
+                  {t('lib.restoreDefaults')}
                 </button>
               )}
               <button
@@ -152,7 +151,7 @@ export function ExerciseLibrary({
                 }}
                 style={{ fontWeight: 600 }}
               >
-                ＋ 建立醫師自訂課表
+                {t('lib.createCustom')}
               </button>
             </div>
           </div>
@@ -171,18 +170,14 @@ export function ExerciseLibrary({
 
       {/* 2. Individual Exercises Section */}
       {filteredExercises.length > 0 && (
-        <section className="library-section" aria-label="單項復健動作">
+        <section className="library-section" aria-label={t('lib.exercisesAria')}>
           <div className="library-section__head">
             <div>
               <h2 className="library-section__title">
-                {activeFilter === 'upcoming'
-                  ? '🔒 進階規劃中動作（待臨床驗證）'
-                  : '🎥 自主訓練動作庫'}
+                {activeFilter === 'upcoming' ? t('lib.upcomingTitle') : t('lib.selfTitle')}
               </h2>
               <p className="library-section__sub">
-                {activeFilter === 'upcoming'
-                  ? '依循復健運動醫學進程，陸續解鎖高角度外展、肩胛平面抬升與外旋動作。'
-                  : '單一關節角度與節奏自主訓練，即時偵測角度與防範代償。'}
+                {activeFilter === 'upcoming' ? t('lib.upcomingSub') : t('lib.selfSub')}
               </p>
             </div>
           </div>

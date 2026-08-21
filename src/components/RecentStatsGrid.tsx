@@ -1,35 +1,37 @@
 import { useState } from 'react'
 import { calculateRecentStats } from '../domain/recoveryMilestones'
 import type { CompletedSession } from '../domain/rehabTypes'
+import { useT } from '../i18n/LocaleContext'
 
 interface RecentStatsGridProps {
   history: CompletedSession[]
 }
 
 export function RecentStatsGrid({ history }: RecentStatsGridProps) {
+  const { t } = useT()
   const [periodDays, setPeriodDays] = useState<number>(7)
   const stats = calculateRecentStats(history, periodDays)
 
   return (
-    <section className="recent-stats-section" aria-label="近期復健成效數據">
+    <section className="recent-stats-section" aria-label={t('stats.aria')}>
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--s-3)' }}>
         <div>
           <div className="section-tag">
             <span className="section-tag__dot" aria-hidden="true" />
-            <span>臨床生物力學指標</span>
+            <span>{t('stats.tag')}</span>
           </div>
-          <h2 className="section-header__title">近期訓練品質與活動度分析</h2>
+          <h2 className="section-header__title">{t('stats.title')}</h2>
         </div>
 
         {/* 7d vs 30d toggle */}
-        <div className="segmented segmented--sm" role="group" aria-label="分析時間範圍">
+        <div className="segmented segmented--sm" role="group" aria-label={t('stats.rangeAria')}>
           <button
             type="button"
             className="segmented__item"
             aria-selected={periodDays === 7}
             onClick={() => setPeriodDays(7)}
           >
-            近 7 天
+            {t('stats.last7')}
           </button>
           <button
             type="button"
@@ -37,7 +39,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
             aria-selected={periodDays === 30}
             onClick={() => setPeriodDays(30)}
           >
-            近 30 天
+            {t('stats.last30')}
           </button>
         </div>
       </div>
@@ -47,13 +49,13 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         <div className="stat-card">
           <div className="stat-card__top">
             <span className="stat-card__icon-badge" aria-hidden="true">📊</span>
-            <span className="stat-card__period">近 {periodDays} 天累計</span>
+            <span className="stat-card__period">{t('stats.volumePeriod', { n: periodDays })}</span>
           </div>
           <span className="stat-card__val stat-card__val--blue">
-            {stats.totalReps} <span className="stat-card__unit">次</span>
+            {stats.totalReps} <span className="stat-card__unit">{t('stats.volumeUnit')}</span>
           </span>
-          <span className="stat-card__label">累計訓練動作次數</span>
-          
+          <span className="stat-card__label">{t('stats.volumeLabel')}</span>
+
           <div className="stat-card__mini-bar">
             <div
               className="stat-card__mini-bar-fill"
@@ -62,9 +64,9 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
           </div>
 
           <div className="stat-card__sub-row">
-            <span>{stats.totalSets} 組處方</span>
+            <span>{t('stats.setsSub', { n: stats.totalSets })}</span>
             <span>·</span>
-            <span>活躍 {stats.daysActiveInPeriod} 天</span>
+            <span>{t('stats.activeDays', { n: stats.daysActiveInPeriod })}</span>
           </div>
         </div>
 
@@ -72,13 +74,13 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         <div className="stat-card">
           <div className="stat-card__top">
             <span className="stat-card__icon-badge" aria-hidden="true">📐</span>
-            <span className="stat-card__period">目標 90° 水平</span>
+            <span className="stat-card__period">{t('stats.angleTarget')}</span>
           </div>
           <span className="stat-card__val stat-card__val--green">
             {stats.avgPeakElevationDeg > 0 ? stats.avgPeakElevationDeg : '--'}
             {stats.avgPeakElevationDeg > 0 && <span className="stat-card__unit">°</span>}
           </span>
-          <span className="stat-card__label">平均最高抬起角度</span>
+          <span className="stat-card__label">{t('stats.angleLabel')}</span>
 
           <div className="stat-card__mini-bar">
             <div
@@ -90,10 +92,10 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
           <div className="stat-card__sub-row">
             <span>
               {stats.avgPeakElevationDeg >= 85 && stats.avgPeakElevationDeg <= 95
-                ? '🎯 落在處方目標區間'
+                ? t('stats.angleInTarget')
                 : stats.avgPeakElevationDeg > 0
-                ? '動作控制穩定'
-                : '尚無近期紀錄'}
+                ? t('stats.angleStable')
+                : t('stats.noRecent')}
             </span>
           </div>
         </div>
@@ -102,13 +104,13 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         <div className="stat-card">
           <div className="stat-card__top">
             <span className="stat-card__icon-badge" aria-hidden="true">⏱️</span>
-            <span className="stat-card__period">處方 5.0 秒</span>
+            <span className="stat-card__period">{t('stats.holdTarget')}</span>
           </div>
           <span className="stat-card__val stat-card__val--orange">
             {stats.avgHoldDurationS > 0 ? stats.avgHoldDurationS.toFixed(1) : '--'}
-            {stats.avgHoldDurationS > 0 && <span className="stat-card__unit">秒</span>}
+            {stats.avgHoldDurationS > 0 && <span className="stat-card__unit">{t('stats.holdUnit')}</span>}
           </span>
-          <span className="stat-card__label">平均頂點等長停頓</span>
+          <span className="stat-card__label">{t('stats.holdLabel')}</span>
 
           <div className="stat-card__mini-bar">
             <div
@@ -120,10 +122,10 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
           <div className="stat-card__sub-row">
             <span>
               {stats.avgHoldDurationS >= 4.5
-                ? '等長肌耐力良好'
+                ? t('stats.holdGood')
                 : stats.avgHoldDurationS > 0
-                ? '維持滿 5 秒穩定'
-                : '尚無近期紀錄'}
+                ? t('stats.holdMaintain')
+                : t('stats.noRecent')}
             </span>
           </div>
         </div>
@@ -132,12 +134,12 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         <div className="stat-card">
           <div className="stat-card__top">
             <span className="stat-card__icon-badge" aria-hidden="true">🛡️</span>
-            <span className="stat-card__period">無代償動作</span>
+            <span className="stat-card__period">{t('stats.formTarget')}</span>
           </div>
           <span className="stat-card__val">
             {stats.totalReps > 0 ? `${stats.cleanMovementRatePct}%` : '--'}
           </span>
-          <span className="stat-card__label">動作標準率</span>
+          <span className="stat-card__label">{t('stats.formLabel')}</span>
 
           <div className="stat-card__mini-bar">
             <div
@@ -147,9 +149,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
           </div>
 
           <div className="stat-card__sub-row">
-            <span>
-              {stats.cleanReps} / {stats.totalReps} 次達標無代償
-            </span>
+            <span>{t('stats.formSub', { clean: stats.cleanReps, total: stats.totalReps })}</span>
           </div>
         </div>
       </div>

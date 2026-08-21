@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
-import type { RehabRoutine } from '../domain/routineCatalog'
-import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
+import { localizeRoutine, type RehabRoutine } from '../domain/routineCatalog'
+import { EXERCISE_CATALOG, localizeExercise } from '../domain/exerciseCatalog'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { assetUrl } from '../domain/assets'
+import { useT } from '../i18n/LocaleContext'
 
 interface RoutineDetailModalProps {
   routine: RehabRoutine
@@ -18,6 +20,8 @@ export function RoutineDetailModal({
   onDeleteRoutine,
   onClose,
 }: RoutineDetailModalProps) {
+  const { t, locale } = useT()
+  const r = localizeRoutine(routine, locale)
   const modalRef = useRef<HTMLDivElement>(null)
 
   useBodyScrollLock()
@@ -32,7 +36,7 @@ export function RoutineDetailModal({
   }, [onClose])
 
   function handleDelete() {
-    if (window.confirm(`確定要刪除「${routine.nameZh}」這組處方課表嗎？`)) {
+    if (window.confirm(t('rdetail.confirmDelete', { name: r.name }))) {
       if (onDeleteRoutine) {
         onDeleteRoutine(routine.id)
       }
@@ -57,17 +61,17 @@ export function RoutineDetailModal({
             <div className="section-tag">
               <span className="section-tag__dot" style={{ background: 'var(--rehab-green-deep)' }} aria-hidden="true" />
               <span style={{ color: 'var(--rehab-green-deep)' }}>
-                {routine.isCustom ? '🩺 醫師客製處方課表' : '複合處方課表'} · {routine.estimatedDurationMin} 分鐘
+                {routine.isCustom ? t('rdetail.customLabel') : t('rdetail.compoundLabel')} · {t('rdetail.minutes', { n: routine.estimatedDurationMin })}
               </span>
             </div>
             <h2 className="sheet__title" id="routine-detail-title">
-              {routine.nameZh}
+              {r.name}
             </h2>
             <p className="sheet__sub" style={{ margin: '4px 0 0', color: 'var(--rehab-ink-secondary)', fontSize: 'var(--t-sm)' }}>
-              {routine.subtitleZh}
+              {r.subtitle}
             </p>
           </div>
-          <button className="btn btn--quiet btn--icon" onClick={onClose} aria-label="關閉詳情">
+          <button className="btn btn--quiet btn--icon" onClick={onClose} aria-label={t('rdetail.close')}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M6 6l12 12M18 6L6 18"
@@ -83,8 +87,8 @@ export function RoutineDetailModal({
         {routine.thumbnailUrl && (
           <div className="exercise-detail-diagram-wrap" style={{ maxHeight: '360px' }}>
             <img
-              src={routine.thumbnailUrl}
-              alt={routine.nameZh}
+              src={assetUrl(routine.thumbnailUrl)}
+              alt={r.name}
               className="exercise-detail-diagram-img"
               style={{ maxHeight: '340px' }}
             />
@@ -93,20 +97,21 @@ export function RoutineDetailModal({
 
         {/* Focus Highlight Box */}
         <div className="routine-focus-box">
-          <span className="routine-focus-box__label">🎯 訓練焦點：</span>
-          <span className="routine-focus-box__val">{routine.targetFocusZh}</span>
+          <span className="routine-focus-box__label">{t('rdetail.focus')}</span>
+          <span className="routine-focus-box__val">{r.targetFocus}</span>
         </div>
 
         {/* Description */}
-        <p className="exercise-detail-section__desc">{routine.descriptionZh}</p>
+        <p className="exercise-detail-section__desc">{r.description}</p>
 
         {/* Stations Breakdown */}
         <div className="routine-stations-section">
-          <h3 className="routine-stations-section__title">課表流程與動作站點</h3>
+          <h3 className="routine-stations-section__title">{t('rdetail.flowTitle')}</h3>
           <div className="routine-stations-list">
             {routine.stations.map((station, idx) => {
               const exercise = EXERCISE_CATALOG.find((e) => e.id === station.exerciseId)
               if (!exercise) return null
+              const ex = localizeExercise(exercise, locale)
 
               return (
                 <div key={idx} className="routine-station-item">
@@ -114,17 +119,17 @@ export function RoutineDetailModal({
                     <span className="routine-station-item__num">{idx + 1}</span>
                     <div className="routine-station-item__info">
                       <div className="routine-station-item__name-row">
-                        <h4 className="routine-station-item__name">{exercise.nameZh}</h4>
-                        <span className="routine-station-item__reps-tag">{station.targetReps} 次處方</span>
+                        <h4 className="routine-station-item__name">{ex.name}</h4>
+                        <span className="routine-station-item__reps-tag">{t('rdetail.repsTag', { n: station.targetReps })}</span>
                       </div>
-                      <p className="routine-station-item__desc">{exercise.category}</p>
+                      <p className="routine-station-item__desc">{ex.category}</p>
                     </div>
                   </div>
 
                   {station.restAfterS > 0 && (
                     <div className="routine-intermission-banner">
                       <span className="routine-intermission-banner__icon">☕</span>
-                      <span>中場主動肌腱修復休息：{station.restAfterS} 秒（預防旋轉肌群疲勞）</span>
+                      <span>{t('rdetail.rest', { s: station.restAfterS })}</span>
                     </div>
                   )}
                 </div>
@@ -135,9 +140,9 @@ export function RoutineDetailModal({
 
         {/* Clinical Note */}
         <div className="routine-card__reminders">
-          <h4 className="routine-card__reminders-title">🩺 臨床處方建議</h4>
+          <h4 className="routine-card__reminders-title">{t('rdetail.clinicalTitle')}</h4>
           <p style={{ margin: 0, fontSize: 'var(--t-xs)', color: 'var(--rehab-ink-secondary)', lineHeight: 1.5 }}>
-            本課表依循先站姿整體動態穩定、後坐姿局部隔離之運動醫學原則。每站動作皆具備即時角度與代償監測。
+            {t('rdetail.clinicalBody')}
           </p>
         </div>
 
@@ -149,7 +154,7 @@ export function RoutineDetailModal({
               style={{ color: 'var(--rehab-red-deep)', padding: '0 var(--s-3)' }}
               onClick={handleDelete}
             >
-              🗑️ 刪除課表
+              {t('rdetail.delete')}
             </button>
           )}
 
@@ -161,7 +166,7 @@ export function RoutineDetailModal({
                 onEditRoutine(routine)
               }}
             >
-              ✏️ 編輯課表
+              {t('rdetail.edit')}
             </button>
           )}
 
@@ -173,7 +178,7 @@ export function RoutineDetailModal({
               onStartRoutine(routine)
             }}
           >
-            開始整組課表訓練
+            {t('rdetail.startAll')}
           </button>
         </div>
       </div>

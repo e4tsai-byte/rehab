@@ -1,5 +1,7 @@
-import type { ExerciseDefinition } from '../domain/exerciseCatalog'
+import { localizeExercise, type ExerciseDefinition } from '../domain/exerciseCatalog'
 import type { UserSettings } from '../domain/rehabTypes'
+import { assetUrl } from '../domain/assets'
+import { useT } from '../i18n/LocaleContext'
 
 interface ExerciseCardProps {
   exercise: ExerciseDefinition
@@ -8,40 +10,43 @@ interface ExerciseCardProps {
 }
 
 export function ExerciseCard({ exercise, settings, onStart }: ExerciseCardProps) {
+  const { t, locale } = useT()
+  const ex = localizeExercise(exercise, locale)
+
   return (
     <section className="routine-card">
       {/* Top Header Row */}
       <div className="routine-card__header">
         <div className="routine-card__info">
-          <p className="routine-card__tag">今日處方 · {exercise.targetLimb}</p>
-          <h2 className="routine-card__name">{exercise.nameZh}</h2>
-          <p className="routine-card__desc">{exercise.descriptionZh}</p>
+          <p className="routine-card__tag">{t('card.todayPrescription')} · {ex.targetLimb}</p>
+          <h2 className="routine-card__name">{ex.name}</h2>
+          <p className="routine-card__desc">{ex.description}</p>
         </div>
 
         <button className="btn btn--primary btn--lg routine-card__cta" onClick={onStart}>
-          開始訓練
+          {t('card.start')}
         </button>
       </div>
 
       {/* Target Specs Row */}
       <div className="routine-card__specs">
         <span className="spec-pill">
-          <span className="spec-pill__label">目標角度</span>
+          <span className="spec-pill__label">{t('spec.targetAngle')}</span>
           <span className="spec-pill__val">{settings.targetAngleDeg}°</span>
         </span>
         <span className="spec-pill">
-          <span className="spec-pill__label">頂點停頓</span>
-          <span className="spec-pill__val">{settings.holdDurationS.toFixed(1)} 秒</span>
+          <span className="spec-pill__label">{t('spec.topHold')}</span>
+          <span className="spec-pill__val">{t('spec.secondsValue', { n: settings.holdDurationS.toFixed(1) })}</span>
         </span>
         <span className="spec-pill">
-          <span className="spec-pill__label">上升 / 下放</span>
+          <span className="spec-pill__label">{t('spec.riseFall')}</span>
           <span className="spec-pill__val">
             {settings.concentricCadenceS}s / {settings.eccentricCadenceS}s
           </span>
         </span>
         <span className="spec-pill">
-          <span className="spec-pill__label">處方次數</span>
-          <span className="spec-pill__val">{settings.targetReps} 次</span>
+          <span className="spec-pill__label">{t('spec.prescribedReps')}</span>
+          <span className="spec-pill__val">{t('fmt.reps', { n: settings.targetReps })}</span>
         </span>
       </div>
 
@@ -49,8 +54,8 @@ export function ExerciseCard({ exercise, settings, onStart }: ExerciseCardProps)
       {exercise.diagramUrl && (
         <div className="routine-card__diagram-wrapper">
           <img
-            src={exercise.diagramUrl}
-            alt={`${exercise.nameZh} 復健動作分解圖`}
+            src={assetUrl(exercise.diagramUrl)}
+            alt={t('card.diagramAlt', { name: ex.name })}
             className="routine-card__diagram-img"
           />
         </div>
@@ -58,9 +63,9 @@ export function ExerciseCard({ exercise, settings, onStart }: ExerciseCardProps)
 
       {/* Dedicated Training Reminders & Safety Box */}
       <div className="routine-card__reminders">
-        <h3 className="routine-card__reminders-title">💡 訓練提醒與動作要點</h3>
+        <h3 className="routine-card__reminders-title">{t('card.remindersTitle')}</h3>
         <ul className="routine-card__reminders-list">
-          {exercise.tipsZh.map((tip, idx) => (
+          {ex.tips.map((tip, idx) => (
             <li key={idx} className="routine-card__reminders-item">
               <span className="routine-card__reminders-dot">•</span>
               <span>{tip}</span>
@@ -68,11 +73,11 @@ export function ExerciseCard({ exercise, settings, onStart }: ExerciseCardProps)
           ))}
           <li className="routine-card__reminders-item">
             <span className="routine-card__reminders-dot">•</span>
-            <span>節奏控制：嚴格維持 5 秒平穩舉起、5 秒頂點穩定停頓、5 秒緩慢下放，每完成 1 次自動休息 3 秒。</span>
+            <span>{t('card.tempoReminder')}</span>
           </li>
           <li className="routine-card__reminders-item routine-card__reminders-item--warn">
             <span className="routine-card__reminders-dot">⚠️</span>
-            <span>安全防護：若在抬起過程感到肩膀關節劇痛或明顯不適，請立即停止下放，切勿勉強。</span>
+            <span>{t('card.safetyReminder')}</span>
           </li>
         </ul>
       </div>

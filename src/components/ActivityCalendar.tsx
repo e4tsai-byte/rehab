@@ -4,6 +4,8 @@ import {
   type DayActivity,
 } from '../domain/recoveryMilestones'
 import type { CompletedSession } from '../domain/rehabTypes'
+import { useT } from '../i18n/LocaleContext'
+import { formatMonthLabel, weekdayNarrow } from '../i18n/datetime'
 
 interface ActivityCalendarProps {
   history: CompletedSession[]
@@ -11,16 +13,16 @@ interface ActivityCalendarProps {
   onSelectDate: (dateStr: string | null) => void
 }
 
-const WEEKDAYS_ZH = ['日', '一', '二', '三', '四', '五', '六'] as const
-
 export function ActivityCalendar({
   history,
   selectedDateStr,
   onSelectDate,
 }: ActivityCalendarProps) {
+  const { t, locale } = useT()
   const [viewDate, setViewDate] = useState<Date>(new Date())
 
   const calendarData = calculateCalendarActivity(history, viewDate)
+  const weekdays = weekdayNarrow(locale)
 
   const handlePrevMonth = () => {
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
@@ -40,36 +42,38 @@ export function ActivityCalendar({
   }
 
   return (
-    <section className="activity-calendar" aria-label="訓練與修復月曆">
+    <section className="activity-calendar" aria-label={t('cal.aria')}>
       {/* Top Header */}
       <div className="activity-calendar__header">
         <div>
           <div className="section-tag">
             <span className="section-tag__dot" style={{ background: 'var(--rehab-orange-deep)' }} aria-hidden="true" />
-            <span style={{ color: 'var(--rehab-orange-deep)' }}>訓練與肌腱修復日誌</span>
+            <span style={{ color: 'var(--rehab-orange-deep)' }}>{t('cal.tag')}</span>
           </div>
-          <h2 className="activity-calendar__title">{calendarData.monthLabelZh}</h2>
+          <h2 className="activity-calendar__title">
+            {formatMonthLabel(calendarData.year, calendarData.month, locale)}
+          </h2>
         </div>
 
         <div className="activity-calendar__nav">
           <button
             className="btn btn--glass btn--sm"
             onClick={handlePrevMonth}
-            aria-label="上一個月"
+            aria-label={t('cal.prevMonth')}
           >
             ‹
           </button>
           <button
             className="btn btn--glass btn--sm"
             onClick={handleToday}
-            aria-label="回到今天"
+            aria-label={t('cal.today')}
           >
-            今天
+            {t('cal.today')}
           </button>
           <button
             className="btn btn--glass btn--sm"
             onClick={handleNextMonth}
-            aria-label="下一個月"
+            aria-label={t('cal.nextMonth')}
           >
             ›
           </button>
@@ -82,45 +86,45 @@ export function ActivityCalendar({
           <span className="cal-stat__icon" aria-hidden="true">🔥</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--orange">
-              {calendarData.currentStreak} <span className="cal-stat__unit">天</span>
+              {calendarData.currentStreak} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
             </span>
-            <span className="cal-stat__label">連續訓練</span>
+            <span className="cal-stat__label">{t('cal.streak')}</span>
           </div>
         </div>
         <div className="cal-stat">
           <span className="cal-stat__icon" aria-hidden="true">📅</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--blue">
-              {calendarData.activeDaysCount} <span className="cal-stat__unit">天</span>
+              {calendarData.activeDaysCount} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
             </span>
-            <span className="cal-stat__label">訓練天數</span>
+            <span className="cal-stat__label">{t('cal.trainDays')}</span>
           </div>
         </div>
         <div className="cal-stat">
           <span className="cal-stat__icon" aria-hidden="true">🎯</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--green">
-              {calendarData.totalRepsThisMonth} <span className="cal-stat__unit">次</span>
+              {calendarData.totalRepsThisMonth} <span className="cal-stat__unit">{t('cal.unitReps')}</span>
             </span>
-            <span className="cal-stat__label">累計動作</span>
+            <span className="cal-stat__label">{t('cal.cumReps')}</span>
           </div>
         </div>
         <div className="cal-stat">
           <span className="cal-stat__icon" aria-hidden="true">🌱</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--rest">
-              {calendarData.restDaysCount} <span className="cal-stat__unit">天</span>
+              {calendarData.restDaysCount} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
             </span>
-            <span className="cal-stat__label">肌腱修復</span>
+            <span className="cal-stat__label">{t('cal.recovery')}</span>
           </div>
         </div>
       </div>
 
       {/* Weekday Labels */}
       <div className="activity-calendar__weekdays" aria-hidden="true">
-        {WEEKDAYS_ZH.map((w, idx) => (
+        {weekdays.map((w, idx) => (
           <div
-            key={w}
+            key={idx}
             className={`activity-calendar__weekday ${
               idx === 0 || idx === 6 ? 'activity-calendar__weekday--weekend' : ''
             }`}
@@ -161,13 +165,13 @@ export function ActivityCalendar({
             >
               <div className="cal-day__header">
                 <span className="cal-day__number">{day.dayNumber}</span>
-                {day.isToday && <span className="cal-day__today-badge">今</span>}
+                {day.isToday && <span className="cal-day__today-badge">{t('cal.todayBadge')}</span>}
               </div>
 
               <div className="cal-day__body">
                 {hasSessions ? (
                   <div className="cal-day__activity">
-                    <span className="cal-day__reps-badge">{day.totalReps}次</span>
+                    <span className="cal-day__reps-badge">{t('cal.dayReps', { n: day.totalReps })}</span>
                     <span className="cal-day__dots" aria-hidden="true">
                       {Array.from({ length: Math.min(3, day.sessionsCount) }).map((_, i) => (
                         <span key={i} className="cal-day__dot" />
@@ -175,9 +179,9 @@ export function ActivityCalendar({
                     </span>
                   </div>
                 ) : day.isRestDay ? (
-                  <div className="cal-day__rest-badge" title="肌腱修復日">
+                  <div className="cal-day__rest-badge" title={t('cal.restTitle')}>
                     <span className="cal-day__rest-icon" aria-hidden="true">🌱</span>
-                    <span className="cal-day__rest-label">修復</span>
+                    <span className="cal-day__rest-label">{t('cal.restLabel')}</span>
                   </div>
                 ) : null}
               </div>
@@ -190,15 +194,15 @@ export function ActivityCalendar({
       <div className="activity-calendar__legend">
         <div className="legend-item">
           <span className="legend-dot legend-dot--active" />
-          <span>完成訓練</span>
+          <span>{t('cal.legendDone')}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot legend-dot--rest" />
-          <span>肌腱修復日</span>
+          <span>{t('cal.legendRest')}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot legend-dot--today" />
-          <span>今日</span>
+          <span>{t('cal.legendToday')}</span>
         </div>
         {selectedDateStr && (
           <button
@@ -206,7 +210,7 @@ export function ActivityCalendar({
             onClick={() => onSelectDate(null)}
             style={{ marginLeft: 'auto', fontSize: '12px' }}
           >
-            ✕ 清除篩選 ({selectedDateStr})
+            {t('cal.clearFilter', { date: selectedDateStr })}
           </button>
         )}
       </div>

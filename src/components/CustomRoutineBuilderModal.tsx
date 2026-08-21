@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react'
-import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
+import { EXERCISE_CATALOG, localizeExercise } from '../domain/exerciseCatalog'
 import type { RehabRoutine, RoutineStation } from '../domain/routineCatalog'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
+import { assetUrl } from '../domain/assets'
+import { useT } from '../i18n/LocaleContext'
+import type { StringKey } from '../i18n/uiStrings'
 
 interface CustomRoutineBuilderModalProps {
   initialRoutine?: RehabRoutine | null
@@ -9,12 +12,12 @@ interface CustomRoutineBuilderModalProps {
   onClose: () => void
 }
 
-const PRESET_THUMBNAILS = [
-  { id: 'scapular', label: '肩胛複合', url: '/images/thumb-routine-scapular.jpg' },
-  { id: 'standing', label: '站姿前舉', url: '/images/thumb-standing-flexion.jpg' },
-  { id: 'seated', label: '坐姿桌前', url: '/images/thumb-seated-flexion.jpg' },
-  { id: 'desk', label: '辦公舒緩', url: '/images/thumb-routine-desk.jpg' },
-  { id: 'abduction', label: '側向外展', url: '/images/thumb-lateral-abduction.jpg' },
+const PRESET_THUMBNAILS: Array<{ id: string; labelKey: StringKey; url: string }> = [
+  { id: 'scapular', labelKey: 'builder.presetScapular', url: 'images/thumb-routine-scapular.jpg' },
+  { id: 'standing', labelKey: 'builder.presetStanding', url: 'images/thumb-standing-flexion.jpg' },
+  { id: 'seated', labelKey: 'builder.presetSeated', url: 'images/thumb-seated-flexion.jpg' },
+  { id: 'desk', labelKey: 'builder.presetDesk', url: 'images/thumb-routine-desk.jpg' },
+  { id: 'abduction', labelKey: 'builder.presetAbduction', url: 'images/thumb-lateral-abduction.jpg' },
 ]
 
 export function CustomRoutineBuilderModal({
@@ -22,6 +25,7 @@ export function CustomRoutineBuilderModal({
   onSave,
   onClose,
 }: CustomRoutineBuilderModalProps) {
+  const { t, locale } = useT()
   const modalRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -30,16 +34,18 @@ export function CustomRoutineBuilderModal({
   const isEditMode = Boolean(initialRoutine)
   const liveExercises = EXERCISE_CATALOG.filter((ex) => ex.status === 'prescribed')
 
-  const [nameZh, setNameZh] = useState(initialRoutine?.nameZh ?? '醫師處方客製復健課表')
-  const [subtitleZh, setSubtitleZh] = useState(
-    initialRoutine?.subtitleZh ?? '主治醫師指定個別化居家處方'
+  // A custom routine is authored once, in one language, through these fields —
+  // there is no separate English form. On save the typed text is written to
+  // both the *Zh and *En slots so it shows in either display language.
+  const [name, setName] = useState(initialRoutine?.nameZh ?? t('builder.defaultName'))
+  const [subtitle, setSubtitle] = useState(
+    initialRoutine?.subtitleZh ?? t('builder.defaultSubtitle')
   )
-  const [descriptionZh, setDescriptionZh] = useState(
-    initialRoutine?.descriptionZh ??
-      '依據臨床醫師指示配置之動作組合與處方次數，落實每日居家肩關節復健。'
+  const [description, setDescription] = useState(
+    initialRoutine?.descriptionZh ?? t('builder.defaultDesc')
   )
   const [thumbnailUrl, setThumbnailUrl] = useState<string>(
-    initialRoutine?.thumbnailUrl ?? '/images/thumb-routine-scapular.jpg'
+    initialRoutine?.thumbnailUrl ?? 'images/thumb-routine-scapular.jpg'
   )
   const [stations, setStations] = useState<RoutineStation[]>(
     initialRoutine?.stations && initialRoutine.stations.length > 0
@@ -112,15 +118,23 @@ export function CustomRoutineBuilderModal({
   const estimatedDurationMin = Math.max(1, Math.round(totalSeconds / 60))
 
   function handleSave() {
-    if (!nameZh.trim() || stations.length === 0) return
+    if (!name.trim() || stations.length === 0) return
+
+    const trimmedName = name.trim()
+    const trimmedSubtitle = subtitle.trim() || t('builder.defaultSubtitleFallback')
+    const trimmedDesc = description.trim() || t('builder.defaultDescFallback')
+    const focus = initialRoutine?.targetFocusZh ?? t('builder.defaultFocus')
 
     const routineToSave: RehabRoutine = {
       id: initialRoutine?.id ?? `custom-routine-${Date.now()}`,
-      nameZh: nameZh.trim(),
-      nameEn: initialRoutine?.nameEn ?? 'Doctor Custom Prescription Routine',
-      subtitleZh: subtitleZh.trim() || '主治醫師指定居家處方',
-      descriptionZh: descriptionZh.trim() || '依據醫師指示配置之個別化復健課表。',
-      targetFocusZh: initialRoutine?.targetFocusZh ?? '醫師個別化處方 · 肩關節活動度與穩定',
+      nameZh: trimmedName,
+      nameEn: trimmedName,
+      subtitleZh: trimmedSubtitle,
+      subtitleEn: trimmedSubtitle,
+      descriptionZh: trimmedDesc,
+      descriptionEn: trimmedDesc,
+      targetFocusZh: focus,
+      targetFocusEn: initialRoutine?.targetFocusEn ?? focus,
       estimatedDurationMin,
       category: 'custom_doctor',
       stations,
@@ -150,17 +164,17 @@ export function CustomRoutineBuilderModal({
             <div className="section-tag">
               <span className="section-tag__dot" style={{ background: 'var(--rehab-blue-deep)' }} aria-hidden="true" />
               <span style={{ color: 'var(--rehab-blue-deep)' }}>
-                {isEditMode ? '編輯處方課表' : '客製化處方建立器'}
+                {isEditMode ? t('builder.editTag') : t('builder.createTag')}
               </span>
             </div>
             <h2 className="sheet__title" id="custom-routine-builder-title">
-              {isEditMode ? `編輯「${nameZh}」` : '建立醫師自訂處方課表'}
+              {isEditMode ? t('builder.editTitle', { name }) : t('builder.createTitle')}
             </h2>
             <p className="sheet__sub" style={{ margin: '4px 0 0', color: 'var(--rehab-ink-secondary)', fontSize: 'var(--t-sm)' }}>
-              輸入主治醫師或物理治療師交代之動作組合、次數、休息間隔與專屬封面縮圖。
+              {t('builder.sub')}
             </p>
           </div>
-          <button className="btn btn--quiet btn--icon" onClick={onClose} aria-label="關閉建立器">
+          <button className="btn btn--quiet btn--icon" onClick={onClose} aria-label={t('builder.close')}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M6 6l12 12M18 6L6 18"
@@ -176,20 +190,18 @@ export function CustomRoutineBuilderModal({
         <div className="thumbnail-upload-section">
           <div className="thumbnail-upload-preview-wrap">
             <img
-              src={thumbnailUrl}
-              alt="課表封面預覽"
+              src={assetUrl(thumbnailUrl)}
+              alt={t('builder.coverAlt')}
               className="thumbnail-upload-preview-img"
             />
             <span className="video-badge video-badge--duration" style={{ position: 'absolute', bottom: '8px', right: '8px' }}>
-              16:9 封面預覽
+              {t('builder.coverBadge')}
             </span>
           </div>
 
           <div className="thumbnail-upload-controls">
-            <h4 className="thumbnail-upload-title">🖼️ 課表縮圖封面</h4>
-            <p className="thumbnail-upload-desc">
-              可上傳門診醫囑照片、個人訓練照，或從下方預設縮圖快速選擇：
-            </p>
+            <h4 className="thumbnail-upload-title">{t('builder.thumbTitle')}</h4>
+            <p className="thumbnail-upload-desc">{t('builder.thumbDesc')}</p>
 
             <div className="thumbnail-preset-row">
               {PRESET_THUMBNAILS.map((preset) => (
@@ -199,7 +211,7 @@ export function CustomRoutineBuilderModal({
                   className={`btn btn--sm ${thumbnailUrl === preset.url ? 'btn--primary' : 'btn--glass'}`}
                   onClick={() => setThumbnailUrl(preset.url)}
                 >
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </button>
               ))}
             </div>
@@ -217,7 +229,7 @@ export function CustomRoutineBuilderModal({
                 className="btn btn--glass btn--sm"
                 onClick={() => fileInputRef.current?.click()}
               >
-                📁 上傳自訂封面照片
+                {t('builder.uploadCover')}
               </button>
             </div>
           </div>
@@ -227,43 +239,43 @@ export function CustomRoutineBuilderModal({
         <div className="routine-form-grid">
           <div className="form-field">
             <label className="form-field__label" htmlFor="routine-name-input">
-              課表名稱
+              {t('builder.nameLabel')}
             </label>
             <input
               id="routine-name-input"
               type="text"
               className="form-input"
-              value={nameZh}
-              onChange={(e) => setNameZh(e.target.value)}
-              placeholder="例如：陳醫師指定每日肩胛強化課表"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('builder.namePlaceholder')}
             />
           </div>
 
           <div className="form-field">
             <label className="form-field__label" htmlFor="routine-sub-input">
-              副標題 / 訓練焦點
+              {t('builder.subtitleLabel')}
             </label>
             <input
               id="routine-sub-input"
               type="text"
               className="form-input"
-              value={subtitleZh}
-              onChange={(e) => setSubtitleZh(e.target.value)}
-              placeholder="例如：早晚各一組 · 強化前三角肌"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              placeholder={t('builder.subtitlePlaceholder')}
             />
           </div>
 
           <div className="form-field form-field--full">
             <label className="form-field__label" htmlFor="routine-desc-input">
-              醫師叮嚀與備註說明
+              {t('builder.descLabel')}
             </label>
             <textarea
               id="routine-desc-input"
               className="form-textarea"
               rows={2}
-              value={descriptionZh}
-              onChange={(e) => setDescriptionZh(e.target.value)}
-              placeholder="例如：動作過程專注沉肩，若有劇烈刺痛即刻停止..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('builder.descPlaceholder')}
             />
           </div>
         </div>
@@ -273,10 +285,10 @@ export function CustomRoutineBuilderModal({
           <div className="stations-builder-section__head">
             <div>
               <h3 className="stations-builder-section__title">
-                動作站點清單（共 {stations.length} 項 · 預估約 {estimatedDurationMin} 分鐘）
+                {t('builder.stationsTitle', { count: stations.length, min: estimatedDurationMin })}
               </h3>
               <p style={{ margin: '2px 0 0', fontSize: 'var(--t-xs)', color: 'var(--rehab-ink-tertiary)' }}>
-                系統將在訓練中自動依序引導，並於站點之間啟動中場休息計時。
+                {t('builder.stationsSub')}
               </p>
             </div>
             <button
@@ -284,7 +296,7 @@ export function CustomRoutineBuilderModal({
               className="btn btn--glass btn--sm"
               onClick={handleAddStation}
             >
-              ＋ 新增動作站點
+              {t('builder.addStation')}
             </button>
           </div>
 
@@ -292,7 +304,7 @@ export function CustomRoutineBuilderModal({
             {stations.map((st, idx) => (
               <div key={idx} className="station-builder-card">
                 <div className="station-builder-card__head">
-                  <span className="station-builder-card__badge">第 {idx + 1} 站</span>
+                  <span className="station-builder-card__badge">{t('builder.stationN', { n: idx + 1 })}</span>
                   {stations.length > 1 && (
                     <button
                       type="button"
@@ -300,7 +312,7 @@ export function CustomRoutineBuilderModal({
                       style={{ color: 'var(--rehab-red-deep)', padding: '2px 8px', fontSize: '12px' }}
                       onClick={() => handleRemoveStation(idx)}
                     >
-                      移除站點
+                      {t('builder.removeStation')}
                     </button>
                   )}
                 </div>
@@ -308,7 +320,7 @@ export function CustomRoutineBuilderModal({
                 <div className="station-builder-card__fields">
                   {/* Select Exercise */}
                   <div className="form-field" style={{ flex: 2, minWidth: '180px' }}>
-                    <label className="form-field__label">執行動作</label>
+                    <label className="form-field__label">{t('builder.stationExercise')}</label>
                     <select
                       className="form-select"
                       value={st.exerciseId}
@@ -318,7 +330,10 @@ export function CustomRoutineBuilderModal({
                     >
                       {liveExercises.map((ex) => (
                         <option key={ex.id} value={ex.id}>
-                          {ex.nameZh} ({ex.posture === 'standing' ? '站姿' : '坐姿桌前'})
+                          {t('builder.stationExerciseOpt', {
+                            name: localizeExercise(ex, locale).name,
+                            posture: ex.posture === 'standing' ? t('posture.standingShort') : t('posture.seatedShort'),
+                          })}
                         </option>
                       ))}
                     </select>
@@ -326,7 +341,7 @@ export function CustomRoutineBuilderModal({
 
                   {/* Target Reps */}
                   <div className="form-field" style={{ flex: 1, minWidth: '110px' }}>
-                    <label className="form-field__label">處方次數</label>
+                    <label className="form-field__label">{t('builder.stationReps')}</label>
                     <select
                       className="form-select"
                       value={st.targetReps}
@@ -338,7 +353,7 @@ export function CustomRoutineBuilderModal({
                     >
                       {[5, 8, 10, 12, 15, 20].map((reps) => (
                         <option key={reps} value={reps}>
-                          {reps} 次
+                          {t('builder.repsOpt', { n: reps })}
                         </option>
                       ))}
                     </select>
@@ -346,7 +361,7 @@ export function CustomRoutineBuilderModal({
 
                   {/* Rest after */}
                   <div className="form-field" style={{ flex: 1, minWidth: '130px' }}>
-                    <label className="form-field__label">完畢後中場休息</label>
+                    <label className="form-field__label">{t('builder.stationRest')}</label>
                     <select
                       className="form-select"
                       value={st.restAfterS}
@@ -356,10 +371,10 @@ export function CustomRoutineBuilderModal({
                         })
                       }
                     >
-                      <option value={0}>無休息（直接進入）</option>
-                      <option value={30}>30 秒肌腱修復</option>
-                      <option value={60}>60 秒標準休息</option>
-                      <option value={90}>90 秒充分緩和</option>
+                      <option value={0}>{t('builder.restNone')}</option>
+                      <option value={30}>{t('builder.rest30')}</option>
+                      <option value={60}>{t('builder.rest60')}</option>
+                      <option value={90}>{t('builder.rest90')}</option>
                     </select>
                   </div>
                 </div>
@@ -371,15 +386,15 @@ export function CustomRoutineBuilderModal({
         {/* Actions */}
         <div className="sheet__actions" style={{ marginTop: 'var(--s-6)' }}>
           <button className="btn btn--glass" onClick={onClose}>
-            取消
+            {t('builder.cancel')}
           </button>
           <button
             className="btn btn--primary btn--lg"
             style={{ flex: 1 }}
             onClick={handleSave}
-            disabled={!nameZh.trim() || stations.length === 0}
+            disabled={!name.trim() || stations.length === 0}
           >
-            {isEditMode ? '儲存修改' : '儲存自訂處方課表'}
+            {isEditMode ? t('builder.saveEdit') : t('builder.saveNew')}
           </button>
         </div>
       </div>

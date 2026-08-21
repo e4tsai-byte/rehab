@@ -9,3 +9,10 @@ dist/
 # recoverable from the `velocare-archive` branch and the `velocare-final-state`
 # tag; this directory is safe to delete outright:  rm -rf _to_delete
 _to_delete/
+
+# Copied out of node_modules by scripts/vendor-mediapipe.mjs.
+# Version-locked to package.json, so it is generated rather than committed.
+public/vendor/
+
+# Screenshots from tools/shoot.mjs and tools/offline-test.mjs.
+shots/

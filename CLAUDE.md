@@ -64,7 +64,9 @@ with no enforcer is negotiable by default, which defeats the point.
 
 * This repo ships Rehabibi only. No file under `src/` may reference sit-to-stand
   assessment, participant rosters, trials, staff facilitators, or velocare.
-* No second design system, no second string table, no second data-source layer.
+* No second design system, no second data-source layer, no second *product*.
+  (The bilingual `src/i18n/` layer added 2026-08-21 is Rehabibi's own single
+  localization layer — see §4 — not a second string table in this sense.)
 
 ### 6. Copy Tone (zh-TW) — *enforced by zh-tw-copywriter*
 
@@ -101,13 +103,18 @@ rehab/
 ├── AGENTS.md                      # The 12-agent roster and its boundaries
 ├── docs/decisions/                # Archived decision records (see §7)
 ├── src/
-│   ├── main.tsx                   # React root. Owns the stylesheet load order (§5).
+│   ├── main.tsx                   # React root, wrapped in LocaleProvider. Owns stylesheet load order (§5).
 │   ├── App.tsx                    # State router: Dashboard → Training → Summary
+│   ├── i18n/                      # The zh/en locale layer (see §4)
+│   │   ├── locale.ts              # Locale type, browser detection, <html lang> map
+│   │   ├── uiStrings.ts           # UI-chrome string table (zh + en), typed for completeness
+│   │   ├── LocaleContext.tsx      # LocaleProvider + useT() hook (locale, setLocale, t)
+│   │   └── datetime.ts            # Intl-based date/month/weekday formatting per locale
 │   ├── domain/
 │   │   ├── rehabTypes.ts          # Phases, FormFlags, RepRecords, UserSettings
-│   │   ├── recoveryMilestones.ts  # Recovery phases, calendar activity, recent stats
-│   │   ├── exerciseCatalog.ts     # Exercise library + ALL zh-TW copy (see §4)
-│   │   └── routineCatalog.ts      # Multi-exercise rehab menus & sequence models
+│   │   ├── recoveryMilestones.ts  # Recovery phases (+localizePhase), calendar, recent stats
+│   │   ├── exerciseCatalog.ts     # Exercise library, bilingual copy + localizeExercise (see §4)
+│   │   └── routineCatalog.ts      # Multi-exercise menus, bilingual copy + localizeRoutine
 │   ├── pose/
 │   │   └── shoulderKinematics.ts  # 3D vector geometry, CONFIG, rep state machine
 │   ├── data/
@@ -159,6 +166,10 @@ npm run dev
 
 # Production bundle (runs typecheck first)
 npm run build
+
+# Proves invariant 1: no network, served under a deployed subpath.
+# Aborts every non-local request, so one reintroduced CDN reference fails it.
+node tools/offline-test.mjs
 ```
 
 > **KNOWN GAP — the most important thing on this page.**
@@ -176,17 +187,44 @@ npm run build
 
 ## 4. Copy and Localization
 
-**Rehabibi has no i18n abstraction, deliberately.** zh-TW copy lives beside the
-exercise it describes, in `domain/exerciseCatalog.ts` (`nameZh`, `descriptionZh`,
-`framingHintZh`, `tipsZh`, `commonErrorsZh`).
+**Rehabibi is bilingual: Traditional Chinese (`zh`, zh-TW) and English (`en`.)**
+Added 2026-08-21 — the second locale is the moment the earlier single-locale
+version said an i18n layer should be *designed*, not inherited. There are two
+homes for copy, and the split is deliberate:
+
+* **UI chrome** (labels, buttons, headings, live cues) lives in
+  `src/i18n/uiStrings.ts` as a keyed table with a `zh` and `en` entry for every
+  key. The English table is typed against the Chinese keys, so a missing
+  translation is a **compile error**, not a silent fall-through. Read it with
+  `useT()` → `t('some.key', { vars })`; `{token}` placeholders interpolate.
+* **Domain copy** (what a specific exercise / routine / recovery stage says)
+  still lives beside its data in `domain/` — now as paired fields (`descriptionZh`
+  / `descriptionEn`, `tipsZh` / `tipsEn`, …). Components never branch on locale
+  themselves: they call the one selector per catalog — `localizeExercise`,
+  `localizeRoutine`, `localizePhase` — and read plain `.name` / `.description`.
+
+The chosen locale is detected from the browser on first visit (en-* → English,
+zh-* or anything else → Chinese) and persisted in `localStorage` through
+`rehabStore.loadLocale` / `saveLocale` — localStorage access stays centralised
+there (invariant 1). `LocaleProvider` (in `main.tsx`) also keeps `<html lang>`
+in sync. The switch is in the header (中 / EN) and in Settings.
+
+**Invariant 1.6 governs the tone of every string in both languages** — the
+English is written to the same clinical, dignified register as the Chinese
+(no cheerfulness, no exclamation marks, name the observable action not the
+person's failure). The `flag.*` keys in `uiStrings.ts` are where the old
+`FormAlertBanner` FLAG_MESSAGES moved to; they remain instruction, not verdict.
+
+Custom doctor routines are authored once, in one language, through the builder;
+their typed text is written to both `*Zh` and `*En` slots, and `localizeRoutine`
+falls back to the author's text when an English field is absent (older stored
+routines). Recorded sessions still store only `exerciseNameZh`; the display name
+is re-resolved from the catalog by id via `resolveExerciseName`, so no storage
+migration was needed.
 
 The 713-line `src/i18n/strings.ts` that used to exist belonged entirely to
-velocare — no Rehabibi surface ever imported it — and went with it.
-
-Do not reintroduce a string table for a single-locale product. If a second
-locale is ever added, that is the moment to extract one, and it should be
-designed then rather than inherited now. Invariant 1.6 governs the tone of
-everything written here.
+velocare — no Rehabibi surface ever imported it — and went with it. The current
+`src/i18n/` is a fresh, Rehabibi-only layer and shares nothing with it.
 
 ---
 

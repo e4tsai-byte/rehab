@@ -3,13 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Rehabibi — Intelligent Home Rehabilitation Coach",
+  "description": "Rehabibi \u2014 Intelligent Home Rehabilitation Coach",
   "scripts": {
     "dev": "vite --host",
     "dev:https": "vite --host --mode https",
     "build": "tsc --noEmit && vite build",
+    "prebuild": "node scripts/vendor-mediapipe.mjs",
     "preview": "vite preview --host",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vendor:mediapipe": "node scripts/vendor-mediapipe.mjs",
+    "postinstall": "node scripts/vendor-mediapipe.mjs"
   },
   "dependencies": {
     "@fontsource/noto-sans-tc": "^5.2.5",

@@ -47,45 +47,56 @@ export function usePoseTracker({
   useEffect(() => {
     let active = true
 
+    /* Local assets, not a CDN.
+     *
+     * These used to point at cdn.jsdelivr.net (pinned to @latest) and
+     * storage.googleapis.com, which meant the app could not start without a
+     * network and a rehab surface made remote requests on every load — both
+     * forbidden by invariant 1, and both contradicted by the README.
+     *
+     * The wasm is copied out of node_modules by scripts/vendor-mediapipe.mjs on
+     * postinstall/prebuild; the model is committed under public/models/.
+     * BASE_URL keeps them resolving under a GitHub Pages subpath. */
+    /* Resolved to absolute URLs against document.baseURI rather than left
+       relative. `base: './'` makes BASE_URL the string './', and MediaPipe's
+       FilesetResolver concatenates onto whatever it is given before fetching —
+       so a relative prefix depends on how it happens to construct the request.
+       Resolving here removes the ambiguity and still honours the deploy base. */
+    const resolve = (p: string) => new URL(`${import.meta.env.BASE_URL}${p}`, document.baseURI).href
+    const WASM_PATH = resolve('vendor/mediapipe/wasm')
+    const MODEL_PATH = resolve('models/pose_landmarker_lite.task')
+
+    async function createLandmarker(delegate: 'GPU' | 'CPU') {
+      const vision = await FilesetResolver.forVisionTasks(WASM_PATH)
+      return PoseLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: MODEL_PATH, delegate },
+        runningMode: 'VIDEO',
+        numPoses: 1,
+        minPoseDetectionConfidence: 0.5,
+        minPosePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      })
+    }
+
     async function initMediaPipe() {
       try {
-        const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-        )
-        if (!active) return
-
-        const landmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath:
-              'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-            delegate: 'GPU',
-          },
-          runningMode: 'VIDEO',
-          numPoses: 1,
-          minPoseDetectionConfidence: 0.5,
-          minPosePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
-        })
-
-        if (!active) return
+        const landmarker = await createLandmarker('GPU')
+        if (!active) {
+          landmarker.close()
+          return
+        }
         landmarkerRef.current = landmarker
         setIsLoaded(true)
       } catch (err) {
-        console.warn('GPU delegate failed or network slow, falling back to CPU delegate', err)
+        // Not "network slow" any more — the assets are local. A GPU failure here
+        // is a WebGL/driver problem, so CPU is a real fallback rather than a retry.
+        console.warn('GPU delegate unavailable, falling back to CPU', err)
         try {
-          const vision = await FilesetResolver.forVisionTasks(
-            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
-          )
-          const landmarker = await PoseLandmarker.createFromOptions(vision, {
-            baseOptions: {
-              modelAssetPath:
-                'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-              delegate: 'CPU',
-            },
-            runningMode: 'VIDEO',
-            numPoses: 1,
-          })
-          if (!active) return
+          const landmarker = await createLandmarker('CPU')
+          if (!active) {
+            landmarker.close()
+            return
+          }
           landmarkerRef.current = landmarker
           setIsLoaded(true)
         } catch (cpuErr) {

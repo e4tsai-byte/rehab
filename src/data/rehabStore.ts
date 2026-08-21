@@ -1,4 +1,5 @@
 import type { CompletedSession, UserSettings } from '../domain/rehabTypes'
+import { detectBrowserLocale, isLocale, type Locale } from '../i18n/locale'
 
 /* Local storage only. Invariant #1: what persists is rep records and settings,
    on this device, in this browser. No frames, no landmark arrays, no identity.
@@ -8,6 +9,7 @@ import type { CompletedSession, UserSettings } from '../domain/rehabTypes'
    than silently resetting to zero; drop the fallback after the next release. */
 const SETTINGS_KEY = 'rehabibi_user_settings'
 const HISTORY_KEY = 'rehabibi_session_history'
+const LOCALE_KEY = 'rehabibi_locale'
 const LEGACY_SETTINGS_KEY = 'velocare_rehab_user_settings'
 const LEGACY_HISTORY_KEY = 'velocare_rehab_session_history'
 
@@ -35,6 +37,28 @@ export function saveSettings(settings: UserSettings): void {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
   } catch (err) {
     console.error('Failed to save settings to localStorage', err)
+  }
+}
+
+/* The chosen UI language. A stored choice wins; otherwise the browser's own
+   language preferences decide (English for en-*, Chinese for zh-* or anything
+   else). Kept here with the other persisted state per invariant 1 — the i18n
+   layer owns detection, this file owns storage. */
+export function loadLocale(): Locale {
+  try {
+    const raw = localStorage.getItem(LOCALE_KEY)
+    if (isLocale(raw)) return raw
+  } catch {
+    /* localStorage unavailable — fall through to browser detection */
+  }
+  return detectBrowserLocale()
+}
+
+export function saveLocale(locale: Locale): void {
+  try {
+    localStorage.setItem(LOCALE_KEY, locale)
+  } catch (err) {
+    console.error('Failed to save locale to localStorage', err)
   }
 }
 

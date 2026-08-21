@@ -159,6 +159,53 @@
   font-weight: 600;
 }
 
+/* Language toggle — a compact 中 / EN switch in the nav. Same glass-segmented
+   family as `.segmented`, sized down to sit beside the streak badge and the
+   settings button without crowding the chrome row. */
+.lang-toggle {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--r-full);
+  background: var(--mat-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-inset-edge);
+}
+
+.lang-toggle__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--rehab-ink-secondary);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.lang-toggle__opt:hover {
+  color: var(--rehab-ink);
+}
+
+.lang-toggle__opt--active {
+  background: var(--rehab-surface);
+  color: var(--rehab-ink);
+  box-shadow: var(--shadow-sm);
+}
+
+.lang-toggle__opt:active {
+  transform: scale(0.97);
+}
+
 /* ═══ Dashboard ═══════════════════════════════════════════════════════════════ */
 
 .rehab-dashboard {

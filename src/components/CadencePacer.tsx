@@ -1,5 +1,6 @@
 import { Digits } from './Digits'
 import type { PaceStatus, RehabPhase } from '../domain/rehabTypes'
+import { useT } from '../i18n/LocaleContext'
 
 interface CadencePacerProps {
   phase: RehabPhase
@@ -38,6 +39,8 @@ export function CadencePacer({
   targetDuration = 5.0,
   restTotal = 3.0,
 }: CadencePacerProps) {
+  const { t } = useT()
+
   // Rest between reps.
   if (phase === 'RESTING' && restRemaining > 0) {
     const progress = Math.max(0, Math.min(1, (restTotal - restRemaining) / restTotal))
@@ -58,11 +61,11 @@ export function CadencePacer({
           <div className="pacer__ring-center">
             <span className="pacer__hero">
               <Digits value={restRemaining.toFixed(1)} />
-              <span className="pacer__hero-unit">秒</span>
+              <span className="pacer__hero-unit">{t('pacer.secUnit')}</span>
             </span>
           </div>
         </div>
-        <p className="pacer__caption">次間休息</p>
+        <p className="pacer__caption">{t('pacer.restCaption')}</p>
       </div>
     )
   }
@@ -71,9 +74,7 @@ export function CadencePacer({
   if (phase === 'RESTING') {
     return (
       <div className="pacer">
-        <p className="pacer__idle">
-          準備完成後，將右手臂以 5 秒平緩向前平舉
-        </p>
+        <p className="pacer__idle">{t('pacer.idle')}</p>
       </div>
     )
   }
@@ -98,11 +99,11 @@ export function CadencePacer({
           <div className="pacer__ring-center">
             <span className="pacer__hero">
               <Digits value={holdRemaining.toFixed(1)} />
-              <span className="pacer__hero-unit">秒</span>
+              <span className="pacer__hero-unit">{t('pacer.secUnit')}</span>
             </span>
           </div>
         </div>
-        <p className="pacer__caption">維持水平停頓</p>
+        <p className="pacer__caption">{t('pacer.holdCaption')}</p>
       </div>
     )
   }
@@ -114,22 +115,25 @@ export function CadencePacer({
 
   const verdict =
     paceStatus === 'TOO_FAST'
-      ? { cls: 'fast', glyph: '↓', text: '慢一點' }
+      ? { cls: 'fast', glyph: '↓', text: t('pacer.verdictSlower') }
       : paceStatus === 'TOO_SLOW'
-        ? { cls: 'slow', glyph: '↑', text: '快一點' }
+        ? { cls: 'slow', glyph: '↑', text: t('pacer.verdictFaster') }
         : paceStatus === 'ON_TRACK'
-          ? { cls: 'ontrack', glyph: '✓', text: '很好' }
+          ? { cls: 'ontrack', glyph: '✓', text: t('pacer.verdictGood') }
           : null
 
   return (
     <div className="pacer">
       <span className="pacer__hero">
         <Digits value={elapsed.toFixed(1)} />
-        <span className="pacer__hero-unit">秒</span>
+        <span className="pacer__hero-unit">{t('pacer.secUnit')}</span>
       </span>
 
       <p className="pacer__caption">
-        {isAscent ? '向上平舉' : '控制下放'} · 目標 {targetDuration.toFixed(1)} 秒
+        {t('pacer.moveCaption', {
+          dir: isAscent ? t('phase.ascending') : t('phase.descending'),
+          t: targetDuration.toFixed(1),
+        })}
       </p>
 
       {verdict ? (

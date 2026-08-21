@@ -1,4 +1,5 @@
 import { CONFIG } from '../pose/shoulderKinematics'
+import { useT } from '../i18n/LocaleContext'
 
 interface AngleGaugeProps {
   currentAngle: number
@@ -37,6 +38,7 @@ export function AngleGauge({
   hint,
   maxAngle = 120,
 }: AngleGaugeProps) {
+  const { t } = useT()
   const clamped = Math.max(0, Math.min(maxAngle, currentAngle))
   const valueFraction = clamped / maxAngle
 
@@ -96,7 +98,7 @@ export function AngleGauge({
       </div>
 
       <span className="sr-only" aria-live="polite">
-        目前抬起角度 {Math.round(currentAngle)} 度，{phaseLabel}
+        {t('gauge.srAngle', { n: Math.round(currentAngle), phase: phaseLabel })}
       </span>
     </div>
   )

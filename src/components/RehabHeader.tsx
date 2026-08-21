@@ -1,3 +1,6 @@
+import { useT } from '../i18n/LocaleContext'
+import type { Locale } from '../i18n/locale'
+
 interface RehabHeaderProps {
   activeTab: 'dashboard' | 'exercises'
   onSelectTab: (tab: 'dashboard' | 'exercises') => void
@@ -13,6 +16,8 @@ export function RehabHeader({
   onOpenSettings,
   onGoHome,
 }: RehabHeaderProps) {
+  const { t, locale, setLocale } = useT()
+
   return (
     <header className="rehab-nav">
       {/* Brand */}
@@ -22,17 +27,17 @@ export function RehabHeader({
           onSelectTab('dashboard')
           if (onGoHome) onGoHome()
         }}
-        aria-label="回到首頁"
+        aria-label={t('nav.backHome')}
       >
         <span className="rehab-nav__logo" aria-hidden="true">R</span>
         <span>
           <span className="rehab-nav__title">Rehabibi</span>
-          <span className="rehab-nav__subtitle">肩關節復健教練</span>
+          <span className="rehab-nav__subtitle">{t('nav.subtitle')}</span>
         </span>
       </button>
 
       {/* Primary Navigation Tabs */}
-      <nav className="rehab-nav__tabs" aria-label="主導覽列">
+      <nav className="rehab-nav__tabs" aria-label={t('nav.tabsAria')}>
         <button
           className={`nav-tab ${activeTab === 'dashboard' ? 'nav-tab--active' : ''}`}
           onClick={() => onSelectTab('dashboard')}
@@ -40,7 +45,7 @@ export function RehabHeader({
           role="tab"
         >
           <span aria-hidden="true">📊</span>
-          <span>復健總覽</span>
+          <span>{t('nav.dashboard')}</span>
         </button>
 
         <button
@@ -50,21 +55,36 @@ export function RehabHeader({
           role="tab"
         >
           <span aria-hidden="true">🎥</span>
-          <span>動作與課表</span>
+          <span>{t('nav.exercises')}</span>
         </button>
       </nav>
 
       {/* Actions */}
       <div className="rehab-nav__actions">
-        <span className="streak-badge" title="連續訓練天數">
+        {/* Language toggle — a quick, always-visible 中 / EN switch. */}
+        <div className="lang-toggle" role="group" aria-label={t('nav.language')}>
+          {(['zh', 'en'] as const).map((code: Locale) => (
+            <button
+              key={code}
+              type="button"
+              className={`lang-toggle__opt ${locale === code ? 'lang-toggle__opt--active' : ''}`}
+              aria-pressed={locale === code}
+              onClick={() => setLocale(code)}
+            >
+              {code === 'zh' ? '中' : 'EN'}
+            </button>
+          ))}
+        </div>
+
+        <span className="streak-badge" title={t('nav.streakTitle')}>
           <span aria-hidden="true">🔥</span>
-          <span>{streak} 天</span>
+          <span>{t('nav.streakDays', { n: streak })}</span>
         </span>
 
         <button
           className="btn btn--glass btn--icon"
           onClick={onOpenSettings}
-          aria-label="訓練設定"
+          aria-label={t('nav.settings')}
         >
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path

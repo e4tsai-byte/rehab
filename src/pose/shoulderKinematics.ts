@@ -39,18 +39,56 @@ export const CONFIG = {
   
   REST_BETWEEN_REPS_S: 3.0,
 
-  // Unstickable per-state wall-clock timeouts (Invariant 1.3). Measured against elapsed
-  // time in the state, so no arm angle parked in a dead band can defeat them. PLACEHOLDER
-  // values pending footage validation; deliberately generous so they never clip a slow-but-
-  // -valid rep (see the non-regression sequence in the fix PR's before/after run).
-  ASCENDING_TIMEOUT_S: 7.0,    // Target 5.0s + 2.0s timeout
-  HOLDING_TIMEOUT_BUFFER_S: 2.0, // n + 2.0s, where n is user selected hold time
-  DESCENDING_TIMEOUT_S: 7.0,   // Target 5.0s + 2.0s timeout
+  /* ── Per-state wall-clock timeouts (invariant 1.3) ───────────────────────
+     Measured against elapsed time in the state, so an arm parked in a dead
+     band cannot defeat them.
 
-  COMPENSATION_ELBOW_MIN_DEG: 115.0, // Obvious inward bend (< 115°)
-  COMPENSATION_ELBOW_REACH_RATIO: 0.78, // Inward arm collapse ratio
-  COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.18,
-  COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.22,
+     PROVENANCE: tuned by the author across repeated live runs on real
+     hardware, superseding an earlier set of desk-derived placeholders
+     (15.0 / 12.0). The earlier values were chosen to be deliberately generous
+     on the theory that a slow rep must never be clipped; in practice they left
+     the machine sitting in a state long after the user had visibly stopped.
+
+     KNOWN TRADE-OFF, recorded rather than silently accepted: entry to HOLDING
+     needs BOTH 5.0s elapsed and the target angle, so ASCENDING_TIMEOUT_S = 7.0
+     leaves a 2-second window (5.0s → 7.0s) in which the arm must arrive. That
+     is comfortable for the author's own shoulder. It may not be for a stiffer
+     one — an adhesive-capsulitis or early post-op user working through a
+     painful arc can take longer, and their rep is discarded rather than
+     recorded short. Re-check this specific number first when the validation
+     corpus exists, and check it against someone who is not the author. */
+  ASCENDING_TIMEOUT_S: 7.0,      // 5.0s target + 2.0s to arrive
+  HOLDING_TIMEOUT_BUFFER_S: 2.0, // n + 2.0s, n = user-selected hold duration
+  DESCENDING_TIMEOUT_S: 7.0,     // 5.0s target + 2.0s
+
+  /* ── Compensation thresholds ─────────────────────────────────────────────
+     PROVENANCE: all five tuned by the author across repeated live runs against
+     his own post-operative shoulder, replacing values that had been reasoned
+     from anthropometry rather than observed. Every one was loosened, because
+     the reasoned values fired near-continuously on real movement and an alert
+     that is always on is an alert the user learns to ignore.
+
+     WHAT THAT COSTS, stated plainly so the trade-off is visible to whoever
+     reads this next: loosening moves every one of these toward FALSE
+     NEGATIVES. For an unsupervised user that is the more expensive direction
+     of error — a missed shrug is practised, a false alarm is merely annoying.
+     The shrug ratio in particular is this product's headline claim, and at
+     0.18 it flags a pronounced shrug rather than the smaller trapezius
+     substitution that matters clinically.
+
+     So these are calibrated against ONE shoulder — the right one, mid-recovery,
+     in one room, in one lighting condition. That is real evidence and better
+     than the numbers it replaced. It is not yet generalisation. The validation
+     study is what turns it into one; until then treat every value here as
+     n = 1.
+
+     LIMITATION worth knowing before re-tuning: the hike metric is
+     (lShoulder.y - rShoulder.y), a left-versus-right asymmetry. A symmetric
+     bilateral shrug produces ~0 and is invisible at any threshold. */
+  COMPENSATION_ELBOW_MIN_DEG: 115.0,          // obvious inward bend
+  COMPENSATION_ELBOW_REACH_RATIO: 0.78,       // inward arm collapse
+  COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.18, // of torso length
+  COMPENSATION_SHOULDER_HIKE_RATIO_SEATED: 0.22,   // of shoulder width
   COMPENSATION_TORSO_LEAN_DEG: 16.0,
 }
 
@@ -450,7 +488,11 @@ export class ClientShoulderFlexionTracker {
         this.eccentricDurationS = eccentricElapsed
 
         if (this.peakAngleDeg >= CONFIG.TARGET_HOLD_ENTER) {
-          // Sustained compensation defect filtering (Clinical PM&R standard)
+          // A flag must persist ~0.8s before it is recorded. Landmark jitter
+          // produces single-frame spikes on otherwise clean movement, and a
+          // corrective cue that flickers is worse than none. Author's judgment
+          // from live runs — not a published standard, despite an earlier
+          // comment here claiming one.
           const permanentFlags: FormFlag[] = []
 
           // Physical compensations: only penalize if sustained for >= 0.8s

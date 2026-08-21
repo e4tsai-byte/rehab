@@ -1,22 +1,17 @@
 import { useState } from 'react'
-import { EXERCISE_CATALOG } from '../domain/exerciseCatalog'
+import { EXERCISE_CATALOG, resolveExerciseName } from '../domain/exerciseCatalog'
 import type { CompletedSession } from '../domain/rehabTypes'
 import { RecoveryRoadmap } from '../components/RecoveryRoadmap'
 import { ActivityCalendar } from '../components/ActivityCalendar'
 import { RecentStatsGrid } from '../components/RecentStatsGrid'
+import { useT } from '../i18n/LocaleContext'
+import { formatSessionTime } from '../i18n/datetime'
 
 interface RehabDashboardProps {
   history: CompletedSession[]
   onStartExercise: (exerciseId: string) => void
   onNavigateToExercises: () => void
   onSelectSession: (session: CompletedSession) => void
-}
-
-function formatWhen(ts: number): string {
-  const d = new Date(ts)
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(
-    d.getMinutes()
-  ).padStart(2, '0')}`
 }
 
 function toLocalDateKey(ts: number): string {
@@ -32,6 +27,7 @@ export function RehabDashboard({
   onNavigateToExercises,
   onSelectSession,
 }: RehabDashboardProps) {
+  const { t, locale } = useT()
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null)
 
   const defaultExercise = EXERCISE_CATALOG[0]!
@@ -44,10 +40,8 @@ export function RehabDashboard({
     <div className="rehab-dashboard">
       {/* 1. Hero Header */}
       <div className="rehab-hero">
-        <h1 className="rehab-hero__title">肩關節復健總覽</h1>
-        <p className="rehab-hero__sub">
-          即時追蹤抬起角度與動作節奏，在家或辦公桌前完成處方復健。影像全程留在這台裝置上。
-        </p>
+        <h1 className="rehab-hero__title">{t('dash.heroTitle')}</h1>
+        <p className="rehab-hero__sub">{t('dash.heroSub')}</p>
       </div>
 
       {/* 2. Recommended Prescription Today (Top Priority) */}
@@ -55,29 +49,25 @@ export function RehabDashboard({
         <div className="dashboard-action-banner__info">
           <div className="section-tag" style={{ marginBottom: '2px' }}>
             <span className="section-tag__dot" aria-hidden="true" />
-            <span>今日處方推薦</span>
+            <span>{t('dash.todayRecommend')}</span>
           </div>
-          <h2 className="dashboard-action-banner__title">
-            肩胛綜合穩定強化課表（站姿 ＋ 坐姿）
-          </h2>
-          <p className="dashboard-action-banner__desc">
-            標準 90° 平舉 · 5s-5s-5s 節奏 · 2 站連續訓練 · 預估約 8 分鐘
-          </p>
+          <h2 className="dashboard-action-banner__title">{t('dash.comboTitle')}</h2>
+          <p className="dashboard-action-banner__desc">{t('dash.comboDesc')}</p>
         </div>
 
         <div className="dashboard-action-banner__actions">
           <button
             className="btn btn--glass"
             onClick={onNavigateToExercises}
-            aria-label="查看動作庫與課表"
+            aria-label={t('dash.exploreLibraryAria')}
           >
-            探索動作庫 ▾
+            {t('dash.exploreLibrary')}
           </button>
           <button
             className="btn btn--primary btn--lg"
             onClick={() => onStartExercise(defaultExercise.id)}
           >
-            快速開始訓練
+            {t('dash.quickStart')}
           </button>
         </div>
       </div>
@@ -101,13 +91,15 @@ export function RehabDashboard({
           <div>
             <div className="section-tag">
               <span className="section-tag__dot" aria-hidden="true" />
-              <span>病歷與復健歷程</span>
+              <span>{t('dash.recordsTag')}</span>
             </div>
             <h2 className="section-header__title">
-              {selectedDateStr ? `${selectedDateStr} 訓練紀錄` : '近期訓練紀錄'}
+              {selectedDateStr
+                ? t('dash.recordsTitleFiltered', { date: selectedDateStr })
+                : t('dash.recordsTitle')}
             </h2>
             <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--rehab-ink-tertiary)' }}>
-              點擊任一紀錄可查看各次動作細節與角度分析（可供主治醫師評估參考）
+              {t('dash.recordsHint')}
             </p>
           </div>
           {selectedDateStr && (
@@ -116,7 +108,7 @@ export function RehabDashboard({
               onClick={() => setSelectedDateStr(null)}
               style={{ fontSize: '13px' }}
             >
-              顯示全部紀錄
+              {t('dash.showAll')}
             </button>
           )}
         </div>
@@ -124,23 +116,23 @@ export function RehabDashboard({
         {filteredHistory.length === 0 ? (
           <div className="empty-state">
             <p className="empty-state__title">
-              {selectedDateStr ? `${selectedDateStr} 沒有訓練紀錄` : '還沒有紀錄'}
+              {selectedDateStr
+                ? t('dash.emptyFilteredTitle', { date: selectedDateStr })
+                : t('dash.emptyTitle')}
             </p>
             <p className="empty-state__body">
-              {selectedDateStr
-                ? '當日為肌腱修復休息日，或尚未進行訓練。'
-                : '完成第一組之後，每次的達標次數、停頓時間與動作細節都會列在這裡。'}
+              {selectedDateStr ? t('dash.emptyFilteredBody') : t('dash.emptyBody')}
             </p>
           </div>
         ) : (
           <div className="history-table">
             <div className="history-row history-row--header" aria-hidden="true">
-              <span>訓練時間</span>
-              <span>動作</span>
-              <span>完成次數</span>
-              <span>平均停頓</span>
-              <span>達標次數</span>
-              <span style={{ textAlign: 'right' }}>詳細報告</span>
+              <span>{t('col.time')}</span>
+              <span>{t('col.movement')}</span>
+              <span>{t('col.completedReps')}</span>
+              <span>{t('col.avgHold')}</span>
+              <span>{t('col.onTarget')}</span>
+              <span style={{ textAlign: 'right' }}>{t('col.report')}</span>
             </div>
 
             {filteredHistory.map((session) => (
@@ -157,25 +149,23 @@ export function RehabDashboard({
                 }}
               >
                 <span className="history-row__primary">
-                  <span className="history-row__label">訓練時間</span>
-                  <span>{formatWhen(session.timestamp)}</span>
+                  <span className="history-row__label">{t('col.time')}</span>
+                  <span>{formatSessionTime(session.timestamp, locale)}</span>
                 </span>
                 <span className="history-row__muted">
-                  <span className="history-row__label">動作</span>
-                  <span>{session.exerciseNameZh}</span>
+                  <span className="history-row__label">{t('col.movement')}</span>
+                  <span>{resolveExerciseName(session.exerciseId, session.exerciseNameZh, locale)}</span>
                 </span>
                 <span>
-                  <span className="history-row__label">完成次數</span>
-                  <span>
-                    {session.completedReps} / {session.targetReps} 次
-                  </span>
+                  <span className="history-row__label">{t('col.completedReps')}</span>
+                  <span>{t('dash.repsUnit', { done: session.completedReps, total: session.targetReps })}</span>
                 </span>
                 <span className="history-row__muted">
-                  <span className="history-row__label">平均停頓</span>
-                  <span>{session.averageHoldDurationS.toFixed(1)} 秒</span>
+                  <span className="history-row__label">{t('col.avgHold')}</span>
+                  <span>{t('spec.secondsValue', { n: session.averageHoldDurationS.toFixed(1) })}</span>
                 </span>
                 <span>
-                  <span className="history-row__label">達標次數</span>
+                  <span className="history-row__label">{t('col.onTarget')}</span>
                   <span
                     className={`count-badge ${
                       session.cleanRepsCount === session.completedReps ? 'count-badge--full' : ''
@@ -185,7 +175,7 @@ export function RehabDashboard({
                   </span>
                 </span>
                 <span style={{ textAlign: 'right', color: 'var(--rehab-blue-deep)', fontWeight: 600 }}>
-                  查看細節 ›
+                  {t('dash.viewDetail')}
                 </span>
               </div>
             ))}

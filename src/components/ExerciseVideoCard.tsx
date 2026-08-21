@@ -1,4 +1,6 @@
-import type { ExerciseDefinition } from '../domain/exerciseCatalog'
+import { localizeExercise, type ExerciseDefinition } from '../domain/exerciseCatalog'
+import { assetUrl } from '../domain/assets'
+import { useT } from '../i18n/LocaleContext'
 
 interface ExerciseVideoCardProps {
   exercise: ExerciseDefinition
@@ -6,6 +8,8 @@ interface ExerciseVideoCardProps {
 }
 
 export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps) {
+  const { t, locale } = useT()
+  const ex = localizeExercise(exercise, locale)
   const isPrescribed = exercise.status === 'prescribed'
 
   return (
@@ -14,7 +18,7 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
       onClick={() => onSelect(exercise)}
       role="button"
       tabIndex={0}
-      aria-label={`查看 ${exercise.nameZh} 動作詳情`}
+      aria-label={t('vcard.aria', { name: ex.name })}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           onSelect(exercise)
@@ -25,8 +29,8 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
       <div className="video-card__thumb-wrap">
         {exercise.thumbnailUrl || exercise.diagramUrl ? (
           <img
-            src={exercise.thumbnailUrl || exercise.diagramUrl}
-            alt={`${exercise.nameZh} 訓練預覽`}
+            src={assetUrl(exercise.thumbnailUrl || exercise.diagramUrl)}
+            alt={t('card.diagramAlt', { name: ex.name })}
             className="video-card__thumb"
             loading="lazy"
           />
@@ -40,7 +44,7 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
         <div className="video-card__badges-top">
           <span className="video-badge video-badge--posture">
             <span aria-hidden="true">{exercise.posture === 'standing' ? '🧍' : '🪑'}</span>
-            <span>{exercise.posture === 'standing' ? '站姿' : '坐姿桌前'}</span>
+            <span>{exercise.posture === 'standing' ? t('posture.standingShort') : t('posture.seatedShort')}</span>
           </span>
 
           <span className="video-badge video-badge--angle">
@@ -54,9 +58,9 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
             ⏱️ {exercise.concentricCadenceS}s-{exercise.holdDurationS}s-{exercise.eccentricCadenceS}s
           </span>
           {isPrescribed ? (
-            <span className="video-badge video-badge--status-active">今日處方</span>
+            <span className="video-badge video-badge--status-active">{t('vcard.todayBadge')}</span>
           ) : (
-            <span className="video-badge video-badge--status-upcoming">規劃中</span>
+            <span className="video-badge video-badge--status-upcoming">{t('vcard.upcomingBadge')}</span>
           )}
         </div>
       </div>
@@ -64,16 +68,16 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
       {/* Card Info Body */}
       <div className="video-card__info">
         <div className="video-card__meta-top">
-          <span className="video-card__category">{exercise.category}</span>
-          <span className="video-card__limb">{exercise.targetLimb}</span>
+          <span className="video-card__category">{ex.category}</span>
+          <span className="video-card__limb">{ex.targetLimb}</span>
         </div>
 
-        <h3 className="video-card__title">{exercise.nameZh}</h3>
-        <p className="video-card__desc">{exercise.descriptionZh}</p>
+        <h3 className="video-card__title">{ex.name}</h3>
+        <p className="video-card__desc">{ex.description}</p>
 
         <div className="video-card__action-row">
           <span className="video-card__cue">
-            {isPrescribed ? '點擊查看動作分解與開始訓練 ›' : '臨床動作規範編制中 ›'}
+            {isPrescribed ? t('vcard.viewStart') : t('vcard.upcomingCue')}
           </span>
         </div>
       </div>

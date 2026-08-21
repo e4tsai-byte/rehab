@@ -17,12 +17,15 @@ import './styles/telemetry.css'
 import './styles/rehab.css'
 
 import { App } from './App'
+import { LocaleProvider } from './i18n/LocaleContext'
 
 const el = document.getElementById('root')
 if (!el) throw new Error('#root missing')
 
 createRoot(el).render(
   <StrictMode>
-    <App />
+    <LocaleProvider>
+      <App />
+    </LocaleProvider>
   </StrictMode>,
 )
