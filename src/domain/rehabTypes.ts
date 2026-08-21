@@ -7,13 +7,20 @@ export type FormFlag =
   | 'RUSHED_CONCENTRIC'
   | 'RUSHED_ECCENTRIC'
   | 'INCOMPLETE_HOLD'
+  | 'PACING_TOO_FAST'
+  | 'PACING_TOO_SLOW'
+
+export type PaceStatus = 'ON_TRACK' | 'TOO_FAST' | 'TOO_SLOW' | 'IDLE'
 
 export interface RehabLiveState {
   readonly elevation: number
   readonly phase: RehabPhase
   readonly holdRemaining: number
+  readonly restRemaining: number
   readonly concentricElapsed: number
   readonly eccentricElapsed: number
+  readonly paceStatus: PaceStatus
+  readonly expectedAngle: number
   readonly isTargetZone: boolean
   readonly flags: readonly FormFlag[]
   readonly repsCompleted: number

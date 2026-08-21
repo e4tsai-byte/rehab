@@ -17,6 +17,14 @@ const FLAG_MESSAGES: Record<FormFlag, { title: string; hint: string }> = {
     title: '手臂彎曲',
     hint: '請將手肘伸直，維持手臂直線',
   },
+  PACING_TOO_FAST: {
+    title: '動作太快',
+    hint: '動作請放慢，配合 5 秒節奏平穩移動',
+  },
+  PACING_TOO_SLOW: {
+    title: '動作太慢',
+    hint: '動作請稍微加快，配合 5 秒節奏',
+  },
   RUSHED_CONCENTRIC: {
     title: '抬起過快',
     hint: '請配合節奏，以 5 秒緩慢平舉',
@@ -34,9 +42,12 @@ const FLAG_MESSAGES: Record<FormFlag, { title: string; hint: string }> = {
 export function FormAlertBanner({ flags }: FormAlertBannerProps) {
   if (flags.length === 0) return null
 
+  // Deduplicate and prioritize key alerts
+  const uniqueFlags = Array.from(new Set(flags)).slice(0, 2)
+
   return (
     <div className="form-alert" role="alert" aria-live="assertive">
-      {flags.map((flag) => {
+      {uniqueFlags.map((flag) => {
         const msg = FLAG_MESSAGES[flag]
         if (!msg) return null
         return (

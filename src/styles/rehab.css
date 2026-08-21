@@ -600,3 +600,13 @@ body {
   width: 100%;
   accent-color: #38bdf8;
 }
+
+.pacer__bar-fill--fast {
+  background: #ef4444 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+.pacer--rest {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1) !important;
+}

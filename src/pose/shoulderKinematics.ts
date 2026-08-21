@@ -1,4 +1,4 @@
-import type { FormFlag, RehabPhase, RehabRepRecord, RehabLiveState } from '../domain/rehabTypes'
+import type { FormFlag, PaceStatus, RehabPhase, RehabRepRecord, RehabLiveState } from '../domain/rehabTypes'
 
 export interface Landmark3D {
   x: number
@@ -21,7 +21,7 @@ export const LANDMARKS = {
 
 export const CONFIG = {
   RESTING_ENTER_STANDING: 30.0,
-  RESTING_ENTER_SEATED: 38.0,       // Lap/desk natural resting angle
+  RESTING_ENTER_SEATED: 38.0,
   RESTING_EXIT_STANDING: 40.0,
   RESTING_EXIT_SEATED: 48.0,
   TARGET_HOLD_ENTER: 80.0,
@@ -35,6 +35,8 @@ export const CONFIG = {
   CADENCE_HOLD_MIN_S: 2.5,
   CADENCE_ECCENTRIC_TARGET_S: 5.0,
   CADENCE_ECCENTRIC_MIN_S: 2.5,
+  
+  REST_BETWEEN_REPS_S: 3.0,
   
   COMPENSATION_ELBOW_MIN_DEG: 155.0,
   COMPENSATION_SHOULDER_HIKE_RATIO_STANDING: 0.08,
@@ -74,21 +76,18 @@ export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated 
 
   const vArm = [rElbow.x - rShoulder.x, rElbow.y - rShoulder.y, rElbow.z - rShoulder.z]
 
-  // If hips are visible and standing, use standard hip-to-shoulder torso vector
   const hipsVisible = rHip && (rHip.visibility ?? 1) > 0.4
   if (!isSeated && hipsVisible) {
     const vTorsoDown = [rHip.x - rShoulder.x, rHip.y - rShoulder.y, rHip.z - rShoulder.z]
     return angleBetweenVectorsDeg(vTorsoDown, vArm)
   }
 
-  // Seated / Desk mode: construct torso spine vector from head-to-neck orientation
   if (lShoulder && nose) {
     const midShoulder = [
       (rShoulder.x + lShoulder.x) / 2,
       (rShoulder.y + lShoulder.y) / 2,
       (rShoulder.z + lShoulder.z) / 2,
     ]
-    // Vector from neck midpoint down along the spine
     const vSpineDown = [
       midShoulder[0]! - nose.x,
       midShoulder[1]! - nose.y,
@@ -97,7 +96,6 @@ export function computeShoulderFlexion3D(worldLandmarks: Landmark3D[], isSeated 
     return angleBetweenVectorsDeg(vSpineDown, vArm)
   }
 
-  // Fallback: assume vertical downward axis (0, 1, 0)
   return angleBetweenVectorsDeg([0, 1, 0], vArm)
 }
 
@@ -119,13 +117,11 @@ export function computeShoulderHikeRatio(landmarks: Landmark3D[], isSeated = fal
   if (!rShoulder || !lShoulder) return 0
 
   if (isSeated || !rHip || (rHip.visibility ?? 1) <= 0.4) {
-    // Seated Desk normalization: normalized by shoulder width
     const shoulderWidth = Math.hypot(rShoulder.x - lShoulder.x, rShoulder.y - lShoulder.y)
     if (shoulderWidth < 1e-6) return 0
     return (lShoulder.y - rShoulder.y) / shoulderWidth
   }
 
-  // Standing normalization: normalized by torso length
   const torsoLen = Math.hypot(rShoulder.x - rHip.x, rShoulder.y - rHip.y)
   if (torsoLen < 1e-6) return 0
   return (lShoulder.y - rShoulder.y) / torsoLen
@@ -142,7 +138,6 @@ export function computeTorsoTiltDeg(landmarks: Landmark3D[], isSeated = false): 
   const shoulderMid = [(rShoulder.x + lShoulder.x) / 2, (rShoulder.y + lShoulder.y) / 2]
 
   if (isSeated || !rHip || !lHip || (rHip.visibility ?? 1) <= 0.4) {
-    // Seated / Desk mode: head-to-neck tilt relative to straight up [0, -1]
     if (nose) {
       const headVec = [(nose.x - shoulderMid[0]!), (nose.y - shoulderMid[1]!)]
       return angleBetweenVectorsDeg(headVec, [0, -1])
@@ -168,6 +163,7 @@ export class ClientShoulderFlexionTracker {
   private holdDurationS = 0
   private eccentricStartT = 0
   private eccentricDurationS = 0
+  private restStartT = 0
   
   private repFlags = new Set<FormFlag>()
   private peakAngleDeg = 0
@@ -202,8 +198,11 @@ export class ClientShoulderFlexionTracker {
           elevation: 0,
           phase: this.phase,
           holdRemaining: 0,
+          restRemaining: 0,
           concentricElapsed: 0,
           eccentricElapsed: 0,
+          paceStatus: 'IDLE',
+          expectedAngle: 0,
           isTargetZone: false,
           flags: [],
           repsCompleted: this.repCount,
@@ -242,21 +241,53 @@ export class ClientShoulderFlexionTracker {
     let completedRep: RehabRepRecord | null = null
     const isTargetZone = angle >= CONFIG.TARGET_HOLD_ENTER && angle <= CONFIG.TARGET_HOLD_MAX
     let holdRemaining = 0
+    let restRemaining = 0
     let concentricElapsed = 0
     let eccentricElapsed = 0
+    let paceStatus: PaceStatus = 'IDLE'
+    let expectedAngle = 0
 
     const restingEnter = this.isSeated ? CONFIG.RESTING_ENTER_SEATED : CONFIG.RESTING_ENTER_STANDING
     const restingExit = this.isSeated ? CONFIG.RESTING_EXIT_SEATED : CONFIG.RESTING_EXIT_STANDING
 
     if (this.phase === 'RESTING') {
-      if (angle > restingExit) {
+      // 3-Second Post-Rep Rest Countdown
+      if (this.restStartT > 0) {
+        const restElapsed = Math.max(0, timestampS - this.restStartT)
+        restRemaining = Math.max(0, CONFIG.REST_BETWEEN_REPS_S - restElapsed)
+      }
+
+      // Can only begin next rep once rest period has elapsed
+      if (restRemaining <= 0 && angle > restingExit) {
         this.phase = 'ASCENDING'
         this.concentricStartT = timestampS
+        this.restStartT = 0
         this.repFlags.clear()
         this.peakAngleDeg = angle
       }
     } else if (this.phase === 'ASCENDING') {
       concentricElapsed = Math.max(0, timestampS - this.concentricStartT)
+      
+      // Calculate dynamic expected angle along 5s curve
+      const progress = Math.min(1.0, concentricElapsed / CONFIG.CADENCE_CONCENTRIC_TARGET_S)
+      expectedAngle = restingEnter + progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
+
+      // Pacing evaluation (Too Fast vs Too Slow)
+      if (concentricElapsed >= 0.8) {
+        const delta = angle - expectedAngle
+        if (delta > 16.0) {
+          paceStatus = 'TOO_FAST'
+          activeFlags.push('PACING_TOO_FAST')
+          this.repFlags.add('PACING_TOO_FAST')
+        } else if (delta < -16.0 && concentricElapsed > 1.5) {
+          paceStatus = 'TOO_SLOW'
+          activeFlags.push('PACING_TOO_SLOW')
+          this.repFlags.add('PACING_TOO_SLOW')
+        } else {
+          paceStatus = 'ON_TRACK'
+        }
+      }
+
       if (angle >= CONFIG.TARGET_HOLD_ENTER) {
         this.concentricDurationS = concentricElapsed
         if (this.concentricDurationS < CONFIG.CADENCE_CONCENTRIC_MIN_S) {
@@ -272,6 +303,8 @@ export class ClientShoulderFlexionTracker {
       const holdElapsed = Math.max(0, timestampS - this.holdStartT)
       holdRemaining = Math.max(0, CONFIG.CADENCE_HOLD_TARGET_S - holdElapsed)
       concentricElapsed = this.concentricDurationS
+      expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL
+      paceStatus = 'ON_TRACK'
 
       if (holdElapsed >= CONFIG.CADENCE_HOLD_TARGET_S) {
         this.holdDurationS = holdElapsed
@@ -291,7 +324,25 @@ export class ClientShoulderFlexionTracker {
       eccentricElapsed = Math.max(0, timestampS - this.eccentricStartT)
       concentricElapsed = this.concentricDurationS
 
-      // Check if arm reached resting position OR stabilized at the bottom
+      // Calculate dynamic expected angle along lowering curve
+      const progress = Math.min(1.0, eccentricElapsed / CONFIG.CADENCE_ECCENTRIC_TARGET_S)
+      expectedAngle = CONFIG.TARGET_ANGLE_NOMINAL - progress * (CONFIG.TARGET_ANGLE_NOMINAL - restingEnter)
+
+      // Lowering pacing evaluation
+      if (eccentricElapsed >= 0.8) {
+        if (angle < expectedAngle - 16.0) {
+          paceStatus = 'TOO_FAST'
+          activeFlags.push('PACING_TOO_FAST')
+          this.repFlags.add('PACING_TOO_FAST')
+        } else if (angle > expectedAngle + 16.0 && eccentricElapsed > 1.5) {
+          paceStatus = 'TOO_SLOW'
+          activeFlags.push('PACING_TOO_SLOW')
+          this.repFlags.add('PACING_TOO_SLOW')
+        } else {
+          paceStatus = 'ON_TRACK'
+        }
+      }
+
       const isRestingAngle = angle <= restingEnter
       const isSlowDescentStabilized = eccentricElapsed >= 4.0 && angle <= (restingEnter + 8.0)
 
@@ -314,7 +365,9 @@ export class ClientShoulderFlexionTracker {
           this.repCount++
         }
 
+        // Start 3-second post-rep rest period
         this.phase = 'RESTING'
+        this.restStartT = timestampS
         this.repFlags.clear()
         this.peakAngleDeg = 0
       }
@@ -326,8 +379,11 @@ export class ClientShoulderFlexionTracker {
         elevation: Math.round(angle),
         phase: this.phase,
         holdRemaining: Math.round(holdRemaining * 10) / 10,
+        restRemaining: Math.round(restRemaining * 10) / 10,
         concentricElapsed: Math.round(concentricElapsed * 10) / 10,
         eccentricElapsed: Math.round(eccentricElapsed * 10) / 10,
+        paceStatus,
+        expectedAngle: Math.round(expectedAngle),
         isTargetZone,
         flags: activeFlags,
         repsCompleted: this.repCount,

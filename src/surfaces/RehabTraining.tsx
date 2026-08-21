@@ -209,12 +209,16 @@ export function RehabTraining({
                 isTargetZone={liveState.isTargetZone}
               />
 
-              {/* 5s - 5s - 5s Cadence & Hold Pacer */}
+              {/* 5s - 5s - 5s Cadence & Hold Pacer with 3s Post-Rep Rest */}
               <CadencePacer
                 phase={liveState.phase}
                 holdRemaining={liveState.holdRemaining}
+                restRemaining={liveState.restRemaining}
                 concentricElapsed={liveState.concentricElapsed}
                 eccentricElapsed={liveState.eccentricElapsed}
+                paceStatus={liveState.paceStatus}
+                currentAngle={liveState.elevation}
+                expectedAngle={liveState.expectedAngle}
                 targetDuration={settings.holdDurationS}
               />
 
@@ -244,12 +248,14 @@ export function RehabTraining({
             }`}
           >
             {liveState.phase === 'HOLDING'
-              ? '維持水平停頓中'
+              ? '維持水平停頓中 (90°)'
               : liveState.phase === 'ASCENDING'
-              ? '平舉抬起中'
+              ? '平舉抬起中 (5秒節奏)'
               : liveState.phase === 'DESCENDING'
-              ? '控制下放中'
-              : '就緒待命'}
+              ? '控制下放中 (5秒節奏)'
+              : liveState.restRemaining > 0
+              ? `次間休息中 (${liveState.restRemaining.toFixed(1)}s)`
+              : '準備開始'}
           </div>
 
           <RepPips done={completedReps.length} total={settings.targetReps} />
