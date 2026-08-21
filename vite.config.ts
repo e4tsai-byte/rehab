@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig(({ mode }) => {
-  const isHttps = process.env.VITE_HTTPS === 'true' || mode === 'https'
+  const isHttps = mode === 'https'
   return {
     plugins: [react(), ...(isHttps ? [basicSsl()] : [])],
     // Relative base so the bundle works from GitHub Pages, a custom domain,
