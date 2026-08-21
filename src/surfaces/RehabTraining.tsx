@@ -225,6 +225,7 @@ export function RehabTraining({
                 eccentricElapsed={liveState.eccentricElapsed}
                 paceStatus={liveState.paceStatus}
                 targetDuration={doseHoldS}
+                isometricHold={isIsometric}
               />
 
               <div className="training-progress">

@@ -11,6 +11,11 @@ interface CadencePacerProps {
   paceStatus?: PaceStatus
   targetDuration?: number
   restTotal?: number
+  /* The isometric-hold model (side-lying supraspinatus hold) holds at a low
+     10–15° band, not at horizontal, and is not entered via a paced forward
+     raise — so its idle and hold captions differ from the paced machine's.
+     Paced exercises pass nothing and read as before. */
+  isometricHold?: boolean
 }
 
 const RING_R = 74
@@ -38,6 +43,7 @@ export function CadencePacer({
   paceStatus = 'IDLE',
   targetDuration = 5.0,
   restTotal = 3.0,
+  isometricHold = false,
 }: CadencePacerProps) {
   const { t } = useT()
 
@@ -74,7 +80,7 @@ export function CadencePacer({
   if (phase === 'RESTING') {
     return (
       <div className="pacer">
-        <p className="pacer__idle">{t('pacer.idle')}</p>
+        <p className="pacer__idle">{t(isometricHold ? 'pacer.idleLow' : 'pacer.idle')}</p>
       </div>
     )
   }
@@ -103,7 +109,7 @@ export function CadencePacer({
             </span>
           </div>
         </div>
-        <p className="pacer__caption">{t('pacer.holdCaption')}</p>
+        <p className="pacer__caption">{t(isometricHold ? 'pacer.holdCaptionLow' : 'pacer.holdCaption')}</p>
       </div>
     )
   }

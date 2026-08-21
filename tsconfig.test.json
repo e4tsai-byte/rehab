@@ -1,0 +1,12 @@
+{
+  // Test-only typecheck config. Kept separate from the app's tsconfig so the
+  // node-test relaxations (node globals, .ts-extension imports required by the
+  // native node:test runner) never leak into the application's type surface.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": ["src/pose/__tests__"],
+  "exclude": ["node_modules"]
+}

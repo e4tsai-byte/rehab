@@ -404,22 +404,24 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     targetReps: 5,
     dailySessionTarget: 2,
     descriptionZh:
-      '向左側躺，右手臂伸直、掌心朝向大腿，將手臂由身側向上抬起約 10–15°，維持在這個低位等長支撐 20 秒（可漸進至 30 秒）。重點在於低角度啟動棘上肌，不追求抬高。每回合 5 次，每日至少 2 回合。',
+      '向左側躺，右手臂伸直、掌心朝向大腿，將手臂由身側向上抬起約 10–15°，維持在這個低位等長支撐 20 秒（可漸進至 30 秒）。重點在於低角度啟動棘上肌，不追求抬高。每回合 5 次，每日至少 2 回合。請在臨床醫師允許此階段進行主動等長訓練後再開始；過程中應感覺到肌肉用力，而非疼痛。',
     descriptionEn:
-      'Lie on your left side with the right arm straight and palm facing your thigh. Lift the arm about 10–15° away from your side and hold that low position for 20 seconds (progress toward 30). The point is to activate the supraspinatus at a low angle — do not lift higher. Five holds per session, at least two sessions a day.',
+      'Lie on your left side with the right arm straight and palm facing your thigh. Lift the arm about 10–15° away from your side and hold that low position for 20 seconds (progress toward 30). The point is to activate the supraspinatus at a low angle — do not lift higher. Five holds per session, at least two sessions a day. Begin only once your clinician has cleared active isometric holds for your current stage; the hold should feel like muscular effort, not pain.',
     framingHintZh:
       '向左側躺，面向裝置。將裝置放在胸前約一手臂距離的地面上，螢幕直立、鏡頭與肩同高，讓肩、肘、腕與髖都在畫面內。上方的右手是訓練側。',
     framingHintEn:
       "Lie on your left side facing the device. Set it on the floor about one arm's length in front of your chest, screen upright and the lens level with your shoulder. Keep your shoulder, elbow, wrist, and hip all in frame. Your top (right) arm is the working arm.",
     tipsZh: [
       '掌心朝向大腿（中立位），避免大拇指朝下內旋',
-      '肩膀放鬆下沉，遠離耳朵，不要聳肩出力',
+      '肩膀放鬆下沉、遠離耳朵，勿聳肩帶動手臂',
+      '軀幹保持穩定側躺，勿向後翻滾借力',
       '手肘保持伸直',
-      '低就是目標，不要越抬越高',
+      '低角度就是目標，不要越抬越高',
     ],
     tipsEn: [
       'Palm faces the thigh (neutral); avoid rotating the thumb down.',
-      'Let the shoulder relax and drop away from the ear; do not shrug.',
+      "Let the shoulder relax and drop away from the ear; don't shrug to drive the arm.",
+      "Keep the trunk stable on your side; don't roll backward for leverage.",
       'Keep the elbow straight.',
       'Low is the goal — do not lift higher.',
     ],

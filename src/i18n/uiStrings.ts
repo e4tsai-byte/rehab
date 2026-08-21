@@ -136,7 +136,9 @@ const zh = {
   'pacer.secUnit': '秒',
   'pacer.restCaption': '次間休息',
   'pacer.idle': '準備完成後，將右手臂以 5 秒平緩向前平舉',
+  'pacer.idleLow': '側躺就位後，將右手臂向上抬起約 10–15° 並維持',
   'pacer.holdCaption': '維持水平停頓',
+  'pacer.holdCaptionLow': '維持低角度支撐',
   'pacer.moveCaption': '{dir} · 目標 {t} 秒',
   'pacer.verdictSlower': '慢一點',
   'pacer.verdictFaster': '快一點',
@@ -159,9 +161,8 @@ const zh = {
   'flag.RUSHED_ECCENTRIC.hint': '以 5 秒緩慢控制放下',
   'flag.INCOMPLETE_HOLD.title': '停頓再久一點',
   'flag.INCOMPLETE_HOLD.hint': '在水平位置維持穩定',
-  // DRAFT (side-lying isometric hold) — zh-tw-copywriter to finalize tone.
   'flag.OVER_ELEVATION.title': '手臂放低',
-  'flag.OVER_ELEVATION.hint': '回到貼近身側的低位，不要越抬越高',
+  'flag.OVER_ELEVATION.hint': '回到貼近身側的低位，不必抬高',
 
   // ── Angle gauge (screen-reader) ─────────────────────────────────────
   'gauge.srAngle': '目前抬起角度 {n} 度，{phase}',
@@ -510,7 +511,9 @@ const en: Record<StringKey, string> = {
   'pacer.secUnit': 's',
   'pacer.restCaption': 'Rest between reps',
   'pacer.idle': 'When ready, raise the right arm forward over a steady 5 seconds.',
+  'pacer.idleLow': 'When ready, lift the right arm about 10–15° from your side and hold.',
   'pacer.holdCaption': 'Hold at horizontal',
+  'pacer.holdCaptionLow': 'Hold the low position',
   'pacer.moveCaption': '{dir} · target {t} s',
   'pacer.verdictSlower': 'Slower',
   'pacer.verdictFaster': 'Faster',
@@ -533,9 +536,8 @@ const en: Record<StringKey, string> = {
   'flag.RUSHED_ECCENTRIC.hint': 'Lower under control over 5 seconds',
   'flag.INCOMPLETE_HOLD.title': 'Hold a little longer',
   'flag.INCOMPLETE_HOLD.hint': 'Stay steady at horizontal',
-  // DRAFT (side-lying isometric hold) — zh-tw-copywriter to finalize tone.
   'flag.OVER_ELEVATION.title': 'Lower the arm',
-  'flag.OVER_ELEVATION.hint': "Come back to the low position near your side; don't lift higher",
+  'flag.OVER_ELEVATION.hint': 'Come back to the low position near your side; no need to lift higher',
 
   // ── Angle gauge (screen-reader) ─────────────────────────────────────
   'gauge.srAngle': 'Current elevation {n} degrees, {phase}',
