@@ -1,9 +1,9 @@
 {
-  "name": "velocare",
+  "name": "rehabibi",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "VeloCare Tier 1 — fixed-camera 5x sit-to-stand measurement instrument. Frontend only, fixtures behind SessionDataSource.",
+  "description": "Rehabibi \u2014 Intelligent Home Rehabilitation Coach",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

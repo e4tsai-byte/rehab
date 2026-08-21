@@ -1,147 +1,74 @@
-# Product
+# Rehabibi — Product Specification
 
-## Register
+## 1. Vision & Mission
 
-product
+**Rehabibi** is an intelligent, accessible, and privacy-preserving computer-vision physical rehabilitation platform. 
 
-## Users
+While initiated to solve the specific post-surgery recovery needs of rotator cuff and shoulder mobility rehabilitation, Rehabibi is architected to scale into an open global tool that helps anyone anywhere perform their prescribed physical therapy exercises correctly, safely, and consistently at home.
 
-Four, wanting different things. There is no fifth.
+---
 
-**1. Participant, 75–90.** Reads the screen from 2.5–3 m, mid-physical-effort, often without
-reading glasses, possibly with cataracts. Never touches the interface. **Reads at most four
-characters at a time.** Needs to know two things: how many reps done, and am I finished.
+## 2. The Core Problem
 
-**2. Facilitator / 照服員.** Part-time care worker, no clinical training, standing, running a room
-of ten. **Holds an absolute veto** — a device that adds work, exposes their judgement, or
-disrupts the class simply stops being switched on. Needs to run ten people through a 30-second
-trial each without losing control of the class.
+Physical therapy and post-surgical rehabilitation are overwhelmingly executed at home between clinical visits. However, home rehabilitation suffers from critical failure modes:
 
-**3. 據點負責人 (site lead) — the adoption decision-maker.** Rarely present at a session. Is not
-buying strength or technology. Is buying **defensible evidence** for annual inspection and next
-year's funding. **Their entire experience of this product is the printed sheet.**
+1. **Invisible Compensations (Cheating)**: When experiencing joint stiffness or weakness, patients instinctively compensate by shrugging their shoulders (activating upper trapezius instead of deltoids) or leaning their torso backward to heave the arm upward. Without a therapist watching, these compensations become bad muscle memory and cause secondary impingement.
+2. **Tempo & Cadence Collapse**: Patients frequently rush the movement (e.g. lifting in 1 second and immediately letting the arm drop), skipping the crucial eccentric control and isometric holds that rebuild tendon strength.
+3. **Imprecise Angle Estimation**: Patients cannot accurately judge whether they have reached their target range of motion (e.g. $90^\circ$ horizontal elevation) or are under/overshooting.
+4. **Lack of Adherence & Accountability**: Doing repetitive exercises in isolation without objective progress metrics leads to high dropout rates.
 
-**4. Nobody else.** No physiotherapist surface, no administrator console, no clinician view.
+---
 
-## Product Purpose
+## 3. The Rehabibi Solution
 
-A fixed-camera measurement instrument for community elder-care centres in Taiwan. Not a consumer
-product, not an app. An appliance: a Mac mini or NUC with one camera and one monitor, installed at
-a care station, no network. Nobody downloads it, buys it, or makes an account.
+Rehabibi transforms any standard laptop or smartphone camera into an active physical therapy mirror:
 
-Tier 1, this build: automate the government-mandated pre/post functional assessment — five
-sit-to-stands, arms crossed, timed — for a class of ten or more older adults, and print a
-one-page sheet the site submits with its funding report.
+```
+[ Webcam / Mobile Camera ]
+           ↓
+[ 100% In-Browser MediaPipe BlazePose GPU Vision ]
+           ↓
+[ Deterministic 3D Vector Kinematics & Compensation Engine ]
+           ↓
+[ Real-Time 60 FPS Visual Goniometer + Audio Metronome + Post-Session Scorecard ]
+```
 
-**The printed sheet is the product. Not the screen.** It is a first-class surface, not an export.
-A4, one page, large type, handed physically to a manager who files it.
+---
 
-Success is not a good-looking screen. Success is a site lead filing a sheet without editing it,
-and a facilitator switching the machine on again next week.
+## 4. User Personas
 
-## Brand Personality
+### Primary Persona: The Recovering Patient
+* **Context**: Recovering from orthopedic surgery (e.g. rotator cuff repair, subacromial decompression, labrum repair, frozen shoulder) or managing chronic joint pain.
+* **Prescription**: Prescribed daily sets of specific movements (e.g. 3 sets of 10 reps of $90^\circ$ forward flexion with $5	ext{s}$ isometric hold).
+* **Needs**:
+  * Clear, non-intimidating visual feedback showing exact elevation angle.
+  * Real-time warnings when shrugging, leaning, or bending the elbow.
+  * Seamless ability to exercise while standing or sitting at a desk during work breaks.
+  * Motivational streak counters and clear post-workout form scorecards.
 
-**Dignified, austere, instrumental.**
+### Future Persona: The Physical Therapist / Clinician
+* **Context**: Prescribing home exercise protocols to patients and needing objective adherence verification.
+* **Needs**:
+  * Ability to customize prescribed angles ($60^\circ$–$180^\circ$), hold durations ($2	ext{s}$–$10	ext{s}$), and rep counts.
+  * Objective exportable compliance logs (% clean reps, average hold duration, common compensation flags).
 
-These are adults doing hard physical work. Not patients being managed, not users being engaged.
-No cheerfulness, no encouragement, no exclamation marks. A finished trial reads **完成**. Never
-停止, never 加油, never 太棒了.
+---
 
-Failure states are not failures. Someone who manages three reps instead of five has a **valid
-recorded outcome**, and the screen must not make them feel they broke something.
+## 5. Exercise Catalog Roadmap
 
-The participant-facing surface should read as **an instrument** — a stopwatch, a scale, a
-thermometer — not as software.
+| Exercise Code | Name | Primary Target | Framing View | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **EX-1** | **Standing Arm Forward Flexion** | Anterior Deltoid, Supraspinatus, Serratus Anterior | Full Body Frontal | ✅ Live |
+| **EX-2** | **Seated Desk Forward Flexion** | Anterior Deltoid, Shoulder Mobility | Upper Body / Desk Frontal | ✅ Live |
+| **EX-3** | **Standing Lateral Abduction ($90^\circ$)** | Middle Deltoid, Supraspinatus | Full Body Frontal | 🗓️ Planned |
+| **EX-4** | **Scaption ($30^\circ$ Scapular Plane Elevation)** | Rotator Cuff (Supraspinatus isolation) | Frontal / $45^\circ$ Oblique | 🗓️ Planned |
+| **EX-5** | **Supported External Rotation ($0^\circ$ Abduction)** | Infraspinatus, Teres Minor | Frontal / Desk | 🗓️ Planned |
+| **EX-6** | **Wall Slides / Overhead Elevation ($120^\circ$–$180^\circ$)** | Full Overhead Mobility & Scapular Rhythm | Sagittal Side View | 🗓️ Planned |
 
-## Anti-references
+---
 
-- **Consumer fitness apps.** Activity rings, streaks, confetti, badges, progress celebrations,
-  gamification of any kind.
-- **Glossy health-tech SaaS.** Gradient cards, glassmorphism, hero sections, marketing polish,
-  dashboard grids of KPI tiles.
-- **Clinical software.** Dense tables, tiny type, chart walls.
-- **Anything that reads as "impressive."** Austere is the correct outcome, not a failure of
-  ambition. Do not let anti-slop rules push this toward visual interest.
+## 6. Core Product Invariants
 
-## Design Principles
-
-1. **The sheet is the product.** The screen serves a 30-second interaction; the sheet is what the
-   decision-maker actually holds. Design the artifact first, and never treat printing as an
-   export path bolted onto a UI.
-
-2. **The facilitator has a veto, so every addition must reduce their work or be invisible.** If a
-   feature makes them think, explain, or intervene, it is a liability. This product's failure mode
-   is not a bug, it is a switch left off.
-
-3. **Four characters at a time.** One surface, one number, one decision. Anything competing with
-   the primary readout for the participant's attention is removed rather than shrunk.
-
-4. **A valid outcome is never an error.** Incomplete, hand-assisted, unable, aborted: these are
-   recorded results with their own legible states, not exceptions, warnings, or red text.
-
-5. **The record is append-only, and correcting it must feel ordinary.** A facilitator who cannot
-   fix the machine will either stop using it or start gaming it. Correction is a first-class
-   action, never an admission of fault.
-
-## Accessibility & Inclusion
-
-Applies **before any aesthetic rule**, not after.
-
-- **Participant-facing:** nothing below 2rem; primary number ~12rem; contrast ≥7:1.
-- **Colour never carries meaning alone** — always paired with a word and a distinct shape.
-- **Facilitator tap targets ≥64px.** No hover-only affordances.
-- **Honour `prefers-reduced-motion`.** Motion is functional only; nothing decorative.
-- **Typography:** Traditional Chinese only in this build, with complete zh-TW coverage. Chinese is
-  the entire interface, never a fallback behind a Latin face. English arrives later and must
-  optically match for weight and x-height.
-- **Numbers are the primary content.** Tabular figures only. No proportional-width digits, no
-  digit that changes width as it changes value.
-- **Cataract and contrast-sensitivity consideration:** the hero readout is achromatic — near-black
-  ink on the cream ground — rather than a saturated hue, because chroma costs luminance contrast at
-  3 m for an eye that scatters light. That rule is independent of polarity and survived the flip.
-- **Administrative thresholds are reported as counts, never as warnings.** The ≥10 average
-  attendance floor decides whether a 期 is funded at all, so the number is shown — beside the
-  threshold, in ordinary ink, with no colour, icon, or instruction attached. The device reports;
-  the 據點 decides. This is distinct from the 14-second ICOPE threshold, which is *clinical* and is
-  therefore absent from the product entirely rather than merely unstyled.
-- **Icons are functional only.** Every icon answers "what is this place" or "what will this do".
-  They exist for wayfinding and status scanning, which helps an older user base, and they add a
-  channel alongside word and shape so colour is never carrying meaning alone. Nothing is added to
-  make a screen feel friendlier — that is the consumer-fitness failure the anti-references rule out.
-  SVG, never font glyphs: Noto Sans TC has no coverage for arrows or device marks and an uncovered
-  codepoint renders as tofu, which is worse than no icon.
-
-## Theming
-
-**Single theme, positive polarity: dark ink on a cream ground.** No toggle in this build — one
-theme, done properly.
-
-This reverses an earlier decision, and the reason is acuity rather than taste. A bright field
-constricts the pupil; a smaller pupil increases depth of field and reduces the visual cost of
-optical aberration and lens opacity. For a 75–90 year old reading at 2.5–3 m, that generally helps
-more than a dark field does. The scene is unchanged — overhead fluorescent light, a fixed monitor,
-an 80-year-old mid-effort — but the conclusion drawn from it is.
-
-Two consequences follow and are not negotiable:
-
-- **The ground is cream, not white.** Low chroma, high lightness, never pure white. A white field
-  under overhead fluorescent light produces veiling glare that gives back everything the pupil
-  constriction won.
-- **The 7:1 participant contrast floor is unchanged.** Polarity does not relax it, and every value
-  is re-measured through a canvas rather than reasoned about.
-
-The printed sheet remains separately, strictly **black on white**. Paper is paper: the cream is a
-screen decision and must never reach the printer.
-
-## Design-system mapping
-
-No component library has a primitive for "one number legible at three metres" or for a government
-funding report. Both are custom. Do not map this onto Material, Carbon, or any shadcn default
-vocabulary.
-
-## The hard structural constraint
-
-**One machine, one monitor, two audiences.** The screen the facilitator operates is the screen the
-participant reads mid-movement. There is no second display. This is the central UI problem, not an
-edge case, and it is resolved deliberately in DESIGN.md rather than by making one number large on
-a dashboard.
+1. **100% Privacy by Design**: All computer vision runs locally inside WebAssembly/WebGL. Zero camera frames, video clips, or face crops leave the device.
+2. **Clinical Transparency**: Every metric displayed to the user is grounded in measurable joint angles ($^\circ$) and verifiable time intervals ($	ext{s}$). No opaque black-box AI scores without explanation.
+3. **Positive, Dignified Coaching**: Alerts are corrective and encouraging, prioritizing user safety and proper mechanics over punitive grading.

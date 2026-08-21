@@ -1,98 +1,70 @@
-## gstack (REQUIRED — global install)
+# Rehabibi — System Invariants & Developer Guide
 
-**Before doing ANY work, verify gstack is installed:**
+This document defines non-negotiable engineering rules and system architecture for the **Rehabibi** codebase.
 
-```bash
-test -d ~/.claude/skills/gstack/bin && echo "GSTACK_OK" || echo "GSTACK_MISSING"
+---
+
+## 1. Non-Negotiable Invariants
+
+1. **100% Privacy by Design**:
+   * Camera frames must NEVER be stored, logged to disk, uploaded to any remote server, or retained.
+   * All pose estimation and kinematic calculations run strictly client-side via in-browser `@mediapipe/tasks-vision` (WebAssembly & WebGL GPU).
+2. **Deterministic Kinematic Computation**:
+   * All angles and compensation triggers must be computed via transparent vector mathematics (`shoulderKinematics.ts`).
+   * No probabilistic or generative AI guessing for joint angles or rep counting.
+3. **Ergonomic State Machine Architecture**:
+   * All exercises follow deterministic state machines (`RESTING` $	o$ `ASCENDING` $	o$ `HOLDING` $	o$ `DESCENDING` $	o$ `RESTING`).
+   * Must include 3-second post-rep rest intervals and robust descent-settle triggers to avoid getting stuck.
+4. **Dual-View Support**:
+   * Every exercise should account for both standing full-body and seated desk upper-body occlusion modes where possible.
+
+---
+
+## 2. Project Structure
+
+```
+/Users/ethantsai/Github/rehab/
+├── src/
+│   ├── domain/
+│   │   ├── rehabTypes.ts          # Core domain models (Phases, Flags, RepRecords, Settings)
+│   │   └── exerciseCatalog.ts     # Prescribed exercise library metadata & instructions
+│   ├── pose/
+│   │   └── shoulderKinematics.ts  # 3D vector geometry, shrug detection, state machine
+│   ├── hooks/
+│   │   ├── usePoseTracker.ts      # In-browser MediaPipe PoseLandmarker vision loop
+│   │   └── useChime.ts            # Web Audio API audio metronome & cues
+│   ├── components/
+│   │   ├── RehabHeader.tsx        # App header with streak badge & settings icon
+│   │   ├── ExerciseCard.tsx       # Routine card with parameters & start CTA
+│   │   ├── SettingsModal.tsx      # Target angle, hold duration, and reps modal
+│   │   ├── AngleGauge.tsx         # Circular SVG goniometer with active target zone
+│   │   ├── CadencePacer.tsx       # 5s dynamic bar, hold countdown, and 3s rest ring
+│   │   └── FormAlertBanner.tsx    # Real-time form compensation warning alerts
+│   ├── surfaces/
+│   │   ├── RehabDashboard.tsx     # Home dashboard, exercise switcher, streak & history
+│   │   ├── RehabTraining.tsx      # Fullscreen live 60 FPS coaching surface
+│   │   └── SessionSummary.tsx     # Post-workout form quality scorecard
+│   ├── styles/
+│   │   └── rehab.css              # Sleek Dark Mode design tokens & UI styling
+│   └── App.tsx                    # Main app state router (Dashboard → Training → Summary)
+├── pose/                          # Python kinematics benchmark suite & test harness
+└── package.json
 ```
 
-If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
+---
 
-> gstack is required for all AI-assisted work in this repo.
-> Install it:
-> ```bash
-> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
-> cd ~/.claude/skills/gstack && ./setup --team
-> ```
-> Then restart your AI coding tool.
+## 3. Development Workflow
 
-Do not skip skills, ignore gstack errors, or work around missing gstack.
+```bash
+# Typecheck
+npm run typecheck
 
-Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
-and /browse are available. Use /browse for all web browsing.
-Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
+# Build bundle
+npm run build
 
-# VeloCare — project rules
+# Start local Vite dev server
+npm run dev
 
-A shared, camera-based strength-training coach for community elder-care centres in Taiwan.
-A participant does sit-to-stands in front of a device; it counts reps, checks movement
-quality, measures how much they slow across a set, and turns that into two decisions: stop
-the set now, and change the load next time. One non-specialist staff member supervises a
-rotation. No wearable, no app, no smartphone, no account.
-
-## Repository layout
-
-This repo is `velocare/`, nested inside a parent workspace folder. The parent contains
-internal strategy documents (`../Proposal .pdf`, `../GoonGPT Hackathon Blurt.pdf`). Read them
-for background when useful. **Never copy them into this repo** — they are internal, contain
-claims explicitly marked unverified, and this repo is public.
-
-## Hard invariants — never violate, never "improve"
-
-1. **No image data is ever persisted.** Frames are reduced to landmarks and discarded. No
-   frame buffer, no canvas readback we retain, no upload, no "just for debugging" recording.
-   If a feature seems to need stored video, stop and raise it — the answer is no.
-2. **No identity fields.** There is no name, date of birth, or national ID field anywhere in
-   any type, schema, form, or fixture. Participants are pseudonymous IDs (`P-0042`) plus a
-   short staff-chosen display label. The mapping to a real person lives in the site's paper
-   records, off-device.
-3. **No clinical output.** The system never diagnoses, screens, assesses risk, categorises,
-   or refers. Every output is a training measurement or a training instruction. Use training
-   language (train, coach, progress, participant) — never clinical language (diagnose,
-   screen, assess, rehabilitate, patient). This is a regulatory boundary, not a style
-   preference: it is what keeps the product outside medical-device classification.
-4. **Accessibility floor on participant surfaces**, applied before any aesthetic rule:
-   nothing under 2rem; primary number ~12rem; contrast >= 7:1; colour never carries meaning
-   alone (always paired with a word and a distinct shape); >=64px tap targets on facilitator
-   surfaces; no hover-only affordances; honour `prefers-reduced-motion`.
-5. **Traditional Chinese (zh-TW) is the default language**, English is the toggle. All copy
-   lives in one strings module. Both languages ship complete — English is not a stub. The CJK
-   face must have full zh-TW coverage.
-
-## Open decisions — do not silently resolve
-
-- **Load progression mechanism.** Resistance bands (what the current proposal says) vs chair
-  height (probably more correct for sit-to-stands, and camera-verifiable). Until this is
-  settled, load is an **abstract ordered ladder** and the UI says "step up / hold / step
-  down". Do not hardcode band colours.
-- **Velocity-intent validity.** Velocity loss only indexes fatigue if participants attempt
-  maximal speed each rep. The system cues "stand up fast, sit down slowly", but compliance in
-  this population is unproven. Where a session's rep-to-rep velocity is erratic rather than
-  monotonically declining, prefer declining to make a recommendation over making a weak one.
-
-## Design tool hierarchy
-
-- **impeccable owns the design system.** `DESIGN.md` and `PRODUCT.md` are the source of
-  truth for tokens, typography, and anti-references. Do not run `/design-consultation` — it
-  would author a competing system.
-- **taste-skill applies at generation time only.** It never overrides `DESIGN.md`.
-- **When impeccable and taste conflict, impeccable wins.**
-- Variant exploration: `/design-shotgun`. Mockup to markup: `/design-html`.
-- Plan-stage design critique: `/plan-design-review`. Built-UI critique: impeccable
-  `/audit`, `/critique`, `/polish`. Do not use gstack `/design-review` — impeccable owns that.
-
-## Aesthetic direction
-
-The participant display should look almost austere. That is the correct outcome, not a
-failure of ambition — do not let anti-slop rules push it toward visual interest.
-Anti-references: consumer fitness apps (rings, streaks, confetti, badges, gamification),
-glossy health-tech SaaS (gradient cards, glassmorphism, hero sections), clinical software
-(dense grids, tiny type, chart walls).
-Tone: dignified. These are adults doing hard physical work — not patients being managed, not
-users being engaged. No cheerfulness, no encouragement stickers, no exclamation marks.
-
-## Current scope
-
-Frontend only, driven by fixtures behind a `SessionDataSource` interface. The pose pipeline
-implements that same interface later; no UI code may know the difference. No backend, no
-accounts, no deployment yet.
+# Run Python kinematic tests
+python3 pose/tests/test_shoulder_flexion.py
+```
