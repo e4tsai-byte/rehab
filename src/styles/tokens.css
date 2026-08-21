@@ -78,29 +78,29 @@
      solid, cards are glass over it, chrome is glass over cards. A glass card
      inside a glass card is a defect — legibility collapses and the blur has
      nothing true to sample. */
-  --mat-thin: rgba(255, 255, 255, 0.44);
-  --mat-regular: rgba(255, 255, 255, 0.58);
-  --mat-thick: rgba(255, 255, 255, 0.72);
+  --mat-thin: rgba(255, 255, 255, 0.68);
+  --mat-regular: rgba(255, 255, 255, 0.82);
+  --mat-thick: rgba(255, 255, 255, 0.92);
 
-  --mat-blur-thin: blur(22px) saturate(200%);
-  --mat-blur-regular: blur(34px) saturate(210%);
-  --mat-blur-thick: blur(44px) saturate(200%);
+  --mat-blur-thin: blur(20px) saturate(180%);
+  --mat-blur-regular: blur(28px) saturate(190%);
+  --mat-blur-thick: blur(36px) saturate(200%);
 
   /* The specular sheen. A material catches light along its top edge and falls
      away; a flat alpha does not. This is the difference between "glass" and
      "white box at 58% opacity", and it is why the first pass read flat. */
   --mat-sheen: linear-gradient(
     160deg,
-    rgba(255, 255, 255, 0.62) 0%,
-    rgba(255, 255, 255, 0.16) 26%,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.25) 26%,
     rgba(255, 255, 255, 0) 52%
   );
 
   /* The bright top edge is what makes a surface read as a material catching
      light rather than a rectangle at reduced opacity. It is not decoration. */
-  --mat-edge: rgba(255, 255, 255, 0.75);
-  --mat-hairline: rgba(23, 29, 41, 0.08);
-  --mat-hairline-strong: rgba(23, 29, 41, 0.14);
+  --mat-edge: rgba(255, 255, 255, 0.95);
+  --mat-hairline: rgba(255, 255, 255, 0.8);
+  --mat-hairline-strong: rgba(23, 29, 41, 0.12);
 
   /* ── Over-video material ──────────────────────────────────────────────────
      Everything painted over the camera feed uses this, and it is DARK on
