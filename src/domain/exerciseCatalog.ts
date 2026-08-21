@@ -261,7 +261,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: 'Tempo too slow',
     },
     thumbnailUrl: 'images/thumb-lateral-abduction.jpg',
-    diagramUrl: 'images/standing-arm-flexion-guide.jpg',
+    diagramUrl: 'images/lateral-abduction-guide.jpg',
     status: 'upcoming',
   },
   {
@@ -320,7 +320,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: 'Tempo too slow',
     },
     thumbnailUrl: 'images/thumb-scaption.jpg',
-    diagramUrl: 'images/standing-arm-flexion-guide.jpg',
+    diagramUrl: 'images/scaption-guide.jpg',
     status: 'upcoming',
   },
   {
@@ -379,7 +379,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       PACING_TOO_SLOW: 'Tempo too slow',
     },
     thumbnailUrl: 'images/thumb-external-rotation.jpg',
-    diagramUrl: 'images/seated-desk-flexion-guide.jpg',
+    diagramUrl: 'images/external-rotation-guide.jpg',
     status: 'upcoming',
   },
   {

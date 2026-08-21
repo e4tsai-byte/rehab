@@ -1340,21 +1340,28 @@
 
 .routine-card__diagram-wrapper {
   width: 100%;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid var(--mat-hairline);
-  border-radius: var(--r-lg);
-  padding: var(--s-2);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: var(--r-xl);
+  padding: var(--s-3);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 12px 28px -6px rgba(15, 23, 42, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .routine-card__diagram-img {
   width: 100%;
-  max-width: 100%;
   height: auto;
-  border-radius: var(--r-md);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-lg);
   display: block;
   object-fit: contain;
 }
@@ -2772,22 +2779,27 @@
 
 .exercise-detail-diagram-wrap {
   width: 100%;
-  background: #090e1a;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.95);
   border-radius: var(--r-xl);
   padding: var(--s-3);
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 12px 32px -4px rgba(15, 23, 42, 0.1),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  max-height: 500px;
 }
 
 .exercise-detail-diagram-img {
   width: 100%;
-  max-height: 480px;
+  height: auto;
+  aspect-ratio: 16 / 9;
   border-radius: var(--r-lg);
   display: block;
   object-fit: contain;

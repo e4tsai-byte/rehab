@@ -85,12 +85,11 @@ export function RoutineDetailModal({
 
         {/* Thumbnail Preview Banner */}
         {routine.thumbnailUrl && (
-          <div className="exercise-detail-diagram-wrap" style={{ maxHeight: '360px' }}>
+          <div className="exercise-detail-diagram-wrap">
             <img
               src={assetUrl(routine.thumbnailUrl)}
               alt={r.name}
               className="exercise-detail-diagram-img"
-              style={{ maxHeight: '340px' }}
             />
           </div>
         )}
