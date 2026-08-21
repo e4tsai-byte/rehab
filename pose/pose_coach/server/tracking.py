@@ -38,7 +38,7 @@ from ..autoregulation.rep_counter import RepCounter
 from ..capture import CameraUnavailableError, ModelLoadError, PoseCapture
 from ..overlay import draw_skeleton, draw_state_label
 from ..pipeline import PoseTrackingPipeline
-from ..types import FrameOutput, State
+from ..types import PoseObservation, Landmark, Side,  FrameOutput, State
 
 PRESCRIBED_REPS = 5
 
