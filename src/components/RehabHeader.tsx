@@ -1,13 +1,29 @@
 interface RehabHeaderProps {
+  activeTab: 'dashboard' | 'exercises'
+  onSelectTab: (tab: 'dashboard' | 'exercises') => void
   streak: number
   onOpenSettings: () => void
   onGoHome?: () => void
 }
 
-export function RehabHeader({ streak, onOpenSettings, onGoHome }: RehabHeaderProps) {
+export function RehabHeader({
+  activeTab,
+  onSelectTab,
+  streak,
+  onOpenSettings,
+  onGoHome,
+}: RehabHeaderProps) {
   return (
     <header className="rehab-nav">
-      <button className="rehab-nav__brand" onClick={onGoHome} aria-label="回到首頁">
+      {/* Brand */}
+      <button
+        className="rehab-nav__brand"
+        onClick={() => {
+          onSelectTab('dashboard')
+          if (onGoHome) onGoHome()
+        }}
+        aria-label="回到首頁"
+      >
         <span className="rehab-nav__logo" aria-hidden="true">R</span>
         <span>
           <span className="rehab-nav__title">Rehabibi</span>
@@ -15,6 +31,30 @@ export function RehabHeader({ streak, onOpenSettings, onGoHome }: RehabHeaderPro
         </span>
       </button>
 
+      {/* Primary Navigation Tabs */}
+      <nav className="rehab-nav__tabs" aria-label="主導覽列">
+        <button
+          className={`nav-tab ${activeTab === 'dashboard' ? 'nav-tab--active' : ''}`}
+          onClick={() => onSelectTab('dashboard')}
+          aria-selected={activeTab === 'dashboard'}
+          role="tab"
+        >
+          <span aria-hidden="true">📊</span>
+          <span>復健總覽</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeTab === 'exercises' ? 'nav-tab--active' : ''}`}
+          onClick={() => onSelectTab('exercises')}
+          aria-selected={activeTab === 'exercises'}
+          role="tab"
+        >
+          <span aria-hidden="true">🎥</span>
+          <span>動作與課表</span>
+        </button>
+      </nav>
+
+      {/* Actions */}
       <div className="rehab-nav__actions">
         <span className="streak-badge" title="連續訓練天數">
           <span aria-hidden="true">🔥</span>

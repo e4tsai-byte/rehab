@@ -1,0 +1,66 @@
+export interface RoutineStation {
+  exerciseId: string
+  targetReps: number
+  restAfterS: number // Inter-exercise rest interval in seconds (e.g. 60s)
+}
+
+export interface RehabRoutine {
+  id: string
+  nameZh: string
+  nameEn: string
+  subtitleZh: string
+  descriptionZh: string
+  targetFocusZh: string
+  estimatedDurationMin: number
+  category: 'daily_prescribed' | 'desk_relief' | 'advanced_stability' | 'custom_doctor'
+  stations: readonly RoutineStation[]
+  thumbnailUrl: string
+  status: 'prescribed' | 'upcoming'
+  isCustom?: boolean
+}
+
+export const REHAB_ROUTINES: readonly RehabRoutine[] = [
+  {
+    id: 'routine-scapular-daily-combo',
+    nameZh: '肩胛綜合穩定強化課表',
+    nameEn: 'Daily Scapular & Deltoid Stability Menu',
+    subtitleZh: '站姿動力鏈啟動 ＋ 坐姿前三角肌隔離控制',
+    descriptionZh: '結合站姿全身核心協同與坐姿桌前平舉隔離訓練，以標準 5-5-5 節奏消除聳肩代償，全方位重建肩胛肱骨節律。',
+    targetFocusZh: '前三角肌 · 前鋸肌 · 上斜方肌抑制',
+    estimatedDurationMin: 8,
+    category: 'daily_prescribed',
+    stations: [
+      {
+        exerciseId: 'right-arm-forward-flexion-standing',
+        targetReps: 10,
+        restAfterS: 60,
+      },
+      {
+        exerciseId: 'right-arm-forward-flexion-seated',
+        targetReps: 10,
+        restAfterS: 0,
+      },
+    ],
+    thumbnailUrl: '/images/thumb-routine-scapular.jpg',
+    status: 'prescribed',
+  },
+  {
+    id: 'routine-desk-quick-relief',
+    nameZh: '辦公桌前快速關節放鬆課表',
+    nameEn: 'Desk Quick Relief Menu',
+    subtitleZh: '久坐舒緩 · 上半身姿勢校正',
+    descriptionZh: '針對辦公與久坐族群設計，利用椅背與桌面支撐，在 4 分鐘內完成 10 次高品質 90° 前屈平舉與等長停頓。',
+    targetFocusZh: '姿勢校正 · 頸肩減壓 · 前三角肌活動度',
+    estimatedDurationMin: 4,
+    category: 'desk_relief',
+    stations: [
+      {
+        exerciseId: 'right-arm-forward-flexion-seated',
+        targetReps: 10,
+        restAfterS: 0,
+      },
+    ],
+    thumbnailUrl: '/images/thumb-routine-desk.jpg',
+    status: 'prescribed',
+  },
+] as const

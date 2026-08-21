@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { UserSettings } from '../domain/rehabTypes'
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 interface SettingsModalProps {
   settings: UserSettings
@@ -10,6 +11,8 @@ interface SettingsModalProps {
 export function SettingsModal({ settings, onSave, onClose }: SettingsModalProps) {
   const [form, setForm] = useState<UserSettings>({ ...settings })
   const sheetRef = useRef<HTMLDivElement>(null)
+
+  useBodyScrollLock()
 
   // Never trap the user. Escape closes, and focus moves into the sheet on open
   // so a keyboard user is not left behind on the trigger.

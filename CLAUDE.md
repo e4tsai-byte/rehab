@@ -105,17 +105,28 @@ rehab/
 │   ├── App.tsx                    # State router: Dashboard → Training → Summary
 │   ├── domain/
 │   │   ├── rehabTypes.ts          # Phases, FormFlags, RepRecords, UserSettings
-│   │   └── exerciseCatalog.ts     # Exercise library + ALL zh-TW copy (see §4)
+│   │   ├── recoveryMilestones.ts  # Recovery phases, calendar activity, recent stats
+│   │   ├── exerciseCatalog.ts     # Exercise library + ALL zh-TW copy (see §4)
+│   │   └── routineCatalog.ts      # Multi-exercise rehab menus & sequence models
 │   ├── pose/
 │   │   └── shoulderKinematics.ts  # 3D vector geometry, CONFIG, rep state machine
 │   ├── data/
 │   │   └── rehabStore.ts          # localStorage only. Rep records + settings.
 │   ├── hooks/
 │   │   ├── usePoseTracker.ts      # MediaPipe PoseLandmarker vision loop
-│   │   └── useChime.ts            # Web Audio metronome and cues
+│   │   ├── useChime.ts            # Web Audio metronome and cues
+│   │   └── useBodyScrollLock.ts   # Body scroll locking for modal overlays
 │   ├── components/
-│   │   ├── RehabHeader.tsx        # Header: streak badge, settings
+│   │   ├── RehabHeader.tsx        # Header: tab navigation, streak badge, settings
 │   │   ├── ExerciseCard.tsx       # Routine card and start CTA
+│   │   ├── ExerciseVideoCard.tsx  # YouTube-style 16:9 exercise card
+│   │   ├── RoutineVideoCard.tsx   # Multi-exercise routine playlist card
+│   │   ├── ExerciseDetailModal.tsx # Exercise inspection sheet & motion diagram
+│   │   ├── RoutineDetailModal.tsx # Routine inspection sheet & station sequence
+│   │   ├── CustomRoutineBuilderModal.tsx # Doctor custom routine builder modal
+│   │   ├── RecoveryRoadmap.tsx    # 4-stage clinical recovery milestone tracker
+│   │   ├── ActivityCalendar.tsx   # Calendar tracking streaks & rest days
+│   │   ├── RecentStatsGrid.tsx    # 7-day / 30-day clinical analytics grid
 │   │   ├── SettingsModal.tsx      # Target angle, hold duration, reps
 │   │   ├── AngleGauge.tsx         # Circular SVG goniometer with target band
 │   │   ├── CadencePacer.tsx       # Cadence bar, hold countdown, rest ring
@@ -123,7 +134,8 @@ rehab/
 │   │   ├── Digits.tsx             # Fixed-cell numeric primitive
 │   │   └── FormAlertBanner.tsx    # Live compensation warnings
 │   ├── surfaces/
-│   │   ├── RehabDashboard.tsx     # Home, exercise switcher, streak, history
+│   │   ├── RehabDashboard.tsx     # Overview, recovery roadmap, calendar, stats, history
+│   │   ├── ExerciseLibrary.tsx    # YouTube-style visual exercise & routine library
 │   │   ├── RehabTraining.tsx      # Fullscreen live coaching surface
 │   │   └── SessionSummary.tsx     # Post-session form quality scorecard
 │   └── styles/                    # See §5 — load order is significant

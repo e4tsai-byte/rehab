@@ -98,3 +98,78 @@ export function calculateStreak(history: CompletedSession[]): number {
 
   return streak
 }
+
+const CUSTOM_ROUTINES_KEY = 'rehabibi_custom_routines'
+
+export function loadCustomRoutines(): import('../domain/routineCatalog').RehabRoutine[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_ROUTINES_KEY)
+    if (!raw) return []
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+export function saveCustomRoutine(
+  routine: import('../domain/routineCatalog').RehabRoutine
+): import('../domain/routineCatalog').RehabRoutine[] {
+  try {
+    const existing = loadCustomRoutines()
+    const filtered = existing.filter((r) => r.id !== routine.id)
+    const updated = [routine, ...filtered]
+    localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(updated))
+    return updated
+  } catch (err) {
+    console.error('Failed to save custom routine', err)
+    return loadCustomRoutines()
+  }
+}
+
+export function deleteCustomRoutine(id: string): import('../domain/routineCatalog').RehabRoutine[] {
+  try {
+    const existing = loadCustomRoutines()
+    const updated = existing.filter((r) => r.id !== id)
+    localStorage.setItem(CUSTOM_ROUTINES_KEY, JSON.stringify(updated))
+    return updated
+  } catch (err) {
+    console.error('Failed to delete custom routine', err)
+    return loadCustomRoutines()
+  }
+}
+
+const HIDDEN_ROUTINES_KEY = 'rehabibi_hidden_routines'
+
+export function loadHiddenRoutineIds(): string[] {
+  try {
+    const raw = localStorage.getItem(HIDDEN_ROUTINES_KEY)
+    if (!raw) return []
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
+}
+
+export function hideRoutine(id: string): string[] {
+  try {
+    const existing = loadHiddenRoutineIds()
+    if (!existing.includes(id)) {
+      const updated = [...existing, id]
+      localStorage.setItem(HIDDEN_ROUTINES_KEY, JSON.stringify(updated))
+      return updated
+    }
+    return existing
+  } catch (err) {
+    console.error('Failed to hide routine', err)
+    return loadHiddenRoutineIds()
+  }
+}
+
+export function unhideAllRoutines(): string[] {
+  try {
+    localStorage.removeItem(HIDDEN_ROUTINES_KEY)
+    return []
+  } catch {
+    return []
+  }
+}
