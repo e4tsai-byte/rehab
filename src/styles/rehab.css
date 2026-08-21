@@ -909,7 +909,7 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-scrim);
-  background: rgba(15, 23, 42, 0.28);
+  background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(12px) saturate(130%);
   -webkit-backdrop-filter: blur(12px) saturate(130%);
   display: flex;
@@ -942,15 +942,14 @@
   gap: var(--s-5);
   padding: var(--s-8);
   border-radius: var(--r-xl);
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: 1px solid #ffffff;
   box-shadow:
     0 28px 64px -12px rgba(15, 23, 42, 0.22),
     0 8px 24px -6px rgba(15, 23, 42, 0.1),
-    inset 0 1.5px 1px 0 #ffffff,
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    inset 0 1.5px 1px 0 #ffffff;
   /* Materialize, don't just fade: blur and scale animate together so the
      surface reads as a real material arriving rather than an opacity ramp. */
   animation: sheet-in var(--dur-sheet) var(--ease-out-expo) both;
@@ -1278,7 +1277,25 @@
   border-radius: inherit;
   background: var(--mat-sheen);
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
+}
+
+.routine-card > *,
+.recovery-roadmap > *,
+.activity-calendar > *,
+.exercise-launcher > *,
+.dashboard-action-banner > *,
+.video-card > *,
+.routine-card-video > *,
+.stat-card > *,
+.training-panel > *,
+.scorecard > *,
+.history-table > *,
+.rep-log > *,
+.sheet > *,
+.empty-state > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* The brand lockup is a two-line stack, not an inline run. Without this the
