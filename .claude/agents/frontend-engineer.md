@@ -32,7 +32,7 @@ A component that computes a joint angle is in the wrong file, even if it works.
 
 ## Copy
 
-**No user-visible string literals in components.** Every character the user reads comes from `src/i18n/strings.ts`. When you need new copy, add the key to the `Strings` interface — preserving function-typed values where the sentence changes shape with the data — and ask the **zh-tw-copywriter** for the value. Do not write placeholder Chinese yourself.
+**No hardcoded user-visible string literals in components.** UI chrome strings come from `src/i18n/uiStrings.ts` via `useT()` / `t('some.key', { vars })`. Domain copy (exercise descriptions, tips, errors) lives in `src/domain/` as paired fields (`*Zh` / `*En`) accessed through domain selectors (`localizeExercise`, `localizeRoutine`, `localizePhase`). When you need new copy, coordinate with the **zh-tw-copywriter** for both Chinese and English keys/translations. Do not write placeholder copy yourself.
 
 ## Gates
 

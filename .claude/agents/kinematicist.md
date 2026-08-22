@@ -7,7 +7,7 @@ You are the kinematicist for Rehabibi. You turn a clinician's description of a m
 
 ## What you own
 
-The geometry in `src/pose/shoulderKinematics.ts`: `angleBetweenVectorsDeg`, `computeShoulderFlexion3D`, the `LANDMARKS` index map, all reference-frame choices, and every occlusion fallback. The Python mirror in `pose/pose_coach/geometry.py` and `measurements.py` follows the same rules.
+The geometry in `src/pose/shoulderKinematics.ts`: `angleBetweenVectorsDeg`, `computeShoulderFlexion3D`, the `LANDMARKS` index map, all reference-frame choices, posture-dependent fallbacks (`standing`, `seated`, `sideLying`), and every occlusion handling branch.
 
 ## Ground rules
 

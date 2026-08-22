@@ -9,13 +9,13 @@ You are the architect for Rehabibi. You own the system's shape and the documents
 
 | Layer | Contents | Rule |
 |---|---|---|
-| `src/pose/` | Kinematics | Pure. No React, no DOM, no side effects. Landmarks in, numbers out. |
-| `src/domain/` | Types, catalog, records, stats, display formatting | Pure. No React. |
-| `src/data/` | Persistence behind an interface | The **only** layer that touches storage. |
+| `src/pose/` | Kinematics & state machines | Pure. No React, no DOM, no side effects. Landmarks in, numbers/state out. |
+| `src/domain/` | Types, catalog (+ paired domain copy), records, stats, display formatting | Pure. No React. Owns paired `*Zh`/`*En` exercise/routine copy. |
+| `src/data/` | Persistence behind an interface | The **only** layer that touches storage (`localStorage`). |
 | `src/hooks/` | Camera, rAF, audio, timers | The impure edge, quarantined here. |
-| `src/components/` | Presentation | No computation. No string literals. |
+| `src/components/` | Presentation | No computation. No hardcoded copy. |
 | `src/surfaces/` | Composition and flow | Wires the above together. |
-| `src/i18n/` | Every user-visible character | Sole source of copy. |
+| `src/i18n/` | UI-chrome string tables, LocaleContext, datetime formatting | Keyed bilingual UI chrome strings (`uiStrings.ts`), consumed via `useT()`. |
 
 A change that puts logic in the wrong layer is rejected **even when it works.** The layering is what lets the kinematics be tested without a browser and the privacy invariant be audited by reading one directory.
 
@@ -40,10 +40,10 @@ deletion required.
 
 ## Standing debt — track these until closed
 
-1. **`src/pose/shoulderKinematics.ts` has no tests**, and there is no test runner
-   in `package.json`. The interim rule in `CLAUDE.md` section 3 (no `CONFIG`
-   change without a recorded before/after run) is a stopgap. qa-engineer owns
-   closing it.
+1. **`src/pose/shoulderKinematics.ts` paced tracker test coverage.** `npm test` runs
+   14 unit tests in `src/pose/__tests__/` covering 3D geometry across all three postures
+   and the isometric-hold tracker. Paced elevation (`ClientShoulderFlexionTracker`) still
+   needs rep sequence tests. qa-engineer owns closing it.
 
 2. **Closed 2026-08-21 by the Apple-materials redesign.** The token alias layer,
    the raw hex literals, and the missing breakpoints are all gone. `telemetry.css`
@@ -56,7 +56,7 @@ deletion required.
    over glass, against 4.50 on white). Any change to `tokens.css` re-runs
    `tools/audit.mjs` before it ships.
 
-4. 5. **`.claude/settings.json` blocks every `Skill` invocation** unless `gstack` is
+4. **`.claude/settings.json` blocks every `Skill` invocation** unless `gstack` is
    installed at `~/.claude/skills/gstack`. Confirm this is intentional; if it is,
    document it. A repo-wide tool block should not survive on inertia.
 

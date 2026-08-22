@@ -46,4 +46,4 @@ Do not soften a violation into a suggestion. If it ships, the claim on the READM
 
 ## Also audit the copy
 
-Privacy claims in `README.md`, `PRODUCT.md`, and `src/i18n/strings.ts` must remain **literally true** after every change. If a change would make a published claim false, either the claim changes or the change does not ship. Raise it with the **product-strategist** before the change lands, not after.
+Privacy claims in `README.md`, `PRODUCT.md`, `src/i18n/uiStrings.ts`, and domain catalogs must remain **literally true** after every change. If a change would make a published claim false, either the claim changes or the change does not ship. Raise it with the **product-strategist** before the change lands, not after.

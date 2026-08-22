@@ -23,9 +23,9 @@ number that is clinically sensible, geometrically correct, and completely unusab
 | **frontend-engineer** | `components/`, `hooks/`, `surfaces/`, `data/`, `domain/` types, `App.tsx`, `main.tsx`, `index.html` | Building or refactoring UI, the render loop, typecheck failures |
 | **ux-designer** | Information architecture, flow, feedback timing, a11y | Designing a screen, deciding what appears mid-rep |
 | **brand-designer** | `styles/`, the `index.html` favicon, `DESIGN.md` | Brand assets, tokens, visual treatment, visual drift |
-| **zh-tw-copywriter** | `*Zh` fields in `exerciseCatalog.ts` + any user-visible literal | Any new or changed user-visible character |
+| **zh-tw-copywriter** | User-visible copy across `src/i18n/uiStrings.ts` and `domain/` catalogs | Any new or changed user-visible character (zh-TW & EN) |
 | **privacy-auditor** | Invariant #1 — blocking authority | Before merging anything touching camera, storage, network, or deps |
-| **qa-engineer** | The fixture corpus (to be built), test conventions, definition of done | Adding tests, reproducing a bug, judging coverage |
+| **qa-engineer** | The fixture corpus, test conventions, definition of done | Adding tests, reproducing a bug, judging coverage |
 | **architect** | `CLAUDE.md`, module boundaries, the invariant list | Where code belongs, agent conflicts, structural drift |
 | **product-strategist** | `README.md`, `PRODUCT.md`, roadmap, positioning | Outward-facing docs, deciding what to build next |
 
@@ -63,16 +63,16 @@ These pull against each other productively; the architect arbitrates.
 
 ### zh-tw-copywriter is a separate role, not a translation step
 
-The tone rule is now `CLAUDE.md` invariant 1.6: dignified, no cheerfulness, no
+The tone rule is `CLAUDE.md` invariant 1.6: dignified, no cheerfulness, no
 exclamation marks, never 加油, never 太棒了. A user who managed three reps before their
 shoulder stopped them has a valid outcome and the copy must not suggest otherwise. That
 is a design position with clinical weight, not a localization chore — and it needs
-someone who knows the words a Taiwanese PT actually says to a patient.
+someone who knows the words a physical therapist actually says to a patient.
 
-The rule was rescued from `src/i18n/strings.ts`, which was its only home and which was
-deleted with velocare on 2026-08-21. **Rehabibi has no i18n layer**: no live surface ever
-imported that file, and its zh-TW copy lives in `exerciseCatalog.ts` beside the exercise
-it describes. Do not reintroduce a string table for a single-locale product.
+Rehabibi is bilingual (zh-TW and EN): UI chrome is strictly typed in
+`src/i18n/uiStrings.ts` and read via `useT()`, while exercise, routine, and recovery
+copy lives as paired `*Zh`/`*En` fields in `src/domain/`. The same dignified tone
+governs both languages.
 
 ### evidence-analyst is a role because this repo proved it needs one
 
@@ -185,9 +185,9 @@ into `CLAUDE.md`. See `CLAUDE.md` section 7.
 
 ## Open debt
 
-Tracked in full in `.claude/agents/architect.md`. The two that block documented gates:
+Tracked in full in `.claude/agents/architect.md`.
 
-1. **No test suite exists** for `src/pose/shoulderKinematics.ts`, and no fixture corpus.
-   Both collaboration pipelines below name a qa-engineer step that cannot execute until
-   one is built. `CLAUDE.md` section 3 carries the interim rule.
-2. **`telemetry.css` runs on a legacy token alias layer** rather than `--rehab-*`.
+1. **Paced elevation rep sequence tests.** `npm test` runs 14 unit tests in
+   `src/pose/__tests__/` covering geometry across all postures and the isometric hold tracker.
+   Sequence tests for the paced elevation machine (`ClientShoulderFlexionTracker`) remain
+   qa-engineer's standing task. `CLAUDE.md` section 3 carries the interim rule.

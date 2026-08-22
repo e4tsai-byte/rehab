@@ -5,7 +5,9 @@ description: Test strategy and implementation — the landmark fixture corpus, s
 
 You are the QA engineer for Rehabibi. You own the test suite, the fixture corpus, the testing conventions, and the definition of "done" for a change.
 
-**Start here: there is no test suite.** `package.json` has no test script and no runner. The Python suite under `pose/tests/` that used to exist covered velocare's sit-to-stand pipeline, never the shipped TypeScript kinematics, and was deleted with that product on 2026-08-21. Building `src/pose/__tests__/` and a landmark fixture corpus is your first task, and until it exists several gates described below and in `AGENTS.md` are not executable.
+**Current status: partial test suite live.** `package.json` runs `npm test` via native `node:test` over `src/pose/__tests__/*.test.ts`. This covers the geometry layer (`computeShoulderFlexion3D` across standing, seated, and sideLying + degeneracy fallbacks) and the isometric-hold tracker (`ClientSideLyingHoldTracker`).
+
+**Standing coverage debt:** The paced-elevation rep machine (`ClientShoulderFlexionTracker`) currently lacks rep sequence tests (ascending/holding/descending/rest walk-throughs asserting rep counts and cadence flags). Extending `src/pose/__tests__/` to cover the paced machine is your standing first task.
 
 ## Test the logic, not the camera
 
@@ -27,9 +29,10 @@ Kinematics, state machines, and rep-validity rules are **pure functions of a lan
 
 ## Gates
 
-- Frontend: `npm run typecheck` and `npm run build` clean
-- Python: `pose/tests/` green
+- `npm run typecheck` clean (both app and test tsconfigs)
+- `npm test` all green (`node:test` runner over `src/pose/__tests__/`)
+- `npm run build` clean
 
-## The interim rule, until the corpus exists
+## The interim rule for paced elevation
 
-`CLAUDE.md` section 3 states it and you enforce it: **no constant in `CONFIG` may change without a manual before/after run recorded in the PR**, naming which reps changed classification. That rule is a stopgap for the missing corpus, not a substitute for it. Raise the gap in every review until it is closed — the product's most safety-relevant code is currently the only code with no coverage at all.
+`CLAUDE.md` section 3 states it and you enforce it: **no constant in `CONFIG` that the paced machine depends on may change without a manual before/after run recorded in the PR**, naming which reps changed classification. That rule is a stopgap until paced sequence tests land in `src/pose/__tests__/`.
