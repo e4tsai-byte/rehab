@@ -73,8 +73,11 @@ with no enforcer is negotiable by default, which defeats the point.
   reuses `peakElevation` to carry the peak abduction reached during the hold —
   which, for a ceilinged hold, is a **fault** signal, not an achievement. Any
   surface that reads `peakElevation` or `avgElevationDeg` as "higher is better"
-  (the dashboard recovery/stats grid does today) is wrong for this model. That
-  is a **known, recorded downstream gap** (§9), not a silently-accepted one.
+  is wrong for this model, so isometric-hold sessions must never be pooled into
+  the elevation/recovery stats. This is **enforced** in `recoveryMilestones.ts`:
+  `isIsometricSession()` filters them out of `calculateRecoveryProgress` (the
+  Phase-2 track), and they are surfaced separately via `calculateHoldAdherence`.
+  Any new elevation-averaging surface must apply the same guard.
 
 ### 4. Dual-View Support — *enforced by kinematicist + physiatrist*
 
@@ -153,9 +156,11 @@ rehab/
 │   │   ├── rehabTypes.ts          # Phases, FormFlags, RepRecords, UserSettings
 │   │   ├── recoveryMilestones.ts  # Recovery phases (+localizePhase), calendar, recent stats
 │   │   ├── exerciseCatalog.ts     # Exercise library, bilingual copy + localizeExercise (see §4)
-│   │   └── routineCatalog.ts      # Multi-exercise menus, bilingual copy + localizeRoutine
+│   │   ├── routineCatalog.ts      # Multi-exercise menus, bilingual copy + localizeRoutine
+│   │   └── assets.ts              # assetUrl() — base-aware public asset paths (GitHub Pages subpath)
 │   ├── pose/
-│   │   └── shoulderKinematics.ts  # 3D vector geometry, CONFIG, BOTH rep/hold state machines (§3)
+│   │   ├── shoulderKinematics.ts  # 3D vector geometry, CONFIG, BOTH rep/hold state machines (§3)
+│   │   └── __tests__/             # node:test corpus — geometry.test.ts, sideLyingHold.test.ts (§3)
 │   ├── data/
 │   │   └── rehabStore.ts          # localStorage only. Rep records + settings.
 │   ├── hooks/
@@ -200,6 +205,9 @@ rehab/
 # Typecheck — the real gate. Catches every broken import.
 npm run typecheck
 
+# Unit tests — node:test runner over the pose corpus (§3)
+npm test
+
 # Local dev server
 npm run dev
 
@@ -212,15 +220,21 @@ node tools/offline-test.mjs
 ```
 
 > **KNOWN GAP — the most important thing on this page.**
-> `src/pose/shoulderKinematics.ts` has **no test suite**. There is no test
-> runner in `package.json` and no fixture corpus. The Python suite that used to
-> exist (`pose/tests/`) covered velocare's sit-to-stand pipeline and never
-> touched this code.
+> `src/pose/shoulderKinematics.ts` now has a **partial** test suite, run with
+> `npm test` (the native `node:test` runner over `src/pose/__tests__/`). It
+> covers the geometry layer — `computeShoulderFlexion3D` across all three
+> postures plus its degeneracy fallbacks — and the isometric-hold state machine
+> (`ClientSideLyingHoldTracker`) end to end, including settle-gate, over-
+> elevation, incomplete-hold, and pose-lost-timeout sequences.
 >
-> Until a corpus exists, **no constant in `CONFIG` may change without a manual
-> before/after run recorded in the PR**, stating which reps changed
-> classification. Building the corpus — static fixtures, sequence tests,
-> degeneracy tests — is qa-engineer's standing first task.
+> **What is still uncovered:** the paced-elevation rep machine
+> (`ClientShoulderFlexionTracker`) has no sequence tests — no ascending/holding/
+> descending/rest walk-through asserting rep counts and cadence flags. Until
+> that exists, **no `CONFIG` constant the paced machine depends on may change
+> without a manual before/after run recorded in the PR**, stating which reps
+> changed classification. Extending the corpus to the paced machine is
+> qa-engineer's standing first task. (The velocare Python suite in `pose/tests/`
+> was deleted with that product and never touched this code.)
 
 ---
 
@@ -426,10 +440,12 @@ signature; measurement-engineer owns the ceiling value and debounce.
 `shoulderKinematics.ts` (posture-aware geometry, second tracker class, new CONFIG
 per-view sets), `recoveryMilestones.ts` (daily-adherence calc),
 `usePoseTracker.ts` + `RehabTraining.tsx` + the posture-branching components
-(`ExerciseVideoCard`, `ExerciseLauncherCard`, `ExercisePickerModal`,
-`ExerciseLibrary`, `CustomRoutineBuilderModal`), and `uiStrings.ts`
-(`posture.sideLying*`, `flag.overElevation`). §2's file tree is therefore
-unchanged; only the `shoulderKinematics.ts` annotation was updated.
+(`ExerciseVideoCard`, `ExerciseLibrary`, `CustomRoutineBuilderModal`), and
+`uiStrings.ts` (`posture.sideLying*`, `flag.overElevation`). The sideLying work
+itself added no new files. (`assets.ts` and `pose/__tests__/` were later added
+to the §2 tree by the 2026-08-22 health-review reconciliation, which also
+deleted two orphaned components — `ExerciseLauncherCard`, `ExercisePickerModal`
+— that this list originally named but that were never wired into any surface.)
 
 **Open questions escalated to the user (do not build past these):**
 1. **Recovery-phase attribution.** The dashboard recovery model is hardcoded to
