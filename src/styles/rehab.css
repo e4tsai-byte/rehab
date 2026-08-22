@@ -3140,3 +3140,241 @@
     padding: var(--s-6);
   }
 }
+
+/* ═══ Evidence Surface (scientific provenance) ════════════════════════════════ */
+
+.evidence-surface {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-6) var(--s-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-10);
+  box-sizing: border-box;
+}
+
+/* Glass panel over the solid ground (never glass-on-glass). */
+.evidence-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-6) var(--s-8);
+  border-radius: var(--r-xl);
+  background: var(--mat-regular);
+  backdrop-filter: var(--mat-blur-regular);
+  -webkit-backdrop-filter: var(--mat-blur-regular);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-lg), var(--shadow-inset-edge);
+}
+
+.evidence-panel__title {
+  font-size: var(--t-lg);
+  font-weight: 650;
+  letter-spacing: var(--track-title);
+  margin: 0;
+}
+
+.evidence-panel__body {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  line-height: var(--lead-body);
+}
+
+.evidence-panel__body--muted {
+  color: var(--rehab-ink-tertiary);
+  font-size: var(--t-xs);
+}
+
+/* Provenance legend. */
+.evidence-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.evidence-legend__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.evidence-legend__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.evidence-legend__desc {
+  flex: 1 1 20rem;
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  line-height: var(--lead-body);
+}
+
+/* Provenance chip — colored text on a light wash (never white on plain accent). */
+.prov-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px var(--s-3);
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 640;
+  letter-spacing: var(--track-caption);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.prov-chip--literature-supported {
+  background: var(--rehab-green-wash);
+  color: var(--rehab-green-deep);
+  border-color: rgba(10, 126, 58, 0.22);
+}
+
+.prov-chip--literature-adjacent {
+  background: var(--rehab-blue-wash);
+  color: var(--rehab-blue-deep);
+  border-color: var(--rehab-blue-edge);
+}
+
+.prov-chip--clinical-convention {
+  background: var(--rehab-ground-sunk);
+  color: var(--rehab-ink-secondary);
+  border-color: var(--mat-hairline-strong);
+}
+
+.prov-chip--judgment-call {
+  background: var(--rehab-orange-wash);
+  color: var(--rehab-orange-on-wash);
+  border-color: rgba(216, 116, 0, 0.24);
+}
+
+.prov-chip--placeholder {
+  background: var(--rehab-red-wash);
+  color: var(--rehab-red-deep);
+  border-color: rgba(192, 29, 39, 0.22);
+}
+
+/* Claim clusters. */
+.evidence-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.evidence-claim-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Glass claim card over the solid ground. */
+.evidence-claim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-6);
+  border-radius: var(--r-lg);
+  background: var(--mat-thin);
+  backdrop-filter: var(--mat-blur-thin);
+  -webkit-backdrop-filter: var(--mat-blur-thin);
+  border: 1px solid var(--mat-hairline);
+  box-shadow: var(--shadow-md), var(--shadow-inset-edge);
+}
+
+.evidence-claim__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.evidence-claim__title {
+  font-size: var(--t-md);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.evidence-claim__value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: baseline;
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--rehab-ink);
+  font-weight: 560;
+}
+
+.evidence-claim__value-label {
+  font-size: var(--t-xs);
+  font-weight: 640;
+  color: var(--rehab-ink-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--track-caption);
+}
+
+.evidence-claim__summary {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--rehab-ink-secondary);
+  line-height: var(--lead-body);
+}
+
+.evidence-claim__cites {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-3) 0 0;
+  border-top: 1px solid var(--mat-hairline-strong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.evidence-cite {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evidence-cite__link {
+  font-size: var(--t-sm);
+  font-weight: 580;
+  color: var(--rehab-blue-deep);
+  text-decoration: none;
+}
+
+.evidence-cite__link:hover {
+  text-decoration: underline;
+}
+
+.evidence-cite__pop {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  line-height: var(--lead-body);
+}
+
+.evidence-footnote {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  line-height: var(--lead-body);
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .evidence-panel {
+    padding: var(--s-5) var(--s-5);
+  }
+  .evidence-claim {
+    padding: var(--s-4) var(--s-5);
+  }
+}

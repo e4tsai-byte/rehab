@@ -13,13 +13,15 @@ import type { CompletedSession, UserSettings } from './domain/rehabTypes'
 import type { RehabRoutine } from './domain/routineCatalog'
 import { RehabDashboard } from './surfaces/RehabDashboard'
 import { ExerciseLibrary } from './surfaces/ExerciseLibrary'
+import { EvidenceLibrary } from './surfaces/EvidenceLibrary'
 import { RehabTraining } from './surfaces/RehabTraining'
 import { SessionSummary } from './surfaces/SessionSummary'
 
-type ViewMode = 'dashboard' | 'exercises' | 'training' | 'summary'
+type HeaderTab = 'dashboard' | 'exercises' | 'evidence'
+type ViewMode = 'dashboard' | 'exercises' | 'evidence' | 'training' | 'summary'
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'exercises'>('dashboard')
+  const [activeTab, setActiveTab] = useState<HeaderTab>('dashboard')
   const [view, setView] = useState<ViewMode>('dashboard')
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>(EXERCISE_CATALOG[0]!.id)
   const [activeRoutine, setActiveRoutine] = useState<RehabRoutine | null>(null)
@@ -117,6 +119,9 @@ export function App() {
           onStartRoutine={handleStartRoutine}
         />
       )}
+
+      {/* Surface: Scientific Evidence & provenance */}
+      {view === 'evidence' && <EvidenceLibrary />}
 
       {/* Surface: Live Coaching */}
       {view === 'training' && (

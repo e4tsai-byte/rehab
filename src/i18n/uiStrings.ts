@@ -404,6 +404,26 @@ const zh = {
   'road.metricAngle': '平均抬起高度',
   'road.progressLabel': '第 2 階段處方目標 (20 組)',
   'road.clinicalLabel': '臨床評估準則：',
+
+  // ── Evidence surface ────────────────────────────────────────────────
+  'nav.evidence': '科學實證',
+  'evidence.tag': '臨床實證與資料來源',
+  'evidence.heroTitle': '科學實證依據',
+  'evidence.heroSub':
+    '本頁逐項說明 App 內每個角度、秒數與次數的來源與可信度，並附上查證過的文獻連結。目的在於透明，而非提供醫療建議。',
+  'evidence.approachTitle': '我們如何處理數字',
+  'evidence.approachBoundary':
+    'Rehabibi 是動作教練，不是診斷或醫療器材。它為臨床醫師已開立的動作提供姿勢回饋與依從性追蹤，不做診斷、不評估癒合、不提供預後。頁面中的每個數值都是安全的「預設值與範圍」，實際角度、次數與頻率仍以臨床醫師處方為準。',
+  'evidence.approachRule':
+    '本產品的原則：沒有一個數字是無來源的，也沒有一個來源是錯置的。凡找不到相符族群文獻的，一律誠實標為「臨床慣例」「合理判斷」或「暫定值」，絕不勉強引用。許多數值屬於此類——如實說明本身就是目的。',
+  'evidence.approachPopulation':
+    '設計對象：於家中自主復健、肩關節術後（旋轉肌袖修補、肩峰下減壓、盂唇修補）或五十肩、慢性肩痛的成人。每筆文獻皆以此族群檢視，族群差異會標示於同一段說明中。',
+  'evidence.legendTitle': '可信度標記',
+  'evidence.legendSub': '每個數值都會標上以下其中一種標記，說明它的證據強度。',
+  'evidence.appValue': 'App 目前數值',
+  'evidence.population': '研究族群',
+  'evidence.sourceNote':
+    '完整的決策與查證紀錄見版本庫中的 docs/decisions/rehabibi-clinical-evidence.md。所有引文皆核對原始摘要或全文，未查證者一律標為慣例／判斷／暫定，不予引用。外部連結僅於點擊時開啟，App 在離線狀態下仍可完整使用。',
 } as const
 
 export type StringKey = keyof typeof zh
@@ -807,6 +827,26 @@ const en: Record<StringKey, string> = {
   'road.metricAngle': 'Avg. elevation',
   'road.progressLabel': 'Stage 2 target (20 sets)',
   'road.clinicalLabel': 'Clinical criteria: ',
+
+  // ── Evidence surface ────────────────────────────────────────────────
+  'nav.evidence': 'Evidence',
+  'evidence.tag': 'Clinical evidence & sources',
+  'evidence.heroTitle': 'Scientific Evidence',
+  'evidence.heroSub':
+    'This page states, for every angle, duration, and count in the app, where the number comes from and how well it is supported — with links to the sources checked. It is here for transparency, not to give medical advice.',
+  'evidence.approachTitle': 'How we treat the numbers',
+  'evidence.approachBoundary':
+    'Rehabibi is a form coach, not a diagnostic or medical device. It gives posture feedback and adherence tracking for movements a clinician has already prescribed — it does not diagnose, grade healing, or offer a prognosis. Every value here is a safe default and bound; your actual angles, reps, and frequency follow your clinician\'s prescription.',
+  'evidence.approachRule':
+    'The standing rule: no number in this product is unattributed, and no attribution is wrong. Where no matching-population source exists, the value is labeled honestly — clinical convention, judgment call, or placeholder — never given a stretched citation. Many values land there, and saying so plainly is the point.',
+  'evidence.approachPopulation':
+    'Designed for: adults rehabilitating a shoulder at home after surgery (rotator-cuff repair, subacromial decompression, labral repair), or managing adhesive capsulitis or chronic shoulder pain. Every source is read against this population, and any mismatch is stated in the same summary.',
+  'evidence.legendTitle': 'Confidence labels',
+  'evidence.legendSub': 'Every value carries one of these labels, describing how strong its evidence is.',
+  'evidence.appValue': 'Current app value',
+  'evidence.population': 'Study population',
+  'evidence.sourceNote':
+    'The full decision-and-verification record is in the repository at docs/decisions/rehabibi-clinical-evidence.md. Every quote was checked against the original abstract or full text; anything unverified is labeled convention / judgment / placeholder rather than cited. External links open only when clicked — the app remains fully functional offline.',
 }
 
 export const UI_STRINGS: Record<Locale, Record<StringKey, string>> = { zh, en }

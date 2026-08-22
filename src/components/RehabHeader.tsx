@@ -1,9 +1,11 @@
 import { useT } from '../i18n/LocaleContext'
 import type { Locale } from '../i18n/locale'
 
+type HeaderTab = 'dashboard' | 'exercises' | 'evidence'
+
 interface RehabHeaderProps {
-  activeTab: 'dashboard' | 'exercises'
-  onSelectTab: (tab: 'dashboard' | 'exercises') => void
+  activeTab: HeaderTab
+  onSelectTab: (tab: HeaderTab) => void
   streak: number
   onOpenSettings: () => void
   onGoHome?: () => void
@@ -56,6 +58,16 @@ export function RehabHeader({
         >
           <span aria-hidden="true">🎥</span>
           <span>{t('nav.exercises')}</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeTab === 'evidence' ? 'nav-tab--active' : ''}`}
+          onClick={() => onSelectTab('evidence')}
+          aria-selected={activeTab === 'evidence'}
+          role="tab"
+        >
+          <span aria-hidden="true">📚</span>
+          <span>{t('nav.evidence')}</span>
         </button>
       </nav>
 

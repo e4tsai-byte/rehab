@@ -143,7 +143,7 @@ than a snapshot, and its absence is why the previous version drifted so far.
 rehab/
 ├── index.html                     # Vite entry. Dark color-scheme; inline favicon.
 ├── AGENTS.md                      # The 12-agent roster and its boundaries
-├── docs/decisions/                # Archived decision records (see §7)
+├── docs/decisions/                # Decision records: rehabibi-clinical-evidence.md (live, §4) + archived velocity-loss (§7)
 ├── src/
 │   ├── main.tsx                   # React root, wrapped in LocaleProvider. Owns stylesheet load order (§5).
 │   ├── App.tsx                    # State router: Dashboard → Training → Summary
@@ -156,6 +156,7 @@ rehab/
 │   │   ├── rehabTypes.ts          # Phases, FormFlags, RepRecords, UserSettings
 │   │   ├── recoveryMilestones.ts  # Recovery phases (+localizePhase), calendar, recent stats
 │   │   ├── exerciseCatalog.ts     # Exercise library, bilingual copy + localizeExercise (see §4)
+│   │   ├── evidenceCatalog.ts     # Provenance data for the Evidence surface (mirrors docs/decisions/rehabibi-clinical-evidence.md). Read-only; holds NO prescription value.
 │   │   ├── routineCatalog.ts      # Multi-exercise menus, bilingual copy + localizeRoutine
 │   │   └── assets.ts              # assetUrl() — base-aware public asset paths (GitHub Pages subpath)
 │   ├── pose/
@@ -187,6 +188,7 @@ rehab/
 │   ├── surfaces/
 │   │   ├── RehabDashboard.tsx     # Overview, recovery roadmap, calendar, stats, history
 │   │   ├── ExerciseLibrary.tsx    # YouTube-style visual exercise & routine library
+│   │   ├── EvidenceLibrary.tsx    # Read-only scientific-evidence & provenance surface (form-coach boundary, invariant 7)
 │   │   ├── RehabTraining.tsx      # Fullscreen live coaching surface
 │   │   └── SessionSummary.tsx     # Post-session form quality scorecard
 │   └── styles/                    # See §5 — load order is significant
