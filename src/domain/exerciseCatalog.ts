@@ -235,6 +235,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: '水平停頓未滿 5 秒即掉落',
       PACING_TOO_FAST: '動作平舉/下放速度過快',
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable to this movement',
@@ -246,6 +249,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: 'Dropped before the full 5-second hold',
       PACING_TOO_FAST: 'Raise/lower tempo too fast',
       PACING_TOO_SLOW: 'Raise/lower tempo too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/thumb-standing-flexion.jpg',
     diagramUrl: 'images/standing-arm-flexion-guide.jpg',
@@ -293,6 +299,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: '水平停頓未滿 5 秒即掉落',
       PACING_TOO_FAST: '動作平舉/下放速度過快',
       PACING_TOO_SLOW: '動作平舉/下放速度過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable to this movement',
@@ -304,11 +313,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: 'Dropped before the full 5-second hold',
       PACING_TOO_FAST: 'Raise/lower tempo too fast',
       PACING_TOO_SLOW: 'Raise/lower tempo too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/thumb-seated-flexion.jpg',
     diagramUrl: 'images/seated-desk-flexion-guide.jpg',
     status: 'available',
   },
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'right-arm-lateral-abduction-standing',
     name: 'Standing Lateral Abduction (90°)',
@@ -348,6 +364,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: '未滿停頓秒數',
       PACING_TOO_FAST: '速度過快',
       PACING_TOO_SLOW: '速度過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable to this movement',
@@ -359,11 +378,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: 'Hold time not met',
       PACING_TOO_FAST: 'Tempo too fast',
       PACING_TOO_SLOW: 'Tempo too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     diagramUrl: 'images/lateral-abduction-guide.jpg',
     status: 'upcoming',
   },
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'right-arm-scaption-standing',
     name: 'Scaption (Scapular Plane Elevation 30°)',
@@ -403,6 +429,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: '停頓不足',
       PACING_TOO_FAST: '節奏過快',
       PACING_TOO_SLOW: '節奏過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable to this movement',
@@ -414,11 +443,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: 'Hold too short',
       PACING_TOO_FAST: 'Tempo too fast',
       PACING_TOO_SLOW: 'Tempo too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     diagramUrl: 'images/scaption-guide.jpg',
     status: 'upcoming',
   },
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'right-arm-external-rotation-supported',
     name: 'Supported External Rotation',
@@ -458,6 +494,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: '停頓不足',
       PACING_TOO_FAST: '速度過快',
       PACING_TOO_SLOW: '速度過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable to this movement',
@@ -469,6 +508,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       INCOMPLETE_HOLD: 'Hold too short',
       PACING_TOO_FAST: 'Tempo too fast',
       PACING_TOO_SLOW: 'Tempo too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     diagramUrl: 'images/external-rotation-guide.jpg',
@@ -523,6 +565,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: '此動作為等長支撐，無節奏節拍',
       PACING_TOO_FAST: '此動作為等長支撐，無節奏節拍',
       PACING_TOO_SLOW: '此動作為等長支撐，無節奏節拍',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION:
@@ -535,12 +580,19 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: 'This is an isometric hold; there is no tempo to pace',
       PACING_TOO_FAST: 'This is an isometric hold; there is no tempo to pace',
       PACING_TOO_SLOW: 'This is an isometric hold; there is no tempo to pace',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/thumb-side-lying-hold.jpg',
     diagramUrl: 'images/side-lying-abduction-guide.jpg',
     status: 'available',
   },
   // ── Knee Region Exercises ──────────────────────────────────────────
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'knee-quad-sets-seated',
     name: 'Seated Isometric Quad Sets',
@@ -564,30 +616,40 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     tipsZh: ['腳趾朝上勾起', '感受股內側肌 (VMO) 堅硬緊繃', '保持平穩呼吸勿憋氣'],
     tipsEn: ['Keep toes pointed up', 'Focus on tightening the vastus medialis', 'Maintain smooth breathing'],
     commonErrorsZh: {
-      OVER_ELEVATION: '過度挺腰代償',
+      OVER_ELEVATION: '無關聯',
       SHOULDER_HIKE: '聳肩出力',
       TORSO_LEAN: '軀幹向後傾斜',
       ELBOW_BENT: '手部支撐借力',
       INCOMPLETE_HOLD: '未滿10秒即放鬆',
-      RUSHED_CONCENTRIC: '無節拍限制',
-      RUSHED_ECCENTRIC: '無節拍限制',
-      PACING_TOO_FAST: '無節拍限制',
-      PACING_TOO_SLOW: '無節拍限制',
+      RUSHED_CONCENTRIC: '此動作為等長支撐，無節奏節拍',
+      RUSHED_ECCENTRIC: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_FAST: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_SLOW: '此動作為等長支撐，無節奏節拍',
+      LUMBAR_ARCH: '過度挺腰代償',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
-      OVER_ELEVATION: 'Excessive lumbar arching',
+      OVER_ELEVATION: 'Not applicable',
       SHOULDER_HIKE: 'Shoulders tense up',
       TORSO_LEAN: 'Torso leans backward',
       ELBOW_BENT: 'Arm pushing excessively',
       INCOMPLETE_HOLD: 'Hold released too early',
-      RUSHED_CONCENTRIC: 'Not applicable',
-      RUSHED_ECCENTRIC: 'Not applicable',
-      PACING_TOO_FAST: 'Not applicable',
-      PACING_TOO_SLOW: 'Not applicable',
+      RUSHED_CONCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      RUSHED_ECCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_FAST: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_SLOW: 'This is an isometric hold; there is no tempo to pace',
+      LUMBAR_ARCH: 'Excessive lumbar arching',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',
   },
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'knee-terminal-extension-standing',
     name: 'Terminal Knee Extension (TKE)',
@@ -611,7 +673,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     tipsZh: ['腳跟完全著地', '膝關節對齊第二腳趾方向', '骨盆保持水平中立'],
     tipsEn: ['Keep heel flat on ground', 'Knee tracks over second toe', 'Keep pelvis level and neutral'],
     commonErrorsZh: {
-      OVER_ELEVATION: '膝過伸 (Hyperextension)',
+      OVER_ELEVATION: '無關聯',
       SHOULDER_HIKE: '上半身聳肩',
       TORSO_LEAN: '骨盆前傾或側移',
       ELBOW_BENT: '無關聯',
@@ -620,9 +682,12 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: '屈膝回彈過快',
       PACING_TOO_FAST: '節奏過快',
       PACING_TOO_SLOW: '節奏過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '膝過伸 (Hyperextension)',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
-      OVER_ELEVATION: 'Knee hyperextension',
+      OVER_ELEVATION: 'Not applicable',
       SHOULDER_HIKE: 'Upper body tenses',
       TORSO_LEAN: 'Pelvic shift',
       ELBOW_BENT: 'Not applicable',
@@ -631,11 +696,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: 'Flexing too fast',
       PACING_TOO_FAST: 'Pacing too fast',
       PACING_TOO_SLOW: 'Pacing too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Knee hyperextension',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',
   },
   // ── Hip Region Exercises ───────────────────────────────────────────
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'hip-clamshell-side-lying',
     name: 'Side-Lying Clamshell Activation',
@@ -659,7 +731,7 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
     tipsZh: ['骨盆保持垂直地面，勿向後翻倒', '專注臀部外側酸脹感', '腳跟持續輕碰'],
     tipsEn: ['Keep pelvis perpendicular to floor; do not roll back', 'Focus on the lateral glute burn', 'Keep heels glued together'],
     commonErrorsZh: {
-      OVER_ELEVATION: '過度外展導致骨盆翻轉',
+      OVER_ELEVATION: '無關聯',
       SHOULDER_HIKE: '無關聯',
       TORSO_LEAN: '骨盆後翻代償',
       ELBOW_BENT: '無關聯',
@@ -668,9 +740,12 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: '闔腿過快',
       PACING_TOO_FAST: '節奏過快',
       PACING_TOO_SLOW: '節奏過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '過度外展導致骨盆翻轉',
     },
     commonErrorsEn: {
-      OVER_ELEVATION: 'Excessive opening causing pelvic roll',
+      OVER_ELEVATION: 'Not applicable',
       SHOULDER_HIKE: 'Not applicable',
       TORSO_LEAN: 'Pelvic roll backward',
       ELBOW_BENT: 'Not applicable',
@@ -679,11 +754,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: 'Closing too quickly',
       PACING_TOO_FAST: 'Pacing too fast',
       PACING_TOO_SLOW: 'Pacing too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Excessive opening causing pelvic roll',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',
   },
   // ── Elbow & Forearm Exercises ──────────────────────────────────────
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'elbow-wrist-eccentric-extension',
     name: 'Eccentric Wrist Extension (Tennis Elbow)',
@@ -716,6 +798,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: '下放未達5秒（下墜）',
       PACING_TOO_FAST: '離心下放過快',
       PACING_TOO_SLOW: '節奏過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Excessive wrist extension',
@@ -727,11 +812,18 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: 'Dropping down under 5 seconds',
       PACING_TOO_FAST: 'Eccentric phase too fast',
       PACING_TOO_SLOW: 'Pacing too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',
   },
   // ── Spine & Core Exercises ─────────────────────────────────────────
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'spine-cervical-chin-tuck',
     name: 'Cervical Retraction Chin Tuck',
@@ -760,10 +852,13 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       TORSO_LEAN: '駝背或後仰',
       ELBOW_BENT: '無關聯',
       INCOMPLETE_HOLD: '未滿5秒即鬆開',
-      RUSHED_CONCENTRIC: '無節拍限制',
-      RUSHED_ECCENTRIC: '無節拍限制',
-      PACING_TOO_FAST: '無節拍限制',
-      PACING_TOO_SLOW: '無節拍限制',
+      RUSHED_CONCENTRIC: '此動作為等長支撐，無節奏節拍',
+      RUSHED_ECCENTRIC: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_FAST: '此動作為等長支撐，無節奏節拍',
+      PACING_TOO_SLOW: '此動作為等長支撐，無節奏節拍',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Tilting head upward',
@@ -771,15 +866,22 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       TORSO_LEAN: 'Slouching or leaning back',
       ELBOW_BENT: 'Not applicable',
       INCOMPLETE_HOLD: 'Hold released too early',
-      RUSHED_CONCENTRIC: 'Not applicable',
-      RUSHED_ECCENTRIC: 'Not applicable',
-      PACING_TOO_FAST: 'Not applicable',
-      PACING_TOO_SLOW: 'Not applicable',
+      RUSHED_CONCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      RUSHED_ECCENTRIC: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_FAST: 'This is an isometric hold; there is no tempo to pace',
+      PACING_TOO_SLOW: 'This is an isometric hold; there is no tempo to pace',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',
   },
   // ── Ankle & Lower Leg Exercises ────────────────────────────────────
+  // PLACEHOLDER — architectural roadmap row only. Numeric values (angle/hold/cadence)
+  // and copy are illustrative, not clinically authored. Do not treat as validated
+  // until this exercise goes through the physiatrist → kinematicist →
+  // measurement-engineer → qa-engineer chain (AGENTS.md).
   {
     id: 'ankle-dorsiflexion-seated',
     name: 'Seated Active Ankle Dorsiflexion',
@@ -812,6 +914,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: '腳掌拍地（無離心控制）',
       PACING_TOO_FAST: '速度過快',
       PACING_TOO_SLOW: '速度過慢',
+      LUMBAR_ARCH: '無關聯',
+      KNEE_HYPEREXTENSION: '無關聯',
+      PELVIC_ROLL: '無關聯',
     },
     commonErrorsEn: {
       OVER_ELEVATION: 'Not applicable',
@@ -823,6 +928,9 @@ export const EXERCISE_CATALOG: ExerciseDefinition[] = [
       RUSHED_ECCENTRIC: 'Slapping foot down',
       PACING_TOO_FAST: 'Pacing too fast',
       PACING_TOO_SLOW: 'Pacing too slow',
+      LUMBAR_ARCH: 'Not applicable',
+      KNEE_HYPEREXTENSION: 'Not applicable',
+      PELVIC_ROLL: 'Not applicable',
     },
     thumbnailUrl: 'images/exercises/wip-exercise.jpg',
     status: 'upcoming',

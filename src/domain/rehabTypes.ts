@@ -16,6 +16,28 @@ export type FormFlag =
   // (the target is a CEILING, not a floor — §9 D1). Emitted only by the
   // side-lying hold tracker; the paced flexion tracker never raises it.
   | 'OVER_ELEVATION'
+  // Lumbar spine loses its neutral position and arches off the support surface
+  // during a lower-limb isometric/loading task (e.g. quad sets) — the low back,
+  // not the target joint, is doing the work. Distinct from OVER_ELEVATION
+  // (a raised-limb fault): this is a trunk-compensation fault at the spine.
+  // Physiatrist-authored for the knee region 2026-08-26; not yet given a
+  // kinematicist geometric definition — see PLACEHOLDER comments in
+  // exerciseCatalog.ts for the row this was defined against.
+  | 'LUMBAR_ARCH'
+  // Knee travels past anatomical zero (full extension) into hyperextension
+  // during a terminal-extension task — a distinct joint-angle fault from
+  // OVER_ELEVATION's raised-limb meaning; on the knee, "too far" means the
+  // joint locks back past neutral, not that a limb rose too high. Physiatrist-
+  // authored for the knee region 2026-08-26; not yet given a kinematicist
+  // geometric definition — see PLACEHOLDER comments in exerciseCatalog.ts.
+  | 'KNEE_HYPEREXTENSION'
+  // Pelvis rotates/rolls out of its stacked side-lying alignment when a hip-
+  // abduction task (e.g. clamshell) is driven past its safe range — a pelvic-
+  // girdle compensation, not a raised-limb fault like OVER_ELEVATION.
+  // Physiatrist-authored for the hip region 2026-08-26; not yet given a
+  // kinematicist geometric definition — see PLACEHOLDER comments in
+  // exerciseCatalog.ts.
+  | 'PELVIC_ROLL'
 
 export type PaceStatus = 'ON_TRACK' | 'TOO_FAST' | 'TOO_SLOW' | 'IDLE'
 

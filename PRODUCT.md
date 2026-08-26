@@ -2,9 +2,9 @@
 
 ## 1. Vision & Mission
 
-**Rehabibi** is an intelligent, accessible, privacy-preserving computer-vision physical rehabilitation coach for full-body musculoskeletal recovery.
+**Rehabibi** is a privacy-preserving computer-vision physical rehabilitation coach for full-body musculoskeletal recovery — every angle and duration it reports comes from transparent vector geometry, computed entirely on-device.
 
-Born out of personal post-surgical rotator-cuff recovery, Rehabibi has expanded into a full-body rehabilitation architecture covering 6 major anatomical regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Today, three foundational right-arm shoulder movements are clinically active (`EX-0`, `EX-1`, `EX-2`), integrated with an interactive body anatomy map, customizable prescription planner, and comprehensive exercise library. The full-body roadmap in §5 charts the sequence for activating remaining regional kinematic trackers. 🗓️
+Born out of personal post-surgical rotator-cuff recovery, Rehabibi has expanded into a full-body rehabilitation architecture covering 6 major anatomical regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Today, three foundational right-arm shoulder movements are clinically active (`EX-0`, `EX-1`, `EX-2`), integrated with an interactive body anatomy map, customizable prescription planner, and exercise library. The full-body roadmap in §5 charts the sequence for activating remaining regional kinematic trackers.
 
 ---
 
@@ -41,7 +41,7 @@ Nothing in that chain leaves the device.
 
 ### Primary: The Recovering Patient
 
-* **Context** — recovering from orthopedic surgery or managing musculoskeletal conditions (rotator cuff repair, knee rehabilitation, spine posture, hip/ankle mobility).
+* **Context** — recovering from orthopedic surgery or managing a musculoskeletal condition. Shoulder rehab (rotator cuff repair) is what the tracker clinically supports today; knee, hip, elbow, spine, and ankle recovery are the architecture's near-term regions, not yet trackable. [PLANNED]
 * **Prescription** — daily sets of specific movements, organized into customizable multi-track prescriptions.
 * **Needs**
   * Clear, non-intimidating visual feedback showing actual joint angle
@@ -67,24 +67,26 @@ Do not design for the clinician at the patient's expense. An interface optimized
 
 | Code | Name | Region | Primary Target | Framing View | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **EX-0** | Side-Lying Right Arm Low Abduction Hold (10°–15°) | Shoulder | Supraspinatus, low-angle isometric activation | Side-lying, floor-level camera | ✅ Live |
-| **EX-1** | Standing Right Arm Forward Flexion | Shoulder | Anterior deltoid, supraspinatus, serratus anterior | Full body, frontal | ✅ Live |
-| **EX-2** | Seated Desk Right Arm Forward Flexion | Shoulder | Anterior deltoid, shoulder mobility | Upper body, frontal | ✅ Live |
-| **EX-3** | Standing Lateral Abduction (90°) | Shoulder | Middle deltoid, supraspinatus | Full body, frontal | 🗓️ Planned |
-| **EX-4** | Scaption (30° scapular plane elevation) | Shoulder | Rotator cuff, supraspinatus isolation | Frontal / 45° oblique | 🗓️ Planned |
-| **EX-5** | Supported External Rotation (0° abduction) | Shoulder | Infraspinatus, teres minor | Frontal / desk | 🗓️ Planned |
-| **KN-1** | Seated Isometric Quad Sets | Knee | Quadriceps neuromuscular activation | Seated, sagittal side view | 🗓️ Planned |
-| **KN-2** | Terminal Knee Extension (TKE) | Knee | Vastus medialis (VMO), terminal lockout | Standing, sagittal side view | 🗓️ Planned |
-| **HP-1** | Side-Lying Clamshell Activation | Hip | Gluteus medius, pelvic stability | Side-lying, floor-level camera | 🗓️ Planned |
-| **EL-1** | Eccentric Wrist Extension | Elbow | Forearm extensors, tendon remodeling | Seated desk, close-up | 🗓️ Planned |
-| **SP-1** | Cervical Retraction Chin Tuck | Spine | Deep neck flexors, axial alignment | Seated, sagittal eye-level | 🗓️ Planned |
-| **AK-1** | Seated Active Ankle Dorsiflexion | Ankle | Tibialis anterior, foot clearance | Seated, sagittal ankle-level | 🗓️ Planned |
+| **EX-0** | Side-Lying Right Arm Low Abduction Hold (10°–15°) | Shoulder | Supraspinatus, low-angle isometric activation | Side-lying, floor-level camera | **Live** |
+| **EX-1** | Standing Right Arm Forward Flexion | Shoulder | Anterior deltoid, supraspinatus, serratus anterior | Full body, frontal | **Live** |
+| **EX-2** | Seated Desk Right Arm Forward Flexion | Shoulder | Anterior deltoid, shoulder mobility | Upper body, frontal | **Live** |
+| **EX-3** | Standing Lateral Abduction (90°) | Shoulder | Middle deltoid, supraspinatus | Full body, frontal | **Planned** |
+| **EX-4** | Scaption (30° scapular plane elevation) | Shoulder | Rotator cuff, supraspinatus isolation | Frontal / 45° oblique | **Planned** |
+| **EX-5** | Supported External Rotation (0° abduction) | Shoulder | Infraspinatus, teres minor | Frontal / desk | **Planned** |
+| **KN-1** | Seated Isometric Quad Sets | Knee | Quadriceps neuromuscular activation | Seated, sagittal side view | **Planned** |
+| **KN-2** | Terminal Knee Extension (TKE) | Knee | Vastus medialis (VMO), terminal lockout | Standing, sagittal side view | **Planned** |
+| **HP-1** | Side-Lying Clamshell Activation | Hip | Gluteus medius, pelvic stability | Side-lying, floor-level camera | **Planned** |
+| **EL-1** | Eccentric Wrist Extension | Elbow | Forearm extensors, tendon remodeling | Seated desk, close-up | **Planned** |
+| **SP-1** | Cervical Retraction Chin Tuck | Spine | Deep neck flexors, axial alignment | Seated, sagittal eye-level | **Planned** |
+| **AK-1** | Seated Active Ankle Dorsiflexion | Ankle | Tibialis anterior, foot clearance | Seated, sagittal ankle-level | **Planned** |
 
 **Anatomy Explorer & Region Dashboards:** The dashboard provides an interactive human body anatomy selector across 6 major musculoskeletal regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Clicking any region opens a dedicated dashboard displaying targeted prescriptions, muscle groups, and roadmap movements.
 
 All live exercises are currently **right arm / right limb**. The engine reads right-side landmarks with transparent vector kinematics.
 
-A row moves from 🗓️ to ✅ only after the full chain in `AGENTS.md` completes: physiatrist defines it, kinematicist makes it measurable, measurement-engineer makes it stable, qa-engineer has fixtures for it. Nothing is announced before that.
+A row moves from **Planned** to **Live** only after the full chain in `AGENTS.md` completes: physiatrist defines it, kinematicist makes it measurable, measurement-engineer makes it stable, qa-engineer has fixtures for it. Nothing is announced before that.
+
+Every **Planned** row already carries fully-shaped numeric fields (`targetAngleDeg`, `holdDurationS`, cadences) and copy in `exerciseCatalog.ts` so the UI has something to render — but those numbers are illustrative placeholders, not clinically authored defaults. They are marked as such with a source comment above each row in the catalog and must not be read as validated until the chain above actually runs for that row.
 
 ---
 

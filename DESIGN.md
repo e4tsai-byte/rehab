@@ -237,9 +237,10 @@ countdown while holding, rest countdown while resting. Ring for the countdowns,
 bar for cadence.
 
 The pace verdict is **four characters at most** — 很好 / 快一點 / 慢一點 — each
-with its own glyph so colour is not the only differentiator. It replaced strings
-like 「⚠️ 速度過快（請放慢）」: nine characters, unreadable mid-rep by someone
-holding their arm up two metres from the screen.
+with its own glyph so colour is not the only differentiator. It replaced an
+emoji-prefixed string like 「速度過快（請放慢）」: nine characters including the
+leading emoji, unreadable mid-rep by someone holding their arm up two metres
+from the screen.
 
 ### 4.3 Skeleton overlay (`usePoseTracker.ts`)
 
@@ -254,6 +255,140 @@ rate — which grades a healing shoulder against perfection and hands the user a
 number to carry around. When a session recorded nothing, the hero is suppressed
 entirely: "0 / 0" is not information, and a zero at display scale reads as a
 verdict on a session the person may have stopped for a good reason.
+
+### 4.5 Anatomy Explorer (`BodyAnatomyDiagram.tsx`) — inline in the Dashboard, not a surface
+
+This is an interactive region selector embedded inside `RehabDashboard`, not a
+top-level surface — selecting a joint opens `RegionDetailModal` as a modal
+drill-down, not a navigation change (see `ux-designer`'s Flow section). It lives
+in the calm, seated, "nothing running" context that `RehabTraining`'s
+four-character constraint explicitly does not reach.
+
+**Interactive, not a static list, because the question it answers is spatial.**
+Choosing "which of six regions is mine" is faster by pointing at where it hurts
+on a body than by reading six proper nouns in a list. The posterior/anterior
+toggle exists for the same reason: rotator-cuff work reads clearer from behind,
+quad and hip-flexor work reads clearer from the front — the two views are not
+decorative, they answer different questions depending on which region a user is
+looking for.
+
+The SVG diagram and the companion `region-card` grid beside it are not
+redundant with each other. The diagram carries spatial orientation; the cards
+carry what the diagram cannot — exact prescribed/upcoming counts, keyboard
+focus, and screen-reader labels. Clicking either the joint or its card opens the
+same modal, so the diagram is a second way to reach the same destination, not a
+gate in front of it.
+
+Five of six regions render with an **upcoming**, not active, status pill and a
+lighter treatment. This is an honest-roadmap decision: clinically-authored
+content is shoulder-only today (`physiatrist`'s stated scope), so the other
+five joints stay visible with their own two-letter code badge (`[SP]`, `[EL]`,
+`[HP]`, `[KN]`, `[AK]`) rather than being hidden — the product doesn't overstate
+its clinical coverage, but doesn't erase the six-region architecture it was
+built for either. `anatomy-visual-card` sits at `--r-2xl` (Outer Container,
+§8), the `region-card` grid items nested inside it step down to `--r-xl`
+(Component Tile) — the tier ordering §8 describes, not a coincidence of
+naming.
+
+### 4.6 Region Detail Modal (`RegionDetailModal.tsx`) — a region's own dashboard
+
+A modal launched from the Anatomy Explorer (`selectedRegion` is local
+`RehabDashboard` state, never an `App.tsx` view), not a route — closing it
+returns to the same dashboard scroll position rather than navigating back.
+
+It separates **Available** (prescribed, quick-startable today) from
+**Upcoming** for the same honesty reason as the region status pill one level up:
+an exercise the user can start this second must not sit in the same grid as a
+placeholder for a future release, or "quick start" stops being a reliable
+promise. A third section, **Routines**, renders only when the region has any,
+and sits between the two — a routine is a bigger commitment than one exercise,
+so it belongs after "can I do one thing right now" and before "here's what's
+coming."
+
+The available-exercise and routine cards inside this modal render at `--r-lg`
+(§8's Interactive Control tier), one step down from the `--r-xl` region cards
+that led here — inside the modal these cards are the clickable choice list, and
+the modal sheet itself is already the component tile, so the cards it contains
+sit a tier below it, not level with it.
+
+The footer's "Explore All →" hands off to `ExerciseLibrary` rather than
+reimplementing its filtering inside the modal. This region view is a curated
+lens on one catalog, not a second data source (Invariant 5, One Product) — the
+full library is one click further for anyone who wants to browse past the
+region they arrived from.
+
+### 4.7 Prescription Planner (`PrescriptionPlanner.tsx`) — the third top-level surface
+
+A peer to Dashboard and Exercise Library, not a step inside the training flow —
+`App.tsx`'s `activeTab` carries `'prescriptions'` alongside `'dashboard'` and
+`'exercises'` as sibling values. Reached by the header tab or the dashboard's
+"today's prescription" action banner; either way it lands on the same surface,
+never a variant of it.
+
+**Three literal tracks — Active, Queued, Completed — rather than one sortable
+list**, because a prescription plan is staged over time by design: shoulder
+work now, hip work deferred six weeks out. Rendering that as three physically
+separate tracks makes the stage spatial information the user absorbs by
+position, rather than a status column they have to read per card. `rx-track`
+renders at `--r-2xl`, the same Outer Container tier as the hero cards and the
+anatomy explorer (§8) — three peer containers of equal visual weight, not a
+list with a taller header.
+
+The card density inside each track — thumbnail, week-progress bar, a
+clinician's note rendered as a blockquote, spec tags — is licensed by the same
+calm, seated context as `SessionSummary` and the Region Detail Modal
+(`ux-designer`): nothing on this surface is ever read mid-rep.
+
+The metric strip at the top (Active / Queued / Days / Completed as four bare
+numerals) borrows the One-Number Rule's instinct for legibility but repurposes
+it for orientation rather than live feedback — four counts read at a glance
+give the shape of the whole plan before the user reads a single card.
+
+### 4.8 Prescription Timeline Visualizer (`PrescriptionTimelineVisualizer.tsx`) — sequential, not flat
+
+A week-indexed swimlane, not a flat list, because the question this surface
+answers is inherently sequential: not "what am I doing" but "what am I doing,
+for how long, and what starts after it." A flat list only answers the first
+question; a timeline is what it takes to answer the second, and that question
+only exists once a plan has queued stages waiting behind the active ones.
+
+Each row's two-letter region code (`SH` / `KN` / `HP` / `EL` / `SP` / `AK`)
+reuses the exact abbreviation the Anatomy Explorer's joint tags already carry
+(`[SH] Shoulder`, etc.) — one visual vocabulary spans both surfaces, so a code
+a user learned by pointing at a joint on the Dashboard is legible again here
+without re-teaching.
+
+A single vertical "current week" marker crosses every lane, rather than a
+highlighted cell per row — "where am I now" stays one landmark to find once,
+not N cells to individually scan across every track.
+
+Rendered as its own `--r-2xl` outer container, sitting above the three tracks
+it summarizes, ahead of them in reading order — its visual weight matches its
+role as the plan's single overview, meant to be read first.
+
+### 4.9 Prescription Editor Modal (`PrescriptionEditorModal.tsx`) — chips, not sliders
+
+Duration (1–12 weeks), daily sets (1–4), and weekly days (3–7) are each a row
+of discrete chip buttons (`--r-full`) rather than a number input or a slider.
+The valid range in each case is small and clinically bounded — nobody needs a
+12-week exercise to run for 47 — so presenting the actual option set removes an
+entire class of invalid input at entry time rather than validating it after
+the fact.
+
+The exercise picker is a native `<select>` grouped by region code, not a card
+grid. This is the one moment the editor needs to scan a long list quickly while
+filling in a form — exactly what a native select is built for. The richer card
+treatment stays on the browsing surfaces (the Library, the Region modal); a
+data-entry form is not one of them.
+
+The Active/Queued schedule-mode toggle is two equal buttons, not a checkbox,
+because which track a new prescription lands in is the one decision this form
+makes about sequencing — it earns the same visual weight as picking the
+exercise itself, not a secondary checkbox beneath it.
+
+The sheet renders at `--r-2xl`, one tier above the default `.sheet`'s `--r-xl`
+(§8) — its wider two-column parameter grid reads as a small outer container of
+its own, not a single-column dialog wearing extra width.
 
 ---
 
@@ -311,13 +446,31 @@ rendered as a half-width sliver on a phone.
 
 ## 8. Container & Card Hierarchy (Apple Materials)
 
-Outer containers and inner tiles follow a strict 2-tier corner radius and spacing discipline:
+Outer containers, inner tiles, and interactive controls step down through three
+corner-radius tiers, each roughly three-quarters the radius of the one above it —
+concentric clearance, not an arbitrary scale.
 
 | Tier | Radius Token | Value | Typical Uses | Padding |
 |---|---|---|---|---|
 | **Outer Container** | `--r-2xl` | 36px | Action banners, hero cards, prescription tracks, activity calendars, anatomy explorer, exercise cards | `var(--s-6)` – `var(--s-7)` (24–28px) |
 | **Component Tile** | `--r-xl` | 28px | Nested stat cards, calendar tiles, region cards, video cards, note blocks | `var(--s-4)` – `var(--s-5)` (16–20px) |
-| **Interactive Control** | `--r-lg` / `--r-pill` | 18px / 9999px | Buttons, badges, spec pills, segment tabs, dialog inputs | `var(--s-2)` – `var(--s-4)` |
+| **Interactive Control** | `--r-lg` / `--r-full` | 20px / 9999px | `.glass` cards, dialog inputs, spec pills, region exercise/routine cards inside `RegionDetailModal` (`--r-lg`); buttons, segmented controls, streak/track badges, progress-bar fills (`--r-full`) | `var(--s-2)` – `var(--s-4)` |
+
+Verified against `src/styles/tokens.css`, not assumed: `--r-lg` is **20px**, not
+18px — a mismatch a previous draft of this table carried, and `--r-pill` was
+never a real token; the pill radius is `--r-full` (9999px). Two components with
+the word "pill" in their name aren't proof of which token they use — `.spec-pill`
+in fact renders at `--r-lg` (a rounded rectangle, not a true pill), while
+`.segmented` and `.btn` render at `--r-full`. Read the CSS, don't infer from the
+class name.
+
+Below these three sits a fourth, **micro** tier — `--r-xs` (6px), `--r-sm`
+(10px), `--r-md` (14px) — for elements too small to carry a 20px corner without
+looking like a lozenge rather than a rounded rectangle: flag tags, muscle chips,
+badges, and the nav logo mark. It's real and in active use (`.flag-tag`,
+`.muscle-chip`, `.spec-tag`, `.region-card__code-badge`) but doesn't get its own
+row here because none of it is a container — it's inline micro-typography
+treatment, not part of the card-nesting hierarchy this section documents.
 
 This hierarchy ensures that nested cards maintain concentric visual clearance and generous breathing room on high-density displays.
 

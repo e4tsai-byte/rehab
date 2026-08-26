@@ -56,14 +56,29 @@ deletion required.
    over glass, against 4.50 on white). Any change to `tokens.css` re-runs
    `tools/audit.mjs` before it ships.
 
-4. **`.claude/settings.json` blocks every `Skill` invocation** unless `gstack` is
-   installed at `~/.claude/skills/gstack`. Confirm this is intentional; if it is,
-   document it. A repo-wide tool block should not survive on inertia.
+4. **Resolved.** `.claude/settings.json` blocks every `Skill` invocation unless
+   `gstack` is installed at `~/.claude/skills/gstack`. This is intentional and is
+   now documented in `CLAUDE.md` §8 (Tooling Note) and in `AGENTS.md`'s "Notes on
+   setup". No further action.
 
-5. **Roster sizing.** Twelve agents now own roughly twenty live files. Two roles
-   (evidence-analyst, qa-engineer) lost their entire cited artifact base in the
-   deletion. Confirm the roster deliberately rather than inheriting it from the
-   two-product era.
+5. **Roster sizing — the gap widened, not closed.** Twelve agents own 47 files
+   under `src/` as of the full-body expansion (commit `69734e0`), up from
+   roughly twenty at the 2026-08-21 velocare deletion — more than double, driven
+   by the six-region anatomy explorer, the prescription-planner surface, and
+   their supporting components. Only shoulder is clinically live; the other
+   five regions are catalog/UI scaffolding without a physiatrist-defined
+   protocol behind them yet. evidence-analyst and qa-engineer's artifact-base
+   gap from the deletion is unchanged by this growth — it's still open. Confirm
+   the twelve-agent roster deliberately against this larger surface rather than
+   letting it inherit sizing from the two-product era.
+
+6. **Open module-boundary question — full-body expansion.** `src/pose/shoulderKinematics.ts`
+   is still named and scoped for the shoulder. The five newly-scaffolded regions
+   (knee, hip, elbow, spine, ankle) have no live kinematics yet, so it is
+   undecided whether that file generalizes into region-agnostic geometry helpers
+   or whether each region eventually gets its own `pose/` module behind the same
+   `trackingModel` contract. Flagging only — no decision needed until the first
+   non-shoulder exercise (e.g. KN-1) starts its physiatrist → kinematicist chain.
 
 
 ## The contract

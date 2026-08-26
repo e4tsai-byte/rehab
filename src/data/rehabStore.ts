@@ -1,8 +1,9 @@
 import type { CompletedSession, UserSettings } from '../domain/rehabTypes'
 import { detectBrowserLocale, isLocale, type Locale } from '../i18n/locale'
 
-/* Local storage only. Invariant #1: what persists is rep records and settings,
-   on this device, in this browser. No frames, no landmark arrays, no identity.
+/* Local storage only. Invariant #1: what persists is rep records, settings,
+   custom routines, and prescription plans, on this device, in this browser.
+   No frames, no landmark arrays, no identity.
 
    Renamed from the `velocare_rehab_*` keys on 2026-08-21. LEGACY_* is read once
    on a cold start so an existing install keeps its streak and history rather

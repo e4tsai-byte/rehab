@@ -171,7 +171,7 @@ rehab/
 │   │   ├── shoulderKinematics.ts  # 3D vector geometry, CONFIG, BOTH rep/hold state machines (§3)
 │   │   └── __tests__/             # node:test corpus — geometry.test.ts, sideLyingHold.test.ts (§3)
 │   ├── data/
-│   │   └── rehabStore.ts          # localStorage only. Rep records + settings.
+│   │   └── rehabStore.ts          # localStorage only. Rep records, settings, custom routines, prescriptions.
 │   ├── hooks/
 │   │   ├── usePoseTracker.ts      # MediaPipe PoseLandmarker vision loop
 │   │   ├── useChime.ts            # Web Audio metronome and cues

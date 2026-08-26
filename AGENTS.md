@@ -94,8 +94,10 @@ currently labelled *judgment call* or *placeholder*, and not one has a source.
 
 ### Adding a new exercise
 
-The `PRODUCT.md` roadmap has four planned exercises (lateral abduction, scaption,
-external rotation, wall slides). Each one runs this chain, in order:
+The `PRODUCT.md` §5 roadmap has nine planned exercises across all six regions: three
+shoulder movements (EX-3 lateral abduction, EX-4 scaption, EX-5 external rotation),
+two knee movements (KN-1 quad sets, KN-2 terminal knee extension), and one entry each
+for hip, elbow, spine, and ankle (HP-1, EL-1, SP-1, AK-1). Each one runs this chain, in order:
 
 ```
 physiatrist        → defines it clinically: target muscles, rehab phase, framing view,
@@ -121,7 +123,7 @@ zh-tw-copywriter   → instructions, cues, and form-alert copy, to the character
         ↓
 frontend-engineer  → wires it into the catalog and training surface
         ↓
-product-strategist → only now does it move from 🗓️ Planned to ✅ Live in PRODUCT.md
+product-strategist → only now does it move from **Planned** to **Live** in PRODUCT.md
 ```
 
 **The last step is the point.** Nothing gets announced until the chain is complete.
@@ -165,9 +167,8 @@ architect            → records the decision if it departs from a documented de
 
 **`.claude/settings.json` blocks all `Skill` invocations** unless `gstack` is installed at
 `~/.claude/skills/gstack`. Subagents are unaffected, but any skill-based workflow will be
-denied in this repo until `gstack` is installed or the hook is removed. Architect to
-confirm; absent confirmation, remove the hook — a repo-wide tool block should not survive
-on inertia.
+denied in this repo until `gstack` is installed or the hook is removed. Confirmed
+intentional and documented in `CLAUDE.md` §8 (Tooling Note).
 
 ## Resolved 2026-08-21
 

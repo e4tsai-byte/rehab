@@ -1,14 +1,14 @@
 # Rehabibi — Intelligent Home Rehabilitation Coach
 
-**Rehabibi** is a private, real-time computer-vision physical rehabilitation coach that helps people recovering from surgery or musculoskeletal injury perform prescribed rehab exercises across body regions with consistent form and measurable, repeatable feedback at home.
+**Rehabibi** is a private, real-time computer-vision physical rehabilitation coach. It watches a prescribed exercise through a laptop webcam and gives the person doing it — recovering from surgery or managing a musculoskeletal injury — the same form feedback a therapist would: joint angle, hold duration, movement tempo.
 
 Born out of personal post-surgery rotator-cuff rehabilitation, Rehabibi addresses the core failure of home physical therapy: **without a therapist present, patients cannot verify their angle, hold duration, or movement tempo, and drift into compensatory habits — shrugging, leaning, rushing the lowering phase — that work against recovery.**
 
-It runs entirely in your web browser. No hardware, no account, no video ever leaves your device.
+It runs entirely in your browser: MediaPipe's pose model in WebAssembly and WebGL, joint angles from transparent 3D vector geometry rather than a black-box score. No hardware beyond a webcam, no account, no video ever leaves your device.
 
 **Live demo:** [e4tsai-byte.github.io/rehab](https://e4tsai-byte.github.io/rehab/) — allow camera access to try it.
 
-> **Scope today:** Rehabibi features a full-body capable architecture spanning 6 musculoskeletal regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Three foundational right-arm shoulder exercises are live — standing and seated forward flexion, plus a side-lying low-angle isometric hold for early-stage supraspinatus activation — with interactive body anatomy mapping and multi-track prescription planning. Additional regional movement trackers are on the active roadmap. 🗓️
+> **Scope today:** Rehabibi features a full-body capable architecture spanning 6 musculoskeletal regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Three foundational right-arm shoulder exercises are live — standing and seated forward flexion, plus a side-lying low-angle isometric hold for early-stage supraspinatus activation — with interactive body anatomy mapping and multi-track prescription planning. Additional regional movement trackers are on the active roadmap.
 
 ---
 
@@ -22,23 +22,23 @@ Use it only for movements your clinician has already prescribed, and stop immedi
 
 ## Key Capabilities
 
-* **🗺️ Full-Body Musculoskeletal Anatomy Explorer** — interactive human anatomy mapping across 6 major recovery regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`) with dedicated region protocols and target muscle groups.
-* **📋 Multi-Track Prescription Planner & Timeline** — sequential multi-week timeline visualizer, active parallel tracks, and customizable clinician prescription parameters.
-* **📐 3D Goniometric Joint Tracking** — real-time 3D joint angle calculation (hip → shoulder → elbow/wrist) via MediaPipe BlazePose running on WebAssembly and the WebGL GPU backend.
-* **🧍 Standing, 🪑 Seated Desk & 🛏️ Side-Lying Postures** — full-body standing view, upper-body desk framing with spine-vector fallback when hips are occluded, and floor-level horizontal side-lying tracking.
-* **⏱️ Cadence & Isometric Hold Engine**
+* **Full-Body Musculoskeletal Anatomy Explorer** — interactive human anatomy mapping across 6 major recovery regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`) with dedicated region protocols and target muscle groups.
+* **Multi-Track Prescription Planner & Timeline** — sequential multi-week timeline visualizer, active parallel tracks, and customizable clinician prescription parameters.
+* **3D Goniometric Joint Tracking** — real-time 3D joint angle calculation (hip → shoulder → elbow/wrist) via MediaPipe BlazePose running on WebAssembly and the WebGL GPU backend.
+* **Standing, Seated Desk & Side-Lying Postures** — full-body standing view, upper-body desk framing with spine-vector fallback when hips are occluded, and floor-level horizontal side-lying tracking.
+* **Cadence & Isometric Hold Engine**
   * 5.0 s controlled concentric elevation
   * Top isometric hold — engages at 78°, accumulates down to 68°, releases below 52°, band 78°–115° around a 90° nominal
   * 5.0 s controlled eccentric lowering
   * 3.0 s post-rep recovery interval
-* **🛏️ Side-Lying Isometric-Hold Model** — a second, independent tracking state machine (`READY → HOLDING → READY`) for low-load holds where the target is a *ceiling*, not a floor: 10°–15° abduction, held 20 s (progressing toward 30 s). Rising above the band is a form fault, the inverse of the paced-elevation model above.
-* **⚠️ Real-Time Form Guards**
-  * **Shoulder Shrug / Hike** — flags the right shoulder rising relative to the left, the visible signature of upper-trapezius substitution. *(proxy measure; no per-user baseline yet 🗓️)*
-  * **Torso Lean** — detects lateral trunk tilt in the camera plane. In seated or occluded framing this falls back to a head-position proxy. Backward arching is not observable from a frontal view. 🗓️
+* **Side-Lying Isometric-Hold Model** — a second, independent tracking state machine (`READY → HOLDING → READY`) for low-load holds where the target is a *ceiling*, not a floor: 10°–15° abduction, held 20 s (progressing toward 30 s). Rising above the band is a form fault, the inverse of the paced-elevation model above.
+* **Real-Time Form Guards**
+  * **Shoulder Shrug / Hike** — flags the right shoulder rising relative to the left, the visible signature of upper-trapezius substitution. *(proxy measure; no per-user baseline yet [PLANNED])*
+  * **Torso Lean** — detects lateral trunk tilt in the camera plane. In seated or occluded framing this falls back to a head-position proxy. Backward arching is not observable from a frontal view. [PLANNED]
   * **Bent Elbow** — flags a pronounced inward bend, gated on a 3D reach ratio (0.78) with a 115° angle floor. The reach ratio is the constant that binds in practice.
   * **Dynamic Pacer** — alerts when elevation deviates more than 16° from the expected position on the 5 s curve, after a settling grace period.
-* **📊 Post-Session Scorecard** — completed reps, average hold duration, peak angle, and a rep-by-rep breakdown of concentric tempo, hold duration, eccentric tempo, and form flags.
-* **🔥 Habit Building & Progress History** — daily streak tracking, interactive activity calendar, and session records persisted locally.
+* **Post-Session Scorecard** — completed reps, average hold duration, peak angle, and a rep-by-rep breakdown of concentric tempo, hold duration, eccentric tempo, and form flags.
+* **Habit Building & Progress History** — daily streak tracking, interactive activity calendar, and session records persisted locally.
 
 ### On the thresholds above
 
@@ -64,7 +64,7 @@ The compensation and timeout values were tuned by the author across repeated liv
 ### Prerequisites
 
 * Node.js 18+
-* A Chromium-based browser (Chrome, Edge, Brave) with webcam access. Safari is untested — MediaPipe's GPU backend is materially weaker there. 🗓️
+* A Chromium-based browser (Chrome, Edge, Brave) with webcam access. Safari is untested — MediaPipe's GPU backend is materially weaker there. [PLANNED]
 
 ### Installation
 
@@ -102,4 +102,4 @@ The full contract is in `CLAUDE.md`; the agent roster that maintains it is in `A
 
 ## License
 
-MIT License. Designed with care for accessible global physical recovery.
+MIT License.
