@@ -6,7 +6,9 @@ Born out of personal post-surgery shoulder rehabilitation, Rehabibi addresses th
 
 It runs entirely in your web browser. No hardware, no account, no video ever leaves your device.
 
-> **Scope today:** two right-arm shoulder forward-flexion exercises, standing and seated. Left-arm tracking and additional movements are planned. 🗓️
+**Live demo:** [e4tsai-byte.github.io/rehab](https://e4tsai-byte.github.io/rehab/) — allow camera access to try it.
+
+> **Scope today:** three right-arm exercises are live — standing and seated forward flexion, plus a side-lying low-angle isometric hold for early-stage supraspinatus activation. Left-arm tracking and additional movements are planned. 🗓️
 
 ---
 
@@ -27,6 +29,7 @@ Use it only for movements your clinician has already prescribed, and stop immedi
   * Top isometric hold — engages at 78°, accumulates down to 68°, releases below 52°, band 78°–115° around a 90° nominal
   * 5.0 s controlled eccentric lowering
   * 3.0 s post-rep recovery interval
+* **🛏️ Side-Lying Isometric-Hold Model** — a second, independent tracking state machine (`READY → HOLDING → READY`) for low-load holds where the target is a *ceiling*, not a floor: 10°–15° abduction, held 20 s (progressing toward 30 s). Rising above the band is a form fault, the inverse of the paced-elevation model above.
 * **⚠️ Real-Time Form Guards**
   * **Shoulder Shrug / Hike** — flags the right shoulder rising relative to the left, the visible signature of upper-trapezius substitution. *(proxy measure; no per-user baseline yet 🗓️)*
   * **Torso Lean** — detects lateral trunk tilt in the camera plane. In seated or occluded framing this falls back to a head-position proxy. Backward arching is not observable from a frontal view. 🗓️

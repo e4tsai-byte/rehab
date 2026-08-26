@@ -4,7 +4,7 @@
 
 **Rehabibi** is an intelligent, accessible, privacy-preserving computer-vision physical rehabilitation coach.
 
-It began as a solution to one person's post-surgical rotator-cuff recovery. Rehabibi today covers **right-arm shoulder forward flexion**, standing and seated. The architecture is intended to generalise to other limbs and movements, and the roadmap in §5 is the sequence for getting there. 🗓️
+It began as a solution to one person's post-surgical rotator-cuff recovery. Rehabibi today covers **right-arm shoulder forward flexion** (standing and seated) plus a side-lying low-angle isometric hold for early-stage supraspinatus activation. The architecture is intended to generalise to other limbs and movements, and the roadmap in §5 is the sequence for getting there. 🗓️
 
 ---
 
@@ -66,6 +66,7 @@ Do not design for the clinician at the patient's expense. An interface optimized
 
 | Code | Name | Primary Target | Framing View | Status |
 | :--- | :--- | :--- | :--- | :--- |
+| **EX-0** | Side-Lying Right Arm Low Abduction Hold (10°–15°) | Supraspinatus, low-angle isometric activation | Side-lying, floor-level camera | ✅ Live |
 | **EX-1** | Standing Right Arm Forward Flexion | Anterior deltoid, supraspinatus, serratus anterior | Full body, frontal | ✅ Live |
 | **EX-2** | Seated Desk Right Arm Forward Flexion | Anterior deltoid, shoulder mobility | Upper body, frontal | ✅ Live |
 | **EX-3** | Standing Lateral Abduction (90°) | Middle deltoid, supraspinatus | Full body, frontal | 🗓️ Planned |
@@ -73,7 +74,9 @@ Do not design for the clinician at the patient's expense. An interface optimized
 | **EX-5** | Supported External Rotation (0° abduction) | Infraspinatus, teres minor | Frontal / desk | 🗓️ Planned |
 | **EX-6** | Wall Slides / Overhead Elevation (120°–180°) | Overhead mobility, scapular rhythm | Sagittal side view | 🗓️ Planned |
 
-Both live exercises are **right arm only**. The engine reads right-side landmarks with no side parameter; left-arm support is a real piece of work, not a config flag.
+**EX-0** belongs to an earlier recovery phase than EX-1/EX-2 (Phase 1: Acute Protection & Isometric Activation, vs. Phase 2 for the other two) and runs on a separate isometric-hold state machine where the target angle is a ceiling, not a floor — see `CLAUDE.md` §3 and §9 for the full model.
+
+All three live exercises are **right arm only**. The engine reads right-side landmarks with no side parameter; left-arm support is a real piece of work, not a config flag.
 
 A row moves from 🗓️ to ✅ only after the full chain in `AGENTS.md` completes: physiatrist defines it, kinematicist makes it measurable, measurement-engineer makes it stable, qa-engineer has fixtures for it. Nothing is announced before that.
 

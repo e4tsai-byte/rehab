@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Rehabibi — Intelligent Home Rehabilitation Coach",
+  "license": "MIT",
   "scripts": {
     "dev": "vite --host",
     "dev:https": "vite --host --mode https",

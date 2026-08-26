@@ -101,9 +101,9 @@ separates more.
 
 | Token | Alpha | Blur | Used for |
 |---|---|---|---|
-| `--mat-thin` | 0.44 | 22px / sat 200% | Segmented control, small chips |
-| `--mat-regular` | 0.58 | 34px / sat 210% | Cards, panels |
-| `--mat-thick` | 0.72 | 44px / sat 200% | Header, bottom rail, sheets |
+| `--mat-thin` | 0.52 | 24px / sat 200% | Segmented control, small chips |
+| `--mat-regular` | 0.68 | 34px / sat 210% | Cards, panels |
+| `--mat-thick` | 0.78 | 44px / sat 210% | Header, bottom rail, sheets |
 
 Three things make a surface read as a material rather than a white box at
 reduced opacity, and all three are required:
