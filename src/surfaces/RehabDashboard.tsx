@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { EXERCISE_CATALOG, resolveExerciseName } from '../domain/exerciseCatalog'
-import type { CompletedSession } from '../domain/rehabTypes'
-import { RecoveryRoadmap } from '../components/RecoveryRoadmap'
+import { EXERCISE_CATALOG, resolveExerciseName, localizeExercise } from '../domain/exerciseCatalog'
+import type { CompletedSession, BodyRegion } from '../domain/rehabTypes'
+import type { RehabRoutine } from '../domain/routineCatalog'
+import { BodyAnatomyDiagram } from '../components/BodyAnatomyDiagram'
+import { RegionDetailModal } from '../components/RegionDetailModal'
 import { ActivityCalendar } from '../components/ActivityCalendar'
 import { RecentStatsGrid } from '../components/RecentStatsGrid'
 import { useT } from '../i18n/LocaleContext'
@@ -9,8 +11,11 @@ import { formatSessionTime } from '../i18n/datetime'
 
 interface RehabDashboardProps {
   history: CompletedSession[]
+  prescriptions?: import('../domain/rehabTypes').UserPrescription[] | undefined
   onStartExercise: (exerciseId: string) => void
+  onStartRoutine?: ((routine: RehabRoutine) => void) | undefined
   onNavigateToExercises: () => void
+  onNavigateToPrescriptions?: (() => void) | undefined
   onSelectSession: (session: CompletedSession) => void
 }
 
@@ -23,14 +28,23 @@ function toLocalDateKey(ts: number): string {
 
 export function RehabDashboard({
   history,
+  prescriptions = [],
   onStartExercise,
+  onStartRoutine,
   onNavigateToExercises,
+  onNavigateToPrescriptions,
   onSelectSession,
 }: RehabDashboardProps) {
   const { t, locale } = useT()
   const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null)
+  const [selectedRegion, setSelectedRegion] = useState<BodyRegion | null>(null)
 
-  const defaultExercise = EXERCISE_CATALOG[0]!
+  const activePrescriptions = prescriptions.filter((p) => p.status === 'active')
+  const primaryRx = activePrescriptions[0]
+  const primaryExercise = primaryRx
+    ? EXERCISE_CATALOG.find((e) => e.id === primaryRx.exerciseId) || EXERCISE_CATALOG[0]!
+    : EXERCISE_CATALOG[0]!
+  const localizedPrimary = localizeExercise(primaryExercise, locale)
 
   const filteredHistory = selectedDateStr
     ? history.filter((s) => toLocalDateKey(s.timestamp) === selectedDateStr)
@@ -44,39 +58,65 @@ export function RehabDashboard({
         <p className="rehab-hero__sub">{t('dash.heroSub')}</p>
       </div>
 
-      {/* 2. Recommended Prescription Today (Top Priority) */}
+      {/* 2. Prescription / Today's Action Banner */}
       <div className="dashboard-action-banner">
         <div className="dashboard-action-banner__info">
           <div className="section-tag" style={{ marginBottom: '2px' }}>
             <span className="section-tag__dot" aria-hidden="true" />
-            <span>{t('dash.todayRecommend')}</span>
+            <span>
+              {activePrescriptions.length > 0
+                ? t('rx.dashTodayRx')
+                : t('dash.todayRecommend')}
+            </span>
           </div>
-          <h2 className="dashboard-action-banner__title">{t('dash.comboTitle')}</h2>
-          <p className="dashboard-action-banner__desc">{t('dash.comboDesc')}</p>
+          <h2 className="dashboard-action-banner__title">
+            {primaryRx?.customTitle
+              ? primaryRx.customTitle
+              : activePrescriptions.length > 0
+                ? localizedPrimary.name
+                : t('dash.comboTitle')}
+          </h2>
+          <p className="dashboard-action-banner__desc">
+            {activePrescriptions.length > 0
+              ? `${localizedPrimary.description} (${t('rx.setsPerDay', { n: String(primaryRx?.dailySetsTarget ?? 2) })} · ${t('rx.durationWeeks', { n: String(primaryRx?.durationWeeks ?? 3) })})`
+              : t('dash.comboDesc')}
+          </p>
         </div>
 
         <div className="dashboard-action-banner__actions">
-          <button
-            className="btn btn--glass"
-            onClick={onNavigateToExercises}
-            aria-label={t('dash.exploreLibraryAria')}
-          >
-            {t('dash.exploreLibrary')}
-          </button>
+          {onNavigateToPrescriptions ? (
+            <button
+              className="btn btn--glass"
+              onClick={onNavigateToPrescriptions}
+              aria-label={t('nav.prescriptions')}
+            >
+              {activePrescriptions.length > 0 ? t('nav.prescriptions') : t('rx.dashGoToPlan')}
+            </button>
+          ) : (
+            <button
+              className="btn btn--glass"
+              onClick={onNavigateToExercises}
+              aria-label={t('dash.exploreLibraryAria')}
+            >
+              {t('dash.exploreLibrary')}
+            </button>
+          )}
+
           <button
             className="btn btn--primary btn--lg"
-            onClick={() => onStartExercise(defaultExercise.id)}
+            onClick={() => onStartExercise(primaryExercise.id)}
           >
             {t('dash.quickStart')}
           </button>
         </div>
       </div>
 
-      {/* 3. Recovery Progression Roadmap */}
-      <RecoveryRoadmap history={history} />
+      {/* 3. Interactive Body Anatomy Region Explorer */}
+      <BodyAnatomyDiagram onSelectRegion={(region) => setSelectedRegion(region)} />
 
       {/* 4. Recent Biomechanical Stats */}
       <RecentStatsGrid history={history} />
+
 
       {/* 5. Activity & Rest-Day Calendar (Directly above History View) */}
       <ActivityCalendar
@@ -182,6 +222,21 @@ export function RehabDashboard({
           </div>
         )}
       </div>
+
+      {/* Region Detail Modal */}
+      {selectedRegion && (
+        <RegionDetailModal
+          regionId={selectedRegion}
+          onClose={() => setSelectedRegion(null)}
+          onStartExercise={onStartExercise}
+          onStartRoutine={onStartRoutine}
+          onNavigateToLibrary={() => {
+            setSelectedRegion(null)
+            onNavigateToExercises()
+          }}
+        />
+      )}
     </div>
   )
 }
+

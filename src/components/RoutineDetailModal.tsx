@@ -127,7 +127,7 @@ export function RoutineDetailModal({
 
                   {station.restAfterS > 0 && (
                     <div className="routine-intermission-banner">
-                      <span className="routine-intermission-banner__icon">☕</span>
+                      <span className="section-tag__dot" aria-hidden="true" />
                       <span>{t('rdetail.rest', { s: station.restAfterS })}</span>
                     </div>
                   )}

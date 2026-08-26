@@ -1,14 +1,14 @@
 # Rehabibi — Intelligent Home Rehabilitation Coach
 
-**Rehabibi** is a private, real-time computer-vision physical rehabilitation coach that helps people recovering from shoulder surgery or musculoskeletal injury perform prescribed rehab exercises with consistent form and measurable, repeatable feedback at home.
+**Rehabibi** is a private, real-time computer-vision physical rehabilitation coach that helps people recovering from surgery or musculoskeletal injury perform prescribed rehab exercises across body regions with consistent form and measurable, repeatable feedback at home.
 
-Born out of personal post-surgery shoulder rehabilitation, Rehabibi addresses the core failure of home physical therapy: **without a therapist present, patients cannot verify their angle, hold duration, or movement tempo, and drift into compensatory habits — shrugging, leaning, rushing the lowering phase — that work against recovery.**
+Born out of personal post-surgery rotator-cuff rehabilitation, Rehabibi addresses the core failure of home physical therapy: **without a therapist present, patients cannot verify their angle, hold duration, or movement tempo, and drift into compensatory habits — shrugging, leaning, rushing the lowering phase — that work against recovery.**
 
 It runs entirely in your web browser. No hardware, no account, no video ever leaves your device.
 
 **Live demo:** [e4tsai-byte.github.io/rehab](https://e4tsai-byte.github.io/rehab/) — allow camera access to try it.
 
-> **Scope today:** three right-arm exercises are live — standing and seated forward flexion, plus a side-lying low-angle isometric hold for early-stage supraspinatus activation. Left-arm tracking and additional movements are planned. 🗓️
+> **Scope today:** Rehabibi features a full-body capable architecture spanning 6 musculoskeletal regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Three foundational right-arm shoulder exercises are live — standing and seated forward flexion, plus a side-lying low-angle isometric hold for early-stage supraspinatus activation — with interactive body anatomy mapping and multi-track prescription planning. Additional regional movement trackers are on the active roadmap. 🗓️
 
 ---
 
@@ -22,8 +22,10 @@ Use it only for movements your clinician has already prescribed, and stop immedi
 
 ## Key Capabilities
 
+* **🗺️ Full-Body Musculoskeletal Anatomy Explorer** — interactive human anatomy mapping across 6 major recovery regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`) with dedicated region protocols and target muscle groups.
+* **📋 Multi-Track Prescription Planner & Timeline** — sequential multi-week timeline visualizer, active parallel tracks, and customizable clinician prescription parameters.
 * **📐 3D Goniometric Joint Tracking** — real-time 3D joint angle calculation (hip → shoulder → elbow/wrist) via MediaPipe BlazePose running on WebAssembly and the WebGL GPU backend.
-* **🧍 Standing & 🪑 Seated Desk Modes** — full-body standing view plus an upper-body desk framing, with a spine-vector fallback when the hips are occluded. The two modes are separate measurements with separate thresholds, not one measurement with a tolerance.
+* **🧍 Standing, 🪑 Seated Desk & 🛏️ Side-Lying Postures** — full-body standing view, upper-body desk framing with spine-vector fallback when hips are occluded, and floor-level horizontal side-lying tracking.
 * **⏱️ Cadence & Isometric Hold Engine**
   * 5.0 s controlled concentric elevation
   * Top isometric hold — engages at 78°, accumulates down to 68°, releases below 52°, band 78°–115° around a 90° nominal
@@ -36,7 +38,7 @@ Use it only for movements your clinician has already prescribed, and stop immedi
   * **Bent Elbow** — flags a pronounced inward bend, gated on a 3D reach ratio (0.78) with a 115° angle floor. The reach ratio is the constant that binds in practice.
   * **Dynamic Pacer** — alerts when elevation deviates more than 16° from the expected position on the 5 s curve, after a settling grace period.
 * **📊 Post-Session Scorecard** — completed reps, average hold duration, peak angle, and a rep-by-rep breakdown of concentric tempo, hold duration, eccentric tempo, and form flags.
-* **🔥 Habit Building** — daily streak tracking and session history, persisted locally.
+* **🔥 Habit Building & Progress History** — daily streak tracking, interactive activity calendar, and session records persisted locally.
 
 ### On the thresholds above
 
@@ -80,7 +82,7 @@ Open **`http://localhost:5173`**, allow camera access, and begin.
 
 ## Technology Stack
 
-* **Frontend** — React 19, TypeScript, Vite, vanilla modern CSS with a dark design-token system
+* **Frontend** — React 19, TypeScript, Vite, modern CSS design tokens with Apple HIG system materials
 * **Computer Vision** — Google MediaPipe Pose Landmarker (`@mediapipe/tasks-vision`) via WebAssembly and WebGL
 * **Audio** — Web Audio API synthesized chimes
 * **Backend** — none. Rehabibi is a static front-end. There is no server, no account system, and no API.

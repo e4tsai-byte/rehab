@@ -143,7 +143,6 @@ export function RehabTraining({
           <canvas ref={canvasRef} className="training-camera__canvas" />
 
           <span className="vchip vchip--mode">
-            <span aria-hidden="true">{isSeated ? '🪑' : isIsometric ? '🛌' : '🧍'}</span>
             <span>
               {isSeated
                 ? t('posture.seatedDesk')

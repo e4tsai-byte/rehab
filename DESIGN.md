@@ -29,8 +29,8 @@ the material something to do.
 
 ### The scene this is designed for
 
-Someone six weeks post rotator-cuff repair, standing in their bedroom at 7am in
-grey light, laptop on a dresser, arm already aching, on the third of ten reps.
+Someone recovering from orthopedic surgery or managing musculoskeletal rehabilitation (shoulder, knee, spine, hip, elbow, ankle), in their room or at their desk at 7am in
+grey light, laptop on a table, on the third of ten reps.
 Calm, legible from two metres, nothing shouting, nothing grading them.
 
 ---
@@ -294,3 +294,30 @@ stack, because the user cannot see the row label and its value at the same time.
 Until this pass `rehab.css` contained **zero** `@media` queries, so the stacked
 mobile layout this document described had never existed and the camera feed
 rendered as a half-width sliver on a phone.
+
+---
+
+## 7. Invariant: Zero Emojis Across UI Chrome
+
+**Emojis are strictly prohibited anywhere in Rehabibi's UI chrome, catalogs, strings, modals, telemetry, tags, and scorecards.**
+
+- **Rationale**: Emojis introduce visual noise, render inconsistently across OS platforms, and violate the calm, dignified, non-grading medical coaching ethos defined in Invariant 1.6.
+- **Alternatives to Emojis**:
+  - Semantic typographic badges (e.g. `[STAND]`, `[SEAT]`, `[SIDE]`, `ACTIVE`, `ROADMAP`).
+  - Strict SVGs using system stroke/fill tokens (`--rehab-ink`, `--rehab-blue-deep`, `--rehab-green-deep`).
+  - Clear, unadorned clinical labels and metrics.
+
+---
+
+## 8. Container & Card Hierarchy (Apple Materials)
+
+Outer containers and inner tiles follow a strict 2-tier corner radius and spacing discipline:
+
+| Tier | Radius Token | Value | Typical Uses | Padding |
+|---|---|---|---|---|
+| **Outer Container** | `--r-2xl` | 36px | Action banners, hero cards, prescription tracks, activity calendars, anatomy explorer, exercise cards | `var(--s-6)` – `var(--s-7)` (24–28px) |
+| **Component Tile** | `--r-xl` | 28px | Nested stat cards, calendar tiles, region cards, video cards, note blocks | `var(--s-4)` – `var(--s-5)` (16–20px) |
+| **Interactive Control** | `--r-lg` / `--r-pill` | 18px / 9999px | Buttons, badges, spec pills, segment tabs, dialog inputs | `var(--s-2)` – `var(--s-4)` |
+
+This hierarchy ensures that nested cards maintain concentric visual clearance and generous breathing room on high-density displays.
+

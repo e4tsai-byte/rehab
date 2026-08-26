@@ -114,7 +114,7 @@ export function ExerciseCard({ exercise, settings, onStart }: ExerciseCardProps)
             </span>
           </li>
           <li className="routine-card__reminders-item routine-card__reminders-item--warn">
-            <span className="routine-card__reminders-dot">⚠️</span>
+            <span className="routine-card__reminders-dot">!</span>
             <span>{t('card.safetyReminder')}</span>
           </li>
         </ul>

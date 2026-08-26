@@ -2,8 +2,8 @@ import { useT } from '../i18n/LocaleContext'
 import type { Locale } from '../i18n/locale'
 
 interface RehabHeaderProps {
-  activeTab: 'dashboard' | 'exercises'
-  onSelectTab: (tab: 'dashboard' | 'exercises') => void
+  activeTab: 'dashboard' | 'exercises' | 'prescriptions'
+  onSelectTab: (tab: 'dashboard' | 'exercises' | 'prescriptions') => void
   streak: number
   onOpenSettings: () => void
   onGoHome?: () => void
@@ -44,7 +44,6 @@ export function RehabHeader({
           aria-selected={activeTab === 'dashboard'}
           role="tab"
         >
-          <span aria-hidden="true">📊</span>
           <span>{t('nav.dashboard')}</span>
         </button>
 
@@ -54,8 +53,16 @@ export function RehabHeader({
           aria-selected={activeTab === 'exercises'}
           role="tab"
         >
-          <span aria-hidden="true">🎥</span>
           <span>{t('nav.exercises')}</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeTab === 'prescriptions' ? 'nav-tab--active' : ''}`}
+          onClick={() => onSelectTab('prescriptions')}
+          aria-selected={activeTab === 'prescriptions'}
+          role="tab"
+        >
+          <span>{t('nav.prescriptions')}</span>
         </button>
       </nav>
 
@@ -77,7 +84,7 @@ export function RehabHeader({
         </div>
 
         <span className="streak-badge" title={t('nav.streakTitle')}>
-          <span aria-hidden="true">🔥</span>
+          <span className="section-tag__dot" aria-hidden="true" />
           <span>{t('nav.streakDays', { n: streak })}</span>
         </span>
 

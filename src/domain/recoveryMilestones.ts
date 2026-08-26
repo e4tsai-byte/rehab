@@ -1,12 +1,11 @@
 import type { CompletedSession } from './rehabTypes'
-import type { Locale } from '../i18n/locale'
 import { EXERCISE_CATALOG } from './exerciseCatalog'
 
 /**
  * True when a recorded session belongs to an isometric-hold exercise (the
  * side-lying supraspinatus hold). Resolved from the catalog by id — sessions
- * store only `exerciseId`, not the tracking model. Physiatrist §6: a low 10–15°
- * hold must never be pooled into the Phase-2 "higher elevation = better"
+ * store only `exerciseId`, not the tracking model. A low 10–15°
+ * hold must never be pooled into the "higher elevation = better"
  * aggregates, where its peak angle would read as regression. Unknown ids (an
  * exercise later removed) resolve to false and stay in the general stats.
  */
@@ -15,150 +14,6 @@ function isIsometricSession(session: CompletedSession): boolean {
   return ex?.trackingModel === 'isometricHold'
 }
 
-export interface RecoveryPhase {
-  id: string
-  phaseNumber: number
-  nameZh: string
-  nameEn: string
-  /** Range-of-motion notation (e.g. "0° – 90°") — locale-neutral, shared. */
-  targetRom: string
-  descriptionZh: string
-  descriptionEn: string
-  criteriaZh: string
-  criteriaEn: string
-  clinicalNoteZh: string
-  clinicalNoteEn: string
-}
-
-export interface LocalizedPhase {
-  name: string
-  targetRom: string
-  description: string
-  criteria: string
-  clinicalNote: string
-}
-
-export function localizePhase(phase: RecoveryPhase, locale: Locale): LocalizedPhase {
-  const en = locale === 'en'
-  return {
-    name: en ? phase.nameEn : phase.nameZh,
-    targetRom: phase.targetRom,
-    description: en ? phase.descriptionEn : phase.descriptionZh,
-    criteria: en ? phase.criteriaEn : phase.criteriaZh,
-    clinicalNote: en ? phase.clinicalNoteEn : phase.clinicalNoteZh,
-  }
-}
-
-export const RECOVERY_PHASES: readonly RecoveryPhase[] = [
-  {
-    id: 'phase-1',
-    phaseNumber: 1,
-    nameZh: '急性保護與等長啟動',
-    nameEn: 'Acute Protection & Isometric Activation',
-    targetRom: '0° – 45°',
-    descriptionZh: '被動與輔助活動度維持、肩胛控制與無痛等長收縮，保護修復中肌腱與關節囊。',
-    descriptionEn:
-      'Passive and assisted range-of-motion maintenance, scapular control, and pain-free isometric contractions to protect the healing tendon and joint capsule.',
-    criteriaZh: '急性期疼痛減退，在無代償下可完成基礎等長支撐。',
-    criteriaEn:
-      'Acute pain has subsided and basic isometric holds can be performed without compensation.',
-    clinicalNoteZh: '此階段首重避免發炎惡化與過度牽拉修復部位。',
-    clinicalNoteEn:
-      'This stage prioritizes avoiding aggravated inflammation and over-stretching the healing tissue.',
-  },
-  {
-    id: 'phase-2',
-    phaseNumber: 2,
-    nameZh: '主動前屈與肩胛穩定',
-    nameEn: 'Active Flexion & Scapular Stability',
-    targetRom: '0° – 90°',
-    descriptionZh: '站姿與坐姿 90° 主動前屈訓練，嚴格落實 5-5-5 節奏，消除聳肩代償，建立三角肌與前鋸肌穩定協同。',
-    descriptionEn:
-      'Standing and seated active forward flexion to 90°, holding strictly to the 5-5-5 tempo, eliminating shrug compensation and building steady deltoid–serratus coordination.',
-    criteriaZh: '累計完成 20 組處方、平均角度穩定達 90° 且動作標準率 ≥ 80%。',
-    criteriaEn:
-      'Twenty prescribed sets completed, average angle steady at 90°, and clean-movement rate ≥ 80%.',
-    clinicalNoteZh: '90° 為肩關節次發性夾擠的高發轉折點，此處建立的無聳肩動作模式是後續高角度訓練的基石。',
-    clinicalNoteEn:
-      '90° is a common turning point for secondary shoulder impingement; the shrug-free pattern built here is the foundation for later higher-angle work.',
-  },
-  {
-    id: 'phase-3',
-    phaseNumber: 3,
-    nameZh: '高角度抬升與旋轉肌強化',
-    nameEn: 'High-Angle Elevation & Rotator-Cuff Strengthening',
-    targetRom: '90° – 150°',
-    descriptionZh: '側向外展 (Abduction)、肩胛平面抬升 (Scaption) 與阻力外旋訓練，建立全角度動態穩定。',
-    descriptionEn:
-      'Lateral abduction, scaption, and resisted external rotation to build full-range dynamic stability.',
-    criteriaZh: '第二階段達標並經物理治療師評估後晉級。',
-    criteriaEn: "Advance after meeting Stage 2 targets and a physical therapist's assessment.",
-    clinicalNoteZh: '需特別注意肩胛盂肱節律 (Scapulohumeral Rhythm) 之順暢度。',
-    clinicalNoteEn: 'Pay particular attention to the smoothness of scapulohumeral rhythm.',
-  },
-  {
-    id: 'phase-4',
-    phaseNumber: 4,
-    nameZh: '功能性負重與生活重返',
-    nameEn: 'Functional Loading & Return to Life',
-    targetRom: '150° – 180°',
-    descriptionZh: '過頭功能性動作、動態負重與日常生活/工作動作模擬，恢復完整肩關節活動度與肌耐力。',
-    descriptionEn:
-      'Overhead functional movements, dynamic loading, and simulated daily-living and work tasks to restore full shoulder range and endurance.',
-    criteriaZh: '雙側肌力對稱度 ≥ 90% 且全活動範圍無痛。',
-    criteriaEn: 'Bilateral strength symmetry ≥ 90% and pain-free through the full range.',
-    clinicalNoteZh: '維持長期預防性保養與日常姿勢校正。',
-    clinicalNoteEn: 'Maintain long-term preventive care and daily posture correction.',
-  },
-] as const
-
-export interface RecoveryProgress {
-  currentPhase: RecoveryPhase
-  allPhases: readonly RecoveryPhase[]
-  progressPct: number
-  completedSetsInPhase: number
-  targetSetsForPhase: number
-  cleanMovementRatePct: number
-  avgElevationDeg: number
-  isReadyForNextPhase: boolean
-}
-
-export function calculateRecoveryProgress(history: CompletedSession[]): RecoveryProgress {
-  const currentPhase = RECOVERY_PHASES[1]! // Phase 2 is the active phase
-  const targetSetsForPhase = 20
-
-  /* This whole computation is the Phase-2 progress track (sets toward 90°,
-     clean-movement rate, average elevation). Isometric-hold sessions are a
-     Phase-1 activation item and must never feed it (physiatrist §6): counting
-     them would both inflate the Phase-2 set total and drag the elevation
-     average down toward their prescribed 12°, reading as regression. They are
-     surfaced separately via calculateHoldAdherence. */
-  const pacedHistory = history.filter((s) => !isIsometricSession(s))
-  const completedSetsInPhase = pacedHistory.length
-
-  const totalReps = pacedHistory.reduce((acc, s) => acc + s.completedReps, 0)
-  const totalClean = pacedHistory.reduce((acc, s) => acc + s.cleanRepsCount, 0)
-  const cleanMovementRatePct = totalReps > 0 ? Math.round((totalClean / totalReps) * 100) : 0
-
-  const avgElevationDeg =
-    pacedHistory.length > 0
-      ? Math.round(pacedHistory.reduce((acc, s) => acc + s.peakElevationDeg, 0) / pacedHistory.length)
-      : 0
-
-  const progressPct = Math.min(100, Math.round((completedSetsInPhase / targetSetsForPhase) * 100))
-  const isReadyForNextPhase = completedSetsInPhase >= targetSetsForPhase && cleanMovementRatePct >= 80
-
-  return {
-    currentPhase,
-    allPhases: RECOVERY_PHASES,
-    progressPct,
-    completedSetsInPhase,
-    targetSetsForPhase,
-    cleanMovementRatePct,
-    avgElevationDeg,
-    isReadyForNextPhase,
-  }
-}
 
 export interface DayActivity {
   dateStr: string // YYYY-MM-DD

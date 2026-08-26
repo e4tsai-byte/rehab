@@ -1,5 +1,8 @@
 export type RehabPhase = 'RESTING' | 'ASCENDING' | 'HOLDING' | 'DESCENDING'
 
+export type BodyRegion = 'shoulder' | 'knee' | 'hip' | 'elbow' | 'spine' | 'ankle'
+
+
 export type FormFlag =
   | 'SHOULDER_HIKE'
   | 'TORSO_LEAN'
@@ -63,3 +66,20 @@ export interface CompletedSession {
   peakElevationDeg: number
   reps: readonly RehabRepRecord[]
 }
+
+// ── Personalized Prescription Plan ──────────────────────────────────────────
+export type PrescriptionStatus = 'active' | 'queued' | 'completed'
+
+export interface UserPrescription {
+  id: string
+  exerciseId: string
+  customTitle?: string | undefined
+  durationWeeks: number
+  targetDaysPerWeek: number
+  dailySetsTarget: number
+  status: PrescriptionStatus
+  order: number
+  startedAt: number
+  notes?: string | undefined
+}
+

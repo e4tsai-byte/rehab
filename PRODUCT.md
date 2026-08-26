@@ -2,9 +2,9 @@
 
 ## 1. Vision & Mission
 
-**Rehabibi** is an intelligent, accessible, privacy-preserving computer-vision physical rehabilitation coach.
+**Rehabibi** is an intelligent, accessible, privacy-preserving computer-vision physical rehabilitation coach for full-body musculoskeletal recovery.
 
-It began as a solution to one person's post-surgical rotator-cuff recovery. Rehabibi today covers **right-arm shoulder forward flexion** (standing and seated) plus a side-lying low-angle isometric hold for early-stage supraspinatus activation. The architecture is intended to generalise to other limbs and movements, and the roadmap in §5 is the sequence for getting there. 🗓️
+Born out of personal post-surgical rotator-cuff recovery, Rehabibi has expanded into a full-body rehabilitation architecture covering 6 major anatomical regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Today, three foundational right-arm shoulder movements are clinically active (`EX-0`, `EX-1`, `EX-2`), integrated with an interactive body anatomy map, customizable prescription planner, and comprehensive exercise library. The full-body roadmap in §5 charts the sequence for activating remaining regional kinematic trackers. 🗓️
 
 ---
 
@@ -12,7 +12,7 @@ It began as a solution to one person's post-surgical rotator-cuff recovery. Reha
 
 Post-surgical rehabilitation is overwhelmingly executed at home, between clinic visits. Home rehab has four well-known failure modes:
 
-1. **Invisible compensations.** Facing stiffness or weakness, patients instinctively shrug (recruiting upper trapezius instead of deltoid) or lean the trunk to heave the arm up. Unwatched, these become habitual, and are commonly cited as a contributor to secondary impingement. *(literature-adjacent, uncited)*
+1. **Invisible compensations.** Facing stiffness or weakness, patients instinctively shrug (recruiting upper trapezius instead of deltoid) or lean the trunk to heave the limb. Unwatched, these become habitual and compromise recovery. *(literature-adjacent, uncited)*
 2. **Tempo collapse.** Patients rush — lifting in a second, letting the arm drop — skipping the eccentric control and isometric hold that rebuild tendon capacity.
 3. **Imprecise angle estimation.** Nobody can accurately judge from the inside whether they have reached 90° of elevation, or are 15° short.
 4. **No accountability.** Repetitive solo exercise without objective feedback has a high dropout rate.
@@ -41,22 +41,23 @@ Nothing in that chain leaves the device.
 
 ### Primary: The Recovering Patient
 
-* **Context** — recovering from orthopedic shoulder surgery (rotator cuff repair, subacromial decompression, labral repair) or managing adhesive capsulitis or chronic shoulder pain.
-* **Prescription** — daily sets of specific movements, set by their clinician.
+* **Context** — recovering from orthopedic surgery or managing musculoskeletal conditions (rotator cuff repair, knee rehabilitation, spine posture, hip/ankle mobility).
+* **Prescription** — daily sets of specific movements, organized into customizable multi-track prescriptions.
 * **Needs**
-  * Clear, non-intimidating visual feedback showing actual elevation angle
-  * Real-time warning when shrugging, leaning, or bending the elbow
-  * The ability to exercise standing, or seated at a desk during a work break
-  * Streak counters and a post-session scorecard that motivate without grading
+  * Clear, non-intimidating visual feedback showing actual joint angle
+  * Real-time warning when shrugging, leaning, or bending
+  * The ability to exercise standing, seated at a desk, or in side-lying floor postures
+  * Multi-track prescription progress, streak counters, and post-session scorecards that motivate without grading
 
 The product is designed for this person. Every tradeoff resolves in their favour.
 
-### Future: The Physical Therapist / Clinician 🗓️
+### Clinician & Prescribing Physiotherapist
 
-* **Context** — prescribing home protocols and wanting objective adherence data.
-* **Needs (not yet built)**
-  * Customizable target angles (60°–180°), hold durations (2 s–10 s), and rep counts. **This requires parameterising `shoulderKinematics.CONFIG` per exercise — the current engine hardcodes every angle and duration threshold at module level.**
-  * Exportable adherence summaries (% flag-free reps, average hold duration, most frequent compensation flags) — presented as engagement data, never as clinical measurement.
+* **Context** — prescribing home protocols and wanting structured adherence tracking.
+* **Capabilities**
+  * Multi-track prescription timeline organizing exercises into active parallel and queued stages
+  * Customizable target angles, hold durations, and daily frequency parameters
+  * Objective per-rep adherence and compensation logs (presented as engagement data, never as clinical diagnostic measurement)
 
 Do not design for the clinician at the patient's expense. An interface optimized for compliance reporting is an interface the patient stops opening.
 
@@ -64,19 +65,24 @@ Do not design for the clinician at the patient's expense. An interface optimized
 
 ## 5. Exercise Catalog Roadmap
 
-| Code | Name | Primary Target | Framing View | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **EX-0** | Side-Lying Right Arm Low Abduction Hold (10°–15°) | Supraspinatus, low-angle isometric activation | Side-lying, floor-level camera | ✅ Live |
-| **EX-1** | Standing Right Arm Forward Flexion | Anterior deltoid, supraspinatus, serratus anterior | Full body, frontal | ✅ Live |
-| **EX-2** | Seated Desk Right Arm Forward Flexion | Anterior deltoid, shoulder mobility | Upper body, frontal | ✅ Live |
-| **EX-3** | Standing Lateral Abduction (90°) | Middle deltoid, supraspinatus | Full body, frontal | 🗓️ Planned |
-| **EX-4** | Scaption (30° scapular plane elevation) | Rotator cuff, supraspinatus isolation | Frontal / 45° oblique | 🗓️ Planned |
-| **EX-5** | Supported External Rotation (0° abduction) | Infraspinatus, teres minor | Frontal / desk | 🗓️ Planned |
-| **EX-6** | Wall Slides / Overhead Elevation (120°–180°) | Overhead mobility, scapular rhythm | Sagittal side view | 🗓️ Planned |
+| Code | Name | Region | Primary Target | Framing View | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **EX-0** | Side-Lying Right Arm Low Abduction Hold (10°–15°) | Shoulder | Supraspinatus, low-angle isometric activation | Side-lying, floor-level camera | ✅ Live |
+| **EX-1** | Standing Right Arm Forward Flexion | Shoulder | Anterior deltoid, supraspinatus, serratus anterior | Full body, frontal | ✅ Live |
+| **EX-2** | Seated Desk Right Arm Forward Flexion | Shoulder | Anterior deltoid, shoulder mobility | Upper body, frontal | ✅ Live |
+| **EX-3** | Standing Lateral Abduction (90°) | Shoulder | Middle deltoid, supraspinatus | Full body, frontal | 🗓️ Planned |
+| **EX-4** | Scaption (30° scapular plane elevation) | Shoulder | Rotator cuff, supraspinatus isolation | Frontal / 45° oblique | 🗓️ Planned |
+| **EX-5** | Supported External Rotation (0° abduction) | Shoulder | Infraspinatus, teres minor | Frontal / desk | 🗓️ Planned |
+| **KN-1** | Seated Isometric Quad Sets | Knee | Quadriceps neuromuscular activation | Seated, sagittal side view | 🗓️ Planned |
+| **KN-2** | Terminal Knee Extension (TKE) | Knee | Vastus medialis (VMO), terminal lockout | Standing, sagittal side view | 🗓️ Planned |
+| **HP-1** | Side-Lying Clamshell Activation | Hip | Gluteus medius, pelvic stability | Side-lying, floor-level camera | 🗓️ Planned |
+| **EL-1** | Eccentric Wrist Extension | Elbow | Forearm extensors, tendon remodeling | Seated desk, close-up | 🗓️ Planned |
+| **SP-1** | Cervical Retraction Chin Tuck | Spine | Deep neck flexors, axial alignment | Seated, sagittal eye-level | 🗓️ Planned |
+| **AK-1** | Seated Active Ankle Dorsiflexion | Ankle | Tibialis anterior, foot clearance | Seated, sagittal ankle-level | 🗓️ Planned |
 
-**EX-0** belongs to an earlier recovery phase than EX-1/EX-2 (Phase 1: Acute Protection & Isometric Activation, vs. Phase 2 for the other two) and runs on a separate isometric-hold state machine where the target angle is a ceiling, not a floor — see `CLAUDE.md` §3 and §9 for the full model.
+**Anatomy Explorer & Region Dashboards:** The dashboard provides an interactive human body anatomy selector across 6 major musculoskeletal regions (`Shoulder`, `Knee`, `Hip`, `Elbow`, `Spine`, `Ankle`). Clicking any region opens a dedicated dashboard displaying targeted prescriptions, muscle groups, and roadmap movements.
 
-All three live exercises are **right arm only**. The engine reads right-side landmarks with no side parameter; left-arm support is a real piece of work, not a config flag.
+All live exercises are currently **right arm / right limb**. The engine reads right-side landmarks with transparent vector kinematics.
 
 A row moves from 🗓️ to ✅ only after the full chain in `AGENTS.md` completes: physiatrist defines it, kinematicist makes it measurable, measurement-engineer makes it stable, qa-engineer has fixtures for it. Nothing is announced before that.
 

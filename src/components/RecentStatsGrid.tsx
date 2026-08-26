@@ -48,7 +48,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         {/* Card 1: Volume */}
         <div className="stat-card">
           <div className="stat-card__top">
-            <span className="stat-card__icon-badge" aria-hidden="true">📊</span>
+            <span className="section-tag__dot" aria-hidden="true" />
             <span className="stat-card__period">{t('stats.volumePeriod', { n: periodDays })}</span>
           </div>
           <span className="stat-card__val stat-card__val--blue">
@@ -73,7 +73,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         {/* Card 2: Peak Angle */}
         <div className="stat-card">
           <div className="stat-card__top">
-            <span className="stat-card__icon-badge" aria-hidden="true">📐</span>
+            <span className="section-tag__dot" aria-hidden="true" />
             <span className="stat-card__period">{t('stats.angleTarget')}</span>
           </div>
           <span className="stat-card__val stat-card__val--green">
@@ -103,7 +103,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         {/* Card 3: Hold Stability */}
         <div className="stat-card">
           <div className="stat-card__top">
-            <span className="stat-card__icon-badge" aria-hidden="true">⏱️</span>
+            <span className="section-tag__dot" aria-hidden="true" />
             <span className="stat-card__period">{t('stats.holdTarget')}</span>
           </div>
           <span className="stat-card__val stat-card__val--orange">
@@ -133,7 +133,7 @@ export function RecentStatsGrid({ history }: RecentStatsGridProps) {
         {/* Card 4: Form Clean Rate */}
         <div className="stat-card">
           <div className="stat-card__top">
-            <span className="stat-card__icon-badge" aria-hidden="true">🛡️</span>
+            <span className="section-tag__dot" aria-hidden="true" />
             <span className="stat-card__period">{t('stats.formTarget')}</span>
           </div>
           <span className="stat-card__val">

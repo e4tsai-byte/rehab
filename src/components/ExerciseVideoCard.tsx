@@ -5,16 +5,17 @@ import { useT } from '../i18n/LocaleContext'
 interface ExerciseVideoCardProps {
   exercise: ExerciseDefinition
   onSelect: (exercise: ExerciseDefinition) => void
+  isInPlan?: boolean
 }
 
-export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps) {
+export function ExerciseVideoCard({ exercise, onSelect, isInPlan }: ExerciseVideoCardProps) {
   const { t, locale } = useT()
   const ex = localizeExercise(exercise, locale)
-  const isPrescribed = exercise.status === 'prescribed'
+  const isAvailable = exercise.status === 'available'
 
   return (
     <div
-      className={`video-card ${!isPrescribed ? 'video-card--upcoming' : ''}`}
+      className={`video-card ${!isAvailable ? 'video-card--upcoming' : ''}`}
       onClick={() => onSelect(exercise)}
       role="button"
       tabIndex={0}
@@ -36,16 +37,13 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
           />
         ) : (
           <div className="video-card__thumb-placeholder">
-            <span aria-hidden="true">{exercise.posture === 'standing' ? '🧍' : '🪑'}</span>
+            <span className="section-tag__dot" aria-hidden="true" />
           </div>
         )}
 
         {/* Top Badges */}
         <div className="video-card__badges-top">
           <span className="video-badge video-badge--posture">
-            <span aria-hidden="true">
-              {exercise.posture === 'standing' ? '🧍' : exercise.posture === 'seated' ? '🪑' : '🛌'}
-            </span>
             <span>
               {exercise.posture === 'standing'
                 ? t('posture.standingShort')
@@ -54,6 +52,12 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
                   : t('posture.sideLyingShort')}
             </span>
           </span>
+
+          {isInPlan && (
+            <span className="video-badge video-badge--in-plan">
+              {t('rx.inPlanBadge')}
+            </span>
+          )}
 
           <span className="video-badge video-badge--angle">
             {exercise.trackingModel === 'isometricHold' ? '10°–15°' : `${exercise.targetAngleDeg}°`}
@@ -64,11 +68,11 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
         <div className="video-card__badges-bottom">
           <span className="video-badge video-badge--cadence">
             {exercise.trackingModel === 'isometricHold'
-              ? `⏱️ ${t('vcard.holdBadge', { n: String(exercise.holdDurationS ?? 20) })}`
-              : `⏱️ ${exercise.concentricCadenceS}s-${exercise.holdDurationS}s-${exercise.eccentricCadenceS}s`}
+              ? `${t('vcard.holdBadge', { n: String(exercise.holdDurationS ?? 20) })}`
+              : `${exercise.concentricCadenceS}s-${exercise.holdDurationS}s-${exercise.eccentricCadenceS}s`}
           </span>
-          {isPrescribed ? (
-            <span className="video-badge video-badge--status-active">{t('vcard.todayBadge')}</span>
+          {isAvailable ? (
+            <span className="video-badge video-badge--status-active">{t('vcard.availableBadge')}</span>
           ) : (
             <span className="video-badge video-badge--status-upcoming">{t('vcard.upcomingBadge')}</span>
           )}
@@ -87,7 +91,7 @@ export function ExerciseVideoCard({ exercise, onSelect }: ExerciseVideoCardProps
 
         <div className="video-card__action-row">
           <span className="video-card__cue">
-            {isPrescribed ? t('vcard.viewStart') : t('vcard.upcomingCue')}
+            {isAvailable ? t('vcard.viewStart') : t('vcard.upcomingCue')}
           </span>
         </div>
       </div>

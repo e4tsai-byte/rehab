@@ -1,7 +1,7 @@
 # Rehabibi — System Invariants & Developer Guide
 
 Non-negotiable engineering rules and system architecture for **Rehabibi**, a
-private, in-browser computer-vision coach for at-home shoulder rehabilitation.
+private, in-browser computer-vision physical rehabilitation coach for full-body musculoskeletal recovery.
 
 This document is a **contract, not a description**. If the code and this file
 disagree, one of them is a bug — decide which, then fix that one.
@@ -75,11 +75,12 @@ with no enforcer is negotiable by default, which defeats the point.
   surface that reads `peakElevation` or `avgElevationDeg` as "higher is better"
   is wrong for this model, so isometric-hold sessions must never be pooled into
   the elevation/recovery stats. This is **enforced** in `recoveryMilestones.ts`:
-  `isIsometricSession()` filters them out of `calculateRecoveryProgress` (the
-  Phase-2 track), and they are surfaced separately via `calculateHoldAdherence`.
+  `isIsometricSession()` filters them out of `calculateRecentStats` elevation
+  averaging, and they are surfaced separately via `calculateHoldAdherence`.
   Any new elevation-averaging surface must apply the same guard.
 
 ### 4. Dual-View Support — *enforced by kinematicist + physiatrist*
+
 
 * `posture` is `'standing' | 'seated' | 'sideLying'`. Every exercise ships a
   catalog entry for each view it supports and declares unsupported views
@@ -131,6 +132,14 @@ home. It is a clinically-weighted design position, not a style preference.
 * No screen, alert, score, or document may be worded so as to imply a clinical
   judgement.
 
+### 8. Zero Emojis in Product UI — *enforced by brand-designer + zh-tw-copywriter*
+
+* Emojis are strictly prohibited anywhere in Rehabibi's UI chrome, catalogs,
+  strings, modals, telemetry, tags, and scorecards.
+* All visual cues and iconography must use clean, scalable SVG geometry or
+  semantic typographic micro-badges styled with design tokens (`DESIGN.md` §7).
+
+
 ---
 
 ## 2. Project Structure
@@ -175,7 +184,10 @@ rehab/
 │   │   ├── ExerciseDetailModal.tsx # Exercise inspection sheet & motion diagram
 │   │   ├── RoutineDetailModal.tsx # Routine inspection sheet & station sequence
 │   │   ├── CustomRoutineBuilderModal.tsx # Doctor custom routine builder modal
-│   │   ├── RecoveryRoadmap.tsx    # 4-stage clinical recovery milestone tracker
+│   │   ├── BodyAnatomyDiagram.tsx # Interactive human body anatomy region selector
+│   │   ├── RegionDetailModal.tsx  # Dedicated body region dashboard modal
+│   │   ├── PrescriptionEditorModal.tsx # Clinician multi-track prescription editor
+│   │   ├── PrescriptionTimelineVisualizer.tsx # Sequential multi-week timeline visualizer
 │   │   ├── ActivityCalendar.tsx   # Calendar tracking streaks & rest days
 │   │   ├── RecentStatsGrid.tsx    # 7-day / 30-day clinical analytics grid
 │   │   ├── SettingsModal.tsx      # Target angle, hold duration, reps
@@ -185,12 +197,13 @@ rehab/
 │   │   ├── Digits.tsx             # Fixed-cell numeric primitive
 │   │   └── FormAlertBanner.tsx    # Live compensation warnings
 │   ├── surfaces/
-│   │   ├── RehabDashboard.tsx     # Overview, recovery roadmap, calendar, stats, history
+│   │   ├── RehabDashboard.tsx     # Overview, anatomy region selector, calendar, stats, history
 │   │   ├── ExerciseLibrary.tsx    # YouTube-style visual exercise & routine library
+│   │   ├── PrescriptionPlanner.tsx # Multi-track prescription planner & timeline surface
 │   │   ├── RehabTraining.tsx      # Fullscreen live coaching surface
 │   │   └── SessionSummary.tsx     # Post-session form quality scorecard
 │   └── styles/                    # See §5 — load order is significant
-│       ├── tokens.css             # THE palette. Dark polarity.
+│       ├── tokens.css             # THE palette. Light polarity with Apple system materials.
 │       ├── base.css               # Reset, focus, Digits primitive
 │       ├── telemetry.css          # Gauge, pacer, form-alert, pips
 │       └── rehab.css              # Everything else

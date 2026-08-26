@@ -33,7 +33,7 @@ export function CustomRoutineBuilderModal({
   useBodyScrollLock()
 
   const isEditMode = Boolean(initialRoutine)
-  const liveExercises = EXERCISE_CATALOG.filter((ex) => ex.status === 'prescribed')
+  const liveExercises = EXERCISE_CATALOG.filter((ex) => ex.status === 'available')
 
   // A custom routine is authored once, in one language, through these fields —
   // there is no separate English form. On save the typed text is written to

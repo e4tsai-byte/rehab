@@ -197,3 +197,111 @@ export function unhideAllRoutines(): string[] {
     return []
   }
 }
+
+// ── User Prescriptions Store ────────────────────────────────────────────────
+const PRESCRIPTIONS_KEY = 'rehabibi_user_prescriptions_v1'
+
+export const DEFAULT_STARTER_PRESCRIPTIONS: import('../domain/rehabTypes').UserPrescription[] = [
+  {
+    id: 'rx-starter-flexion',
+    exerciseId: 'right-arm-forward-flexion-standing',
+    customTitle: '',
+    durationWeeks: 3,
+    targetDaysPerWeek: 5,
+    dailySetsTarget: 2,
+    status: 'active',
+    order: 0,
+    startedAt: Date.now(),
+    notes: '以 90 度前舉為主，防範聳肩與身體後仰代償。',
+  },
+  {
+    id: 'rx-starter-supraspinatus',
+    exerciseId: 'right-arm-side-lying-abduction-hold',
+    customTitle: '',
+    durationWeeks: 3,
+    targetDaysPerWeek: 5,
+    dailySetsTarget: 2,
+    status: 'active',
+    order: 1,
+    startedAt: Date.now(),
+    notes: '低角度 10–15° 等長啟動，嚴禁過度抬高。',
+  },
+  {
+    id: 'rx-starter-seated',
+    exerciseId: 'right-arm-forward-flexion-seated',
+    customTitle: '',
+    durationWeeks: 4,
+    targetDaysPerWeek: 4,
+    dailySetsTarget: 2,
+    status: 'queued',
+    order: 2,
+    startedAt: Date.now(),
+    notes: '進階階段：維持脊椎中立於書桌前訓練。',
+  },
+]
+
+export function loadPrescriptions(): import('../domain/rehabTypes').UserPrescription[] {
+  try {
+    const raw = localStorage.getItem(PRESCRIPTIONS_KEY)
+    if (!raw) {
+      // First visit: seed default starter prescriptions
+      localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(DEFAULT_STARTER_PRESCRIPTIONS))
+      return DEFAULT_STARTER_PRESCRIPTIONS
+    }
+    return JSON.parse(raw)
+  } catch {
+    return DEFAULT_STARTER_PRESCRIPTIONS
+  }
+}
+
+export function savePrescription(
+  prescription: import('../domain/rehabTypes').UserPrescription
+): import('../domain/rehabTypes').UserPrescription[] {
+  try {
+    const existing = loadPrescriptions()
+    const filtered = existing.filter((p) => p.id !== prescription.id)
+    const updated = [...filtered, prescription]
+    localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(updated))
+    return updated
+  } catch (err) {
+    console.error('Failed to save prescription', err)
+    return loadPrescriptions()
+  }
+}
+
+export function updatePrescription(
+  id: string,
+  updates: Partial<import('../domain/rehabTypes').UserPrescription>
+): import('../domain/rehabTypes').UserPrescription[] {
+  try {
+    const existing = loadPrescriptions()
+    const updated = existing.map((p) => (p.id === id ? { ...p, ...updates } : p))
+    localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(updated))
+    return updated
+  } catch (err) {
+    console.error('Failed to update prescription', err)
+    return loadPrescriptions()
+  }
+}
+
+export function deletePrescription(
+  id: string
+): import('../domain/rehabTypes').UserPrescription[] {
+  try {
+    const existing = loadPrescriptions()
+    const updated = existing.filter((p) => p.id !== id)
+    localStorage.setItem(PRESCRIPTIONS_KEY, JSON.stringify(updated))
+    return updated
+  } catch (err) {
+    console.error('Failed to delete prescription', err)
+    return loadPrescriptions()
+  }
+}
+
+export function togglePrescriptionStatus(
+  id: string,
+  newStatus: import('../domain/rehabTypes').PrescriptionStatus
+): import('../domain/rehabTypes').UserPrescription[] {
+  return updatePrescription(id, { status: newStatus })
+}
+

@@ -169,6 +169,7 @@
   --s-4: 1rem;
   --s-5: 1.25rem;
   --s-6: 1.5rem;
+  --s-7: 1.75rem;
   --s-8: 2rem;
   --s-10: 2.5rem;
   --s-12: 3rem;
@@ -182,6 +183,7 @@
   --r-md: 14px;
   --r-lg: 20px;
   --r-xl: 28px;
+  --r-2xl: 36px;
   --r-full: 9999px;
 
   /* Minimum interactive target. */

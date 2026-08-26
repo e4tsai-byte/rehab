@@ -1,4 +1,5 @@
 import type { Locale } from '../i18n/locale'
+import type { BodyRegion } from './rehabTypes'
 
 export interface RoutineStation {
   exerciseId: string
@@ -16,6 +17,7 @@ export interface RehabRoutine {
   descriptionEn?: string
   targetFocusZh: string
   targetFocusEn?: string
+  bodyRegion?: BodyRegion
   estimatedDurationMin: number
   category: 'daily_prescribed' | 'desk_relief' | 'advanced_stability' | 'custom_doctor'
   stations: readonly RoutineStation[]
@@ -23,6 +25,7 @@ export interface RehabRoutine {
   status: 'prescribed' | 'upcoming'
   isCustom?: boolean
 }
+
 
 export interface LocalizedRoutine {
   name: string

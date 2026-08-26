@@ -5,27 +5,30 @@ import {
   calculateStreak,
   loadHistory,
   loadSettings,
+  loadPrescriptions,
   saveSession,
   saveSettings,
 } from './data/rehabStore'
 import { EXERCISE_CATALOG } from './domain/exerciseCatalog'
-import type { CompletedSession, UserSettings } from './domain/rehabTypes'
+import type { CompletedSession, UserSettings, UserPrescription } from './domain/rehabTypes'
 import type { RehabRoutine } from './domain/routineCatalog'
 import { RehabDashboard } from './surfaces/RehabDashboard'
 import { ExerciseLibrary } from './surfaces/ExerciseLibrary'
+import { PrescriptionPlanner } from './surfaces/PrescriptionPlanner'
 import { RehabTraining } from './surfaces/RehabTraining'
 import { SessionSummary } from './surfaces/SessionSummary'
 
-type ViewMode = 'dashboard' | 'exercises' | 'training' | 'summary'
+type ViewMode = 'dashboard' | 'exercises' | 'prescriptions' | 'training' | 'summary'
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'exercises'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'exercises' | 'prescriptions'>('dashboard')
   const [view, setView] = useState<ViewMode>('dashboard')
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>(EXERCISE_CATALOG[0]!.id)
   const [activeRoutine, setActiveRoutine] = useState<RehabRoutine | null>(null)
   const [routineStationIndex, setRoutineStationIndex] = useState<number>(0)
   const [settings, setSettings] = useState<UserSettings>(loadSettings)
   const [history, setHistory] = useState<CompletedSession[]>(loadHistory)
+  const [prescriptions, setPrescriptions] = useState<UserPrescription[]>(loadPrescriptions)
   const [activeSession, setActiveSession] = useState<CompletedSession | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -93,14 +96,20 @@ export function App() {
         }}
       />
 
-      {/* Surface: Dashboard */}
+      {/* Surface 1: Dashboard */}
       {view === 'dashboard' && (
         <RehabDashboard
           history={history}
+          prescriptions={prescriptions}
           onStartExercise={handleStartExercise}
+          onStartRoutine={handleStartRoutine}
           onNavigateToExercises={() => {
             setActiveTab('exercises')
             setView('exercises')
+          }}
+          onNavigateToPrescriptions={() => {
+            setActiveTab('prescriptions')
+            setView('prescriptions')
           }}
           onSelectSession={(session) => {
             setActiveSession(session)
@@ -109,12 +118,24 @@ export function App() {
         />
       )}
 
-      {/* Surface: YouTube-style Exercise Library */}
+      {/* Surface 2: Exercise Library */}
       {view === 'exercises' && (
         <ExerciseLibrary
           settings={settings}
+          prescriptions={prescriptions}
           onStartExercise={handleStartExercise}
           onStartRoutine={handleStartRoutine}
+        />
+      )}
+
+      {/* Surface 3: My Prescriptions Planner */}
+      {view === 'prescriptions' && (
+        <PrescriptionPlanner
+          prescriptions={prescriptions}
+          onPrescriptionsChange={setPrescriptions}
+          settings={settings}
+          history={history}
+          onStartExercise={handleStartExercise}
         />
       )}
 

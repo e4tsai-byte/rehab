@@ -83,7 +83,6 @@ export function ActivityCalendar({
       {/* Month Summary Strip */}
       <div className="activity-calendar__summary">
         <div className="cal-stat">
-          <span className="cal-stat__icon" aria-hidden="true">🔥</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--orange">
               {calendarData.currentStreak} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
@@ -92,7 +91,6 @@ export function ActivityCalendar({
           </div>
         </div>
         <div className="cal-stat">
-          <span className="cal-stat__icon" aria-hidden="true">📅</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--blue">
               {calendarData.activeDaysCount} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
@@ -101,7 +99,6 @@ export function ActivityCalendar({
           </div>
         </div>
         <div className="cal-stat">
-          <span className="cal-stat__icon" aria-hidden="true">🎯</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--green">
               {calendarData.totalRepsThisMonth} <span className="cal-stat__unit">{t('cal.unitReps')}</span>
@@ -110,7 +107,6 @@ export function ActivityCalendar({
           </div>
         </div>
         <div className="cal-stat">
-          <span className="cal-stat__icon" aria-hidden="true">🌱</span>
           <div className="cal-stat__content">
             <span className="cal-stat__val cal-stat__val--rest">
               {calendarData.restDaysCount} <span className="cal-stat__unit">{t('cal.unitDays')}</span>
@@ -180,7 +176,6 @@ export function ActivityCalendar({
                   </div>
                 ) : day.isRestDay ? (
                   <div className="cal-day__rest-badge" title={t('cal.restTitle')}>
-                    <span className="cal-day__rest-icon" aria-hidden="true">🌱</span>
                     <span className="cal-day__rest-label">{t('cal.restLabel')}</span>
                   </div>
                 ) : null}

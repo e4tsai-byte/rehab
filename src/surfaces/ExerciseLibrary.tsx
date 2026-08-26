@@ -1,7 +1,12 @@
 import { useState } from 'react'
-import { EXERCISE_CATALOG, type ExerciseDefinition } from '../domain/exerciseCatalog'
+import {
+  BODY_REGIONS,
+  EXERCISE_CATALOG,
+  type ExerciseDefinition,
+  type BodyRegionInfo,
+} from '../domain/exerciseCatalog'
 import { REHAB_ROUTINES, type RehabRoutine } from '../domain/routineCatalog'
-import type { UserSettings } from '../domain/rehabTypes'
+import type { UserSettings, BodyRegion } from '../domain/rehabTypes'
 import {
   loadCustomRoutines,
   saveCustomRoutine,
@@ -20,27 +25,47 @@ import type { StringKey } from '../i18n/uiStrings'
 
 interface ExerciseLibraryProps {
   settings: UserSettings
+  prescriptions?: import('../domain/rehabTypes').UserPrescription[] | undefined
   onStartExercise: (exerciseId: string) => void
   onStartRoutine: (routine: RehabRoutine) => void
 }
 
-type FilterCategory = 'all' | 'routines' | 'standing' | 'seated' | 'sideLying' | 'upcoming'
+type FilterCategory =
+  | 'all'
+  | 'shoulder'
+  | 'knee'
+  | 'hip'
+  | 'elbow'
+  | 'spine'
+  | 'ankle'
+  | 'routines'
+  | 'standing'
+  | 'seated'
+  | 'sideLying'
+  | 'upcoming'
 
-const CATEGORY_CHIPS: Array<{ id: FilterCategory; labelKey: StringKey; icon?: string }> = [
+const CATEGORY_CHIPS: Array<{ id: FilterCategory; labelKey: StringKey }> = [
   { id: 'all', labelKey: 'lib.catAll' },
-  { id: 'routines', labelKey: 'lib.catRoutines', icon: '📑' },
-  { id: 'standing', labelKey: 'lib.catStanding', icon: '🧍' },
-  { id: 'seated', labelKey: 'lib.catSeated', icon: '🪑' },
-  { id: 'sideLying', labelKey: 'lib.catSideLying', icon: '🛌' },
-  { id: 'upcoming', labelKey: 'lib.catUpcoming', icon: '🔒' },
+  { id: 'shoulder', labelKey: 'region.shoulder' },
+  { id: 'knee', labelKey: 'region.knee' },
+  { id: 'hip', labelKey: 'region.hip' },
+  { id: 'elbow', labelKey: 'region.elbow' },
+  { id: 'spine', labelKey: 'region.spine' },
+  { id: 'ankle', labelKey: 'region.ankle' },
+  { id: 'routines', labelKey: 'lib.catRoutines' },
+  { id: 'standing', labelKey: 'lib.catStanding' },
+  { id: 'seated', labelKey: 'lib.catSeated' },
+  { id: 'sideLying', labelKey: 'lib.catSideLying' },
+  { id: 'upcoming', labelKey: 'lib.catUpcoming' },
 ]
 
 export function ExerciseLibrary({
   settings,
+  prescriptions = [],
   onStartExercise,
   onStartRoutine,
 }: ExerciseLibraryProps) {
-  const { t } = useT()
+  const { t, locale } = useT()
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all')
   const [customRoutines, setCustomRoutines] = useState<RehabRoutine[]>(loadCustomRoutines)
   const [hiddenRoutineIds, setHiddenRoutineIds] = useState<string[]>(loadHiddenRoutineIds)
@@ -48,6 +73,7 @@ export function ExerciseLibrary({
   const [editingRoutine, setEditingRoutine] = useState<RehabRoutine | null>(null)
   const [inspectingExercise, setInspectingExercise] = useState<ExerciseDefinition | null>(null)
   const [inspectingRoutine, setInspectingRoutine] = useState<RehabRoutine | null>(null)
+  const isEn = locale === 'en'
 
   // Combined routines: custom routines on top, then non-hidden default presets
   const allRoutines = [
@@ -83,16 +109,50 @@ export function ExerciseLibrary({
     setHiddenRoutineIds(updated)
   }
 
-  // Filter routines and exercises
+  // Filter routines
   const showRoutines = activeFilter === 'all' || activeFilter === 'routines'
-  const filteredExercises = EXERCISE_CATALOG.filter((ex) => {
-    if (activeFilter === 'all') return true
+
+  // Helper: sort exercises so available / ready-to-perform come FIRST
+  function sortAvailableFirst(exercises: ExerciseDefinition[]): ExerciseDefinition[] {
+    return [...exercises].sort((a, b) => {
+      if (a.status === 'available' && b.status !== 'available') return -1
+      if (a.status !== 'available' && b.status === 'available') return 1
+      return 0
+    })
+  }
+
+  // Helper: get exercises for a region with active filter applied
+  function getExercisesForRegion(regionId: BodyRegion): ExerciseDefinition[] {
+    const regionExercises = EXERCISE_CATALOG.filter((ex) => ex.bodyRegion === regionId)
+    const filtered = regionExercises.filter((ex) => {
+      if (activeFilter === 'all' || activeFilter === regionId) return true
+      if (activeFilter === 'routines') return false
+      if (activeFilter === 'standing') return ex.posture === 'standing'
+      if (activeFilter === 'seated') return ex.posture === 'seated'
+      if (activeFilter === 'sideLying') return ex.posture === 'sideLying'
+      if (activeFilter === 'upcoming') return ex.status === 'upcoming'
+      return true
+    })
+    return sortAvailableFirst(filtered)
+  }
+
+  // Regions to render based on current filter
+  const targetRegions = BODY_REGIONS.filter((region) => {
     if (activeFilter === 'routines') return false
-    if (activeFilter === 'standing') return ex.posture === 'standing' && ex.status === 'prescribed'
-    if (activeFilter === 'seated') return ex.posture === 'seated' && ex.status === 'prescribed'
-    if (activeFilter === 'sideLying') return ex.posture === 'sideLying' && ex.status === 'prescribed'
-    if (activeFilter === 'upcoming') return ex.status === 'upcoming'
-    return true
+    if (activeFilter === 'all') return true
+    if (
+      activeFilter === 'shoulder' ||
+      activeFilter === 'knee' ||
+      activeFilter === 'hip' ||
+      activeFilter === 'elbow' ||
+      activeFilter === 'spine' ||
+      activeFilter === 'ankle'
+    ) {
+      return region.id === activeFilter
+    }
+    // For posture / upcoming filters, only show region if it has matching exercises
+    const matches = getExercisesForRegion(region.id)
+    return matches.length > 0
   })
 
   return (
@@ -119,13 +179,12 @@ export function ExerciseLibrary({
             className={`filter-chip ${activeFilter === chip.id ? 'filter-chip--active' : ''}`}
             onClick={() => setActiveFilter(chip.id)}
           >
-            {chip.icon && <span aria-hidden="true">{chip.icon}</span>}
             <span>{t(chip.labelKey)}</span>
           </button>
         ))}
       </div>
 
-      {/* 1. Multi-Exercise Routines Section (if visible) */}
+      {/* 1. Multi-Exercise Compound Routines (if visible) */}
       {showRoutines && (
         <section className="library-section" aria-label={t('lib.routinesAria')}>
           <div className="library-section__head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--s-3)' }}>
@@ -170,30 +229,74 @@ export function ExerciseLibrary({
         </section>
       )}
 
-      {/* 2. Individual Exercises Section */}
-      {filteredExercises.length > 0 && (
-        <section className="library-section" aria-label={t('lib.exercisesAria')}>
-          <div className="library-section__head">
-            <div>
-              <h2 className="library-section__title">
-                {activeFilter === 'upcoming' ? t('lib.upcomingTitle') : t('lib.selfTitle')}
-              </h2>
-              <p className="library-section__sub">
-                {activeFilter === 'upcoming' ? t('lib.upcomingSub') : t('lib.selfSub')}
-              </p>
-            </div>
-          </div>
+      {/* 2. Anatomical Region-Grouped Exercises (Ready to Perform FIRST) */}
+      {targetRegions.map((region: BodyRegionInfo) => {
+        const exercises = getExercisesForRegion(region.id)
+        if (exercises.length === 0) return null
 
-          <div className="video-cards-grid">
-            {filteredExercises.map((exercise) => (
-              <ExerciseVideoCard
-                key={exercise.id}
-                exercise={exercise}
-                onSelect={setInspectingExercise}
-              />
-            ))}
-          </div>
-        </section>
+        const regionName = isEn ? region.nameEn : region.nameZh
+        const regionTag = isEn ? region.tagEn : region.tagZh
+        const regionDesc = isEn ? region.descriptionEn : region.descriptionZh
+        const isActive = region.status === 'active'
+
+        return (
+          <section key={region.id} className="library-region-section" aria-labelledby={`region-title-${region.id}`}>
+            <div className="library-region-section__head">
+              <div className="library-region-section__info">
+                <div className="library-region-section__title-row">
+                  <span className="region-card__code-badge" aria-hidden="true">
+                    {region.code}
+                  </span>
+                  <div>
+                    <h2 id={`region-title-${region.id}`} className="library-region-section__title">
+                      {regionName}
+                    </h2>
+                    <span className="library-region-section__tag">
+                      {regionTag}
+                    </span>
+                  </div>
+                </div>
+                <p className="library-region-section__desc">
+                  {regionDesc}
+                </p>
+              </div>
+
+              <div className="library-region-section__status">
+                <span
+                  className={`region-status-pill ${
+                    isActive ? 'region-status-pill--active' : 'region-status-pill--upcoming'
+                  }`}
+                >
+                  {isActive ? t('anatomy.activeBadge') : t('anatomy.upcomingBadge')}
+                </span>
+              </div>
+            </div>
+
+            {/* Grid with Available Exercises First */}
+            <div className="video-cards-grid">
+              {exercises.map((exercise) => {
+                const isInPlan = prescriptions.some(
+                  (p) => p.exerciseId === exercise.id && p.status === 'active'
+                )
+                return (
+                  <ExerciseVideoCard
+                    key={exercise.id}
+                    exercise={exercise}
+                    isInPlan={isInPlan}
+                    onSelect={setInspectingExercise}
+                  />
+                )
+              })}
+            </div>
+          </section>
+        )
+      })}
+
+      {/* Empty State if Filter matches nothing */}
+      {targetRegions.length === 0 && !showRoutines && (
+        <div className="empty-state">
+          <p className="empty-state__body">{t('lib.noResults')}</p>
+        </div>
       )}
 
       {/* Exercise Detail Modal */}

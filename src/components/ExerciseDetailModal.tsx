@@ -21,7 +21,7 @@ export function ExerciseDetailModal({
   const { t, locale } = useT()
   const ex = localizeExercise(exercise, locale)
   const modalRef = useRef<HTMLDivElement>(null)
-  const isPrescribed = exercise.status === 'prescribed'
+  const isAvailable = exercise.status === 'available'
 
   useBodyScrollLock()
 
@@ -140,7 +140,7 @@ export function ExerciseDetailModal({
           <h3 className="exercise-detail-section__title">{t('detail.executeTitle')}</h3>
           <p className="exercise-detail-section__desc">{ex.description}</p>
           <div className="framing-hint-box">
-            <span className="framing-hint-box__icon" aria-hidden="true">📷</span>
+            <span className="section-tag__dot" aria-hidden="true" />
             <span>{t('detail.framing', { hint: ex.framingHint })}</span>
           </div>
         </div>
@@ -164,7 +164,7 @@ export function ExerciseDetailModal({
               </span>
             </li>
             <li className="routine-card__reminders-item routine-card__reminders-item--warn">
-              <span className="routine-card__reminders-dot">⚠️</span>
+              <span className="routine-card__reminders-dot">!</span>
               <span>{t('card.safetyReminder')}</span>
             </li>
           </ul>
@@ -175,7 +175,7 @@ export function ExerciseDetailModal({
           <button className="btn btn--glass" onClick={onClose}>
             {t('detail.backLibrary')}
           </button>
-          {isPrescribed ? (
+          {isAvailable ? (
             <button
               className="btn btn--primary btn--lg"
               style={{ flex: 1 }}

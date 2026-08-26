@@ -36,7 +36,6 @@ export function RoutineVideoCard({ routine, onSelect }: RoutineVideoCardProps) {
         {/* Playlist Stack Overlay Banner */}
         <div className="routine-card-video__stack-overlay">
           <div className="routine-stack-badge">
-            <span aria-hidden="true">📑</span>
             <span>{t('rcard.stations', { n: routine.stations.length })}</span>
           </div>
         </div>
