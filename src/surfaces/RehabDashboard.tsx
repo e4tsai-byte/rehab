@@ -6,6 +6,7 @@ import { BodyAnatomyDiagram } from '../components/BodyAnatomyDiagram'
 import { RegionDetailModal } from '../components/RegionDetailModal'
 import { ActivityCalendar } from '../components/ActivityCalendar'
 import { RecentStatsGrid } from '../components/RecentStatsGrid'
+import { RehabLogo } from '../components/RehabLogo'
 import { useT } from '../i18n/LocaleContext'
 import { formatSessionTime } from '../i18n/datetime'
 
@@ -52,10 +53,15 @@ export function RehabDashboard({
 
   return (
     <div className="rehab-dashboard">
-      {/* 1. Hero Header */}
+      {/* 1. Hero Header with Full Logo Emblem */}
       <div className="rehab-hero">
-        <h1 className="rehab-hero__title">{t('dash.heroTitle')}</h1>
-        <p className="rehab-hero__sub">{t('dash.heroSub')}</p>
+        <div className="rehab-hero__brand-header">
+          <RehabLogo variant="full" size={68} className="rehab-hero__logo" />
+          <div className="rehab-hero__content">
+            <h1 className="rehab-hero__title">{t('dash.heroTitle')}</h1>
+            <p className="rehab-hero__sub">{t('dash.heroSub')}</p>
+          </div>
+        </div>
       </div>
 
       {/* 2. Prescription / Today's Action Banner */}

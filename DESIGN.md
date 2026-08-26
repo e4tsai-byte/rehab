@@ -474,3 +474,19 @@ treatment, not part of the card-nesting hierarchy this section documents.
 
 This hierarchy ensures that nested cards maintain concentric visual clearance and generous breathing room on high-density displays.
 
+---
+
+## 9. Brand Logo & Vector Geometry (`RehabLogo.tsx`)
+
+The Rehabibi logo embodies clinical precision, telemetry feedback, and Apple system materials. It is implemented purely in vector SVG (`src/components/RehabLogo.tsx`) with zero remote image or font dependencies.
+
+### 9.1 Anatomy of the Mark
+1. **Vertical Posture Axis (Spine / Anchor)**: A stable vertical stem providing structural grounding.
+2. **Goniometer Range-of-Motion Arc**: An upper quadrant loop spanning 90° with a central **Joint Rotation Pivot Node** (`#38bdf8` core, `#ffffff` focal center).
+3. **Kinetic Trajectory Vector**: An accelerating forward stroke representing the ascending limb path and concentric/eccentric movement rhythm.
+
+### 9.2 Variants
+- **Simplified Icon (`variant="icon"`)**: 24px–36px compact squircle (`rx=26`) on a deep blue gradient (`#0b79ed` → `#0052b3`) with a dotted ROM arc and highlighted kinetic leg. Used in `RehabHeader.tsx`, small card badges, and the browser tab favicon (`index.html`).
+- **Full Detailed Emblem (`variant="full"`)**: 48px–96px high-fidelity badge with concentric degree calibration track, 0°/30°/45°/60° radial tick marks, and 90° target lockout pip in recovery mint (`#34d399`). Featured in the homepage hero header (`RehabDashboard.tsx`).
+- **Horizontal Lockup (`variant="lockup"`)**: Pairs the simplified mark with styled SF / Noto Sans TC typography (`.rehab-logo-lockup`).
+

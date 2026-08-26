@@ -216,6 +216,67 @@
   gap: var(--s-8);
 }
 
+/* ── Brand Logo & Herald ────────────────────────────────────────────── */
+.rehab-logo {
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rehab-logo--icon {
+  flex-shrink: 0;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.rehab-nav__brand:hover .rehab-logo--icon {
+  transform: scale(1.05);
+}
+
+.rehab-hero__brand-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-6);
+}
+
+.rehab-hero__logo {
+  flex-shrink: 0;
+  border-radius: var(--r-xl);
+  transition: transform var(--dur-normal) var(--ease-out);
+}
+
+.rehab-hero__logo:hover {
+  transform: scale(1.03) translateY(-1px);
+}
+
+.rehab-hero__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.rehab-logo-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.rehab-logo-lockup__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rehab-logo-lockup__title {
+  font-size: var(--t-md);
+  font-weight: 640;
+  letter-spacing: var(--track-title);
+  line-height: 1.25;
+}
+
+.rehab-logo-lockup__subtitle {
+  font-size: var(--t-xs);
+  color: var(--rehab-ink-tertiary);
+  line-height: 1.3;
+}
+
 .rehab-hero__title {
   font-size: var(--t-display);
   font-weight: 660;
@@ -1131,6 +1192,16 @@
   .summary-surface {
     padding: var(--s-6) var(--s-4) var(--s-12);
     gap: var(--s-6);
+  }
+
+  .rehab-hero__brand-header {
+    gap: var(--s-4);
+    align-items: flex-start;
+  }
+
+  .rehab-hero__logo {
+    width: 52px;
+    height: 52px;
   }
 
   .rehab-hero__title {

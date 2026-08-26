@@ -178,6 +178,7 @@ rehab/
 │   │   └── useBodyScrollLock.ts   # Body scroll locking for modal overlays
 │   ├── components/
 │   │   ├── RehabHeader.tsx        # Header: tab navigation, streak badge, settings
+│   │   ├── RehabLogo.tsx          # Brand logo: simplified icon, full emblem & lockup SVG variants
 │   │   ├── ExerciseCard.tsx       # Routine card and start CTA
 │   │   ├── ExerciseVideoCard.tsx  # YouTube-style 16:9 exercise card
 │   │   ├── RoutineVideoCard.tsx   # Multi-exercise routine playlist card

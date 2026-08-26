@@ -1,5 +1,6 @@
 import { useT } from '../i18n/LocaleContext'
 import type { Locale } from '../i18n/locale'
+import { RehabLogo } from './RehabLogo'
 
 interface RehabHeaderProps {
   activeTab: 'dashboard' | 'exercises' | 'prescriptions'
@@ -29,7 +30,7 @@ export function RehabHeader({
         }}
         aria-label={t('nav.backHome')}
       >
-        <span className="rehab-nav__logo" aria-hidden="true">R</span>
+        <RehabLogo variant="icon" size={34} />
         <span>
           <span className="rehab-nav__title">Rehabibi</span>
           <span className="rehab-nav__subtitle">{t('nav.subtitle')}</span>
